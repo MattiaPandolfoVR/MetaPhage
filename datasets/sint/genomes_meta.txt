@@ -1,0 +1,33 @@
+genomes_list_A.fasta
+	>NC_002662.1 Lactococcus lactis subsp. lactis Il1403, complete sequence
+	>NZ_LN774769.1 Lactococcus piscium MKFS47 chromosome I
+	>NZ_LN774770.1 Lactococcus piscium MKFS47 plasmid II, complete sequence
+	>NZ_LN774771.1 Lactococcus piscium MKFS47 plasmid III, complete sequence
+	>NC_049805.1 Lactococcus phage phiQ1 DNA, complete genome
+	>NC_022339.1 Propionibacterium phage PHL037M02, complete genome
+	
+genomes_list_B.fasta
+	>NC_002662.1 Lactococcus lactis subsp. lactis Il1403, complete sequence
+	>NZ_LN774769.1 Lactococcus piscium MKFS47 chromosome I
+	>NZ_LN774770.1 Lactococcus piscium MKFS47 plasmid II, complete sequence
+	>NZ_LN774771.1 Lactococcus piscium MKFS47 plasmid III, complete sequence
+	>NC_049805.1 Lactococcus phage phiQ1 DNA, complete genome
+	>NC_013153.1 Lactococcus phage CB19, complete genome
+
+genomes_list_C.fasta
+	>NC_002662.1 Lactococcus lactis subsp. lactis Il1403, complete sequence
+	>NZ_LN774769.1 Lactococcus piscium MKFS47 chromosome I
+	>NZ_LN774770.1 Lactococcus piscium MKFS47 plasmid II, complete sequence
+	>NZ_LN774771.1 Lactococcus piscium MKFS47 plasmid III, complete sequence
+	>NC_013153.1 Lactococcus phage CB19, complete genome
+	>NC_022339.1 Propionibacterium phage PHL037M02, complete genome
+
+
+
+conda install -c bioconda insilicoseq
+
+iss generate --n_reads 5000 --abundance halfnormal --genomes genomes_list_A.fasta --model miseq --output sint_A_reads && gzip sint_A_reads*.fastq
+
+iss generate --n_reads 5000 --abundance halfnormal --genomes genomes_list_B.fasta --model miseq --output sint_B_reads && gzip sint_B_reads*.fastq
+
+iss generate --n_reads 5000 --abundance halfnormal --genomes genomes_list_C.fasta --model miseq --output sint_C_reads && gzip sint_C_reads*.fastq
