@@ -2,6 +2,6 @@ name: metaphageenv
 
 dependencies:
   # nextflow
-  - conda-forge::graphviz==2.42.3=h055b950_2
+  - conda-forge::graphviz==2.42.3
   # quality check  
-  - bioconda::fastqc=0.11.9=0
+  - bioconda::fastqc=0.11.9
