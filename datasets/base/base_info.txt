@@ -1,0 +1,1 @@
+This is the place where the user can place his datasets (example_R1.fastq.gz, example_R2.fastq.gz).
