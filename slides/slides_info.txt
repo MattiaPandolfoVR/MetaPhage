@@ -1,0 +1,7 @@
+This is the place where we make slides for keynotes. Slides may be in Italian. 
+
+We use these tools:
+
+1) Flowchart editing in VSCode https://marketplace.visualstudio.com/items?itemName=hediet.vscode-drawio
+
+2) Markdown slides creation in VSCode https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode 
