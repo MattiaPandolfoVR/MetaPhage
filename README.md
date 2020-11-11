@@ -22,6 +22,21 @@ conda install python==3.7.8 -c conda-forge
 conda install nextflow==20.10.0 -c bioconda
 ```
 
+5. Install **wget** and **unzip**:
+```
+conda install wget==1.20.1 -c anaconda
+```
+
+6. Using `cd` command, set your working directory where you want to download the pipeline:
+```
+cd your/path
+```
+
+7. Download and extract the repo into the previously specified folder:
+```
+wget -O MetaPhage.zip https://github.com/MattiaPandolfoVR/MetaPhage/archive/main.zip && unzip MetaPhage.zip
+```
+
 ## With Docker
 
 Not implemented yet.
