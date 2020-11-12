@@ -37,7 +37,8 @@ if (params.readPaths) {                 // declared in profile config
     if (params.singleEnd == true) {     // declared in profile config
         error "singleEnd mode not supported yet"
     } else {
-        ch_reads_fastqc = Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz")
+        Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz")
+            .into {ch_reads_fastp}
     }
 }
 else
@@ -46,25 +47,33 @@ else
 
 /* PROCESSES */
 
-/* STEP 1 - quality check */
-process fastqc {
-    tag "${reads.baseName}" 
-    publishDir "${params.outdir}/fastqc/", mode: 'copy',
-        saveAs: {filename -> filename.indexOf(".zip") == -1 ? "$filename" : null}
-
-    when:
-    !params.skip_qc
+/* STEP 1 - quality check  and trimming */
+process fastp {
+    tag "$seqID"
+    publishDir "${params.outdir}/fastp/qc/", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
 
     input:
-    tuple val(name), file(reads) from ch_reads_fastqc
+    tuple val(seqID), file(reads) from ch_reads_fastp
 
     output:
-    file("*_fastqc.{zip,html}") into ch_fastqc_results_raw
+    tuple val(seqID), file("*_trimmed.fastq.gz") into ch_fastp_phix
+    file("${seqID}_qc_report.html")
 
     script:
     """
-    fastqc \
-    -t ${task.cpus} \
-    -q $reads
+    fastp \
+    -w ${task.cpus} \
+    -q ${params.mean_quality} \
+    -5 \
+    -3 \
+    --cut_mean_quality ${params.trimming_quality} \
+    --adapter_sequence=${params.adapter_forward} \
+    --adapter_sequence_r2=${params.adapter_reverse} \
+    -i ${reads[0]} \
+    -I ${reads[1]} \
+    -o "${seqID}_R1_trimmed.fastq.gz" \
+    -O "${seqID}_R2_trimmed.fastq.gz" \
+    -h "${seqID}_qc_report.html"
     """
 }

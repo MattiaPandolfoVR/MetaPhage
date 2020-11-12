@@ -4,4 +4,4 @@ dependencies:
   # nextflow
   - conda-forge::graphviz==2.42.3
   # quality check  
-  - bioconda::fastqc=0.11.9
+  - bioconda::fastp=0.20.1
