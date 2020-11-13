@@ -1,6 +1,6 @@
 # Coded by Gioele Lazzari (gioele.lazza@studenti.univr.it)
 software = "db_manager.py"
-version = "0.0.1"
+version = "0.0.2"
 
 import sys, os, argparse, logging, subprocess
 
@@ -57,11 +57,13 @@ def manage(projectDir, df_file_table, df_last_settings,
         # subset dataframe for the given program
         rows_phix = df_file_table[df_file_table['file'].str.contains('file_phix')] 
         # get every modality for that program
-        mod_list = list(set(rows_phix['modality'].tolist())).append("custom") 
+        mod_list = list(set(rows_phix['modality'].tolist()))
+        mod_list.append("custom") 
         # get every requested file for that program
         file_list = list(set(rows_phix['file'].tolist())) 
 
-        if mod_phix in mod_list: # if the user specified modality is allowed
+        # if the user specified modality is allowed, save this run's parameters into df_last_settings
+        if mod_phix in mod_list: 
             if mod_phix == "custom" and file_phix_alone == "-":
                 error('For a program with its databses/models in "custom" mode you have to specify all thier file paths')
             else:
@@ -69,7 +71,8 @@ def manage(projectDir, df_file_table, df_last_settings,
                     df_last_settings.loc[df_last_settings["file"] == item, ["modality"]] = mod_phix
 
                     if mod_phix != "custom":
-                        df_last_settings.loc[df_last_settings["file"] == item, ["filepath"]] = df_file_table[(df_file_table['file']== item) & (df_file_table['modality'] == mod_phix), 'filepath'].values[0]
+                        path_to_use = df_file_table.loc[(df_file_table['file']== item) & (df_file_table['modality'] == mod_phix), 'filepath'].values[0]
+                        df_last_settings.loc[df_last_settings["file"] == item, ["filepath"]] = path_to_use
 
                     elif mod_phix == "custom" and file_phix_alone != "-":
                         df_last_settings.loc[df_last_settings["file"] == item, ["filepath"]] = file_phix_alone                    
@@ -87,9 +90,14 @@ def manage(projectDir, df_file_table, df_last_settings,
     # PART 3: export current preferences in individual file readable by groovy
     # create a subfolder for containg all the variables
     if not os.path.exists(projectDir + "db/groovy_vars"):
-            os.makedirs(projectDir + "db/groovy_vars")
+        os.makedirs(projectDir + "db/groovy_vars")
     for row in df_last_settings.itertuples():
+        # this file is the one actually opened in the process
         f= open(projectDir + "db/groovy_vars/" + row.file, "w")
+        f.write(row.filepath)
+        f.close()
+        # this file in the working dir is just to temporize the process
+        f= open(row.file, "w")
         f.write(row.filepath)
         f.close()
 
