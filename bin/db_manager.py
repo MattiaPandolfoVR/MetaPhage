@@ -67,8 +67,12 @@ def manage(projectDir, df_file_table, df_last_settings,
             else:
                 for item in file_list:
                     df_last_settings.loc[df_last_settings["file"] == item, ["modality"]] = mod_phix
-                    if mod_phix == "custom" and file_phix_alone != "-":
-                        df_last_settings.loc[df_last_settings["file"] == item, ["custompath"]] = file_phix_alone                    
+
+                    if mod_phix != "custom":
+                        df_last_settings.loc[df_last_settings["file"] == item, ["filepath"]] = df_file_table[(df_file_table['file']== item) & (df_file_table['modality'] == mod_phix), 'filepath'].values[0]
+
+                    elif mod_phix == "custom" and file_phix_alone != "-":
+                        df_last_settings.loc[df_last_settings["file"] == item, ["filepath"]] = file_phix_alone                    
         else:
             error("Modality not allowed. Allowed modalities are " + str(mod_list))
 
@@ -76,11 +80,21 @@ def manage(projectDir, df_file_table, df_last_settings,
     #if (mod_kraken2 != "-"):
 
 
-    # PART 2: save current preferecense
+    # PART 2: save current preferences
     df_last_settings.to_csv(projectDir + "db/last_settings.csv", index = False, sep = ';')
-    
 
-    # PART 3: check file presence and download it if absent
+
+    # PART 3: export current preferences in individual file readable by groovy
+    # create a subfolder for containg all the variables
+    if not os.path.exists(projectDir + "db/groovy_vars"):
+            os.makedirs(projectDir + "db/groovy_vars")
+    for row in df_last_settings.itertuples():
+        f= open(projectDir + "db/groovy_vars/" + row.file, "w")
+        f.write(row.filepath)
+        f.close()
+
+
+    # PART 4: check file presence and download it if absent
     logging.info("Current settings are:\n\n" + df_last_settings.to_string() + "\n\n\n\n\n")
     # phix
     # subset dataframe for the given program
