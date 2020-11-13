@@ -1,7 +1,5 @@
 .DS_Store
 .nextflow/*
-condaenvs/*
-!condaenvs/condaenvs_info.txt
 work/*
-output_test/*
+output*/*
 .nextflow*
