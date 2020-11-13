@@ -1,7 +1,11 @@
 name: metaphageenv
 
 dependencies:
+  # script execution
+  - conda-forge::python==3.7.8
+  - conda-forge::pandas==1.1.4
+  - anaconda::wget==1.20.1
   # nextflow
   - conda-forge::graphviz==2.42.3
   # quality check  
-  - bioconda::fastp=0.20.1
+  - bioconda::fastp==0.20.1

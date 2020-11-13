@@ -3,32 +3,30 @@
 
 /* CONFIGURATION VARIABLES */
 
-// quality check 
-params.skip_qc = false
-
 // Trimming 
 params.adapter_forward = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
 params.adapter_reverse = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
 params.mean_quality = 15
 params.trimming_quality = 15
 params.keep_phix = false
-params.phix_reference = "./db/phix/GCA_002596845.1_ASM259684v1_genomic.fna.gz" 
+params.mod_phix = "-" 
+params.file_phix_alone = "-" 
 
 // microbial taxonomy 
 params.skip_kraken = false 
-params.kraken2_db = false                                                                                                                                          
+params.mod_kraken2 = "-"                                                                                                                                          
 
 // Assembly 
 params.skip_spades = false
 params.skip_quast = false
 
 // Phage-hunting - Vibrant 
-params.skip_vibrant = false
-params.skip_vibrant_db = false  
-params.vibrant_db = './db/vibrant'                                                          
+params.skip_vibrant = false 
+params.mod_vibrant = "-"                                                          
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = false                                                                               
+
 
   
 /* FILE INPUT */
@@ -45,7 +43,25 @@ else
     error "No input files supplied, please check your config file"
 
 
+
 /* PROCESSES */
+
+/* STEP 0 - check presence and download required files */
+process db_manager {
+    publishDir "${params.outdir}/", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".log") ? "$filename" : null}
+
+    output:
+    file("db_manager.log")
+
+    script:
+    """
+    python $workflow.projectDir/bin/db_manager.py \
+    --mod_phix ${params.mod_phix} \
+    --file_phix_alone ${params.file_phix_alone}
+    """
+   
+}
 
 /* STEP 1 - quality check  and trimming */
 process fastp {
