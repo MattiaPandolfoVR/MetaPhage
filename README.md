@@ -12,27 +12,22 @@ conda create --name nf
 conda activate nf
 ```
 
-3. Install Python:
-```
-conda install python==3.7.8 -c conda-forge
-```
-
-4. Install nextflow:
+3. Install nextflow:
 ```
 conda install nextflow==20.10.0 -c bioconda
 ```
 
-5. Install **wget** and **unzip**:
+4. Install **wget** and **unzip**:
 ```
-conda install wget==1.20.1 -c anaconda
+conda install wget==1.20.1 unzip==6.0 -c anaconda
 ```
 
-6. Using `cd` command, set your working directory where you want to download the pipeline:
+5. Using `cd` command, set your working directory where you want to download the pipeline:
 ```
 cd your/path
 ```
 
-7. Download and extract the repo into the previously specified folder:
+6. Download and extract the repo into the previously specified folder:
 ```
 wget -O MetaPhage.zip https://github.com/MattiaPandolfoVR/MetaPhage/archive/main.zip && unzip MetaPhage.zip
 ```
@@ -44,6 +39,17 @@ Not implemented yet.
 ## With Singularity (recommended)
 
 Not implemented yet.
+
+## Dependencies
+
+The execution of the pipeline depends on some dependencies that should be automatically resolved by Conda. However, you can resolve them manually with (type these commands in order):
+```
+conda install python==3.7.8 -c conda-forge
+conda install pandas==1.1.4 -c conda-forge
+conda install wget==1.20.1 -c anaconda
+conda install graphviz==2.42.3 -c conda-forge
+conda install fastp==0.20.1 -c bioconda
+```
 
 # Usage
 
