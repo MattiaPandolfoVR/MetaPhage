@@ -48,6 +48,8 @@ else
 
 /* STEP 0 - check presence and download required files */
 process db_manager {
+    conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1"
+    
     publishDir "${params.outdir}/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".log") ? "$filename" : null}
 
@@ -65,6 +67,7 @@ process db_manager {
 
 /* STEP 1 - quality check  and trimming */
 process fastp {
+    conda "bioconda::fastp==0.20.1"
     tag "$seqID"
     publishDir "${params.outdir}/fastp/qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
