@@ -14,7 +14,8 @@ params.file_phix_alone = "-"
 
 // microbial taxonomy 
 params.skip_kraken = false 
-params.mod_kraken2 = "-"                                                                                                                                          
+params.mod_kraken2 = "miniBAV"
+params.file_kraken2_db = "-"                                                                                                                                     
 
 // Assembly 
 params.skip_spades = false
@@ -48,7 +49,7 @@ else
 
 /* STEP 0 - check presence and download required files */
 process db_manager {
-    conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1"
+    conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1 conda-forge::tar==1.29"
     
     publishDir "${params.outdir}/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".log") ? "$filename" : null}
@@ -56,20 +57,23 @@ process db_manager {
     output:
     file("db_manager.log")
     file("file_phix_alone") into ch_file_phix_alone
+    file("file_kraken2_db") into ch_file_kraken2_db
 
     script:
     println "Checking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log)"
     """
     python $workflow.projectDir/bin/db_manager.py \
     --mod_phix ${params.mod_phix} \
-    --file_phix_alone ${params.file_phix_alone}
+    --file_phix_alone ${params.file_phix_alone} \
+    --mod_kraken2 ${params.mod_kraken2} \
+    --file_kraken2_db ${params.file_kraken2_db}  
     """
    
 }
 
 /* STEP 1a - quality check  and trimming */
 process fastp {
-    conda "bioconda::fastp==0.20.1 conda-forge::genozip==8.0.4"
+    conda "bioconda::fastp==0.20.1"
     
     tag "$seqID"
     publishDir "${params.outdir}/fastp/qc/", mode: 'copy',
@@ -104,7 +108,6 @@ process fastp {
 /* STEP 1b - phix removal */
 if(!params.keep_phix) {
     process remove_phix {
-        echo = true
         conda "bioconda::htstream==1.0.0"
 
         tag "$seqID"
@@ -134,4 +137,37 @@ if(!params.keep_phix) {
 }
 else {
     ch_fastp_phix.into {ch_trimm_spades; ch_trimm_kraken2}
+}
+
+/* STEP 2 - short reads alignment */
+process kraken2 {
+    conda "bioconda::kraken2==2.1.0"
+    
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy',
+        saveAs: {filename -> 
+                    if filename.endsWith(".kraken") ? "$filename" : null
+                    else if filename.endsWith(".txt") ? "$filename" : null
+                }
+
+    when:
+    !params.skip_kraken
+
+    input:
+    file file_kraken2_db from ch_file_kraken2_db
+    tuple val(seqID), file(reads) from ch_trimm_kraken2
+
+    output:
+    file("*.txt")
+
+    script:
+    path_file_kraken2_db = file("$workflow.projectDir/db/kraken2/${file_kraken2_db}").text.replace("hash.kd2", "")
+    """
+    kraken2 \
+    --report-zero-counts \
+    --threads ${task.cpus} \
+    --db ${path_file_kraken2_db} \
+    --report ${seqID}_report.txt \
+    --paired ${reads[0]} ${reads[1]} 
+    """
 }
