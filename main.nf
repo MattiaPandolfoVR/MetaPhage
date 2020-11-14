@@ -9,7 +9,7 @@ params.adapter_reverse = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
 params.mean_quality = 15
 params.trimming_quality = 15
 params.keep_phix = false
-params.mod_phix = "WA11" 
+params.mod_phix = "phiX174" 
 params.file_phix_alone = "-" 
 
 // microbial taxonomy 
@@ -36,7 +36,7 @@ if (params.readPaths) {                 // declared in profile config
         error "singleEnd mode not supported yet"
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz")
-            .into {ch_reads_fastp}
+            .set {ch_reads_fastp}
     }
 }
 else
@@ -58,6 +58,7 @@ process db_manager {
     file("file_phix_alone") into ch_file_phix_alone
 
     script:
+    println "Checking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log)"
     """
     python $workflow.projectDir/bin/db_manager.py \
     --mod_phix ${params.mod_phix} \
@@ -66,9 +67,9 @@ process db_manager {
    
 }
 
-/* STEP 1 - quality check  and trimming */
+/* STEP 1a - quality check  and trimming */
 process fastp {
-    conda "bioconda::fastp==0.20.1"
+    conda "bioconda::fastp==0.20.1 conda-forge::genozip==8.0.4"
     
     tag "$seqID"
     publishDir "${params.outdir}/fastp/qc/", mode: 'copy',
@@ -78,10 +79,11 @@ process fastp {
     tuple val(seqID), file(reads) from ch_reads_fastp
 
     output:
-    tuple val(seqID), file("*_trimmed.fastq") into ch_fastp_phix
+    tuple val(seqID), file("*_trimmed.fastq*") into ch_fastp_phix
     file("${seqID}_qc_report.html")
 
     script:
+    { ext = (params.keep_phix == true) ? ".gz" : "" } // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
     """
     fastp \
     -w ${task.cpus} \
@@ -93,39 +95,43 @@ process fastp {
     --adapter_sequence_r2=${params.adapter_reverse} \
     -i ${reads[0]} \
     -I ${reads[1]} \
-    -o ${seqID}_R1_trimmed.fastq \
-    -O ${seqID}_R2_trimmed.fastq \
+    -o ${seqID}_R1_trimmed.fastq${ext} \
+    -O ${seqID}_R2_trimmed.fastq${ext} \
     -h ${seqID}_qc_report.html
     """
 }
 
-process remove_phix {
-    conda "bioconda::htstream==1.0.0"
+/* STEP 1b - phix removal */
+if(!params.keep_phix) {
+    process remove_phix {
+        echo = true
+        conda "bioconda::htstream==1.0.0"
 
-    tag "$seqID"
-    publishDir "${params.outdir}/hts_SeqScreener/", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".fastq.gz") ? "$filename" : null}
+        tag "$seqID"
+        publishDir "${params.outdir}/hts_SeqScreener/", mode: 'copy',
+            saveAs: {filename -> filename.endsWith(".fastq.gz") ? "$filename" : null}
 
-    when:
-    !params.keep_phix
+        input:
+        file file_phix_alone from ch_file_phix_alone
+        tuple val(seqID), file(reads) from ch_fastp_phix
 
-    input:
-    file file_phix_alone from ch_file_phix_alone
-    tuple val(seqID), file(reads) from ch_fastp_phix
+        output:
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_spades)
 
-    output:
-    tuple val(seqID), file("dephixed*.fastq.gz") into ch_phix_kraken2
-
-    script:
-    path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
-    """
-    hts_SeqScreener \
-    -1 ${reads[0]} \
-    -2 ${reads[1]} \
-    --seq $workflow.projectDir/${path_file_phix_alone} \
-    --check-read-2 \
-    --gzip-output \
-    --prefix dephixed_${seqID} \
-    --force
-    """
+        script:
+        path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
+        """
+        hts_SeqScreener \
+        -1 ${reads[0]} \
+        -2 ${reads[1]} \
+        --seq $workflow.projectDir/${path_file_phix_alone} \
+        --check-read-2 \
+        --gzip-output \
+        --prefix dephixed_${seqID} \
+        --force
+        """
+    }
+}
+else {
+    ch_fastp_phix.into {ch_trimm_spades; ch_trimm_kraken2}
 }
