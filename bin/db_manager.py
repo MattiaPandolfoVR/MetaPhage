@@ -146,8 +146,8 @@ def manage(projectDir, df_file_table, df_last_settings,
     for row in rows_phix.itertuples():
 
         if row.modality == "custom":
-            if os.path.exists(row.custompath) == False:
-                error("Can't find the file you specified")
+            if os.path.exists(projectDir + row.filepath) == False:
+                error("Can't find the file you specified: " + projectDir + row.filepath )
         # if the program is NOT set in "custom" mode, manage its files automatically:
         else:
             # extract the predefined path of this file
@@ -191,8 +191,8 @@ def manage(projectDir, df_file_table, df_last_settings,
     for row in rows_kraken2.itertuples():
 
         if row.modality == "custom":
-            if os.path.exists(row.custompath) == False:
-                error("Can't find the file you specified")
+            if os.path.exists(projectDir + row.filepath) == False:
+                error("Can't find the file you specified: " + projectDir + row.filepath )
         # if the program is NOT set in "custom" mode, manage its files automatically:
         else:
             # extract the predefined path of this file

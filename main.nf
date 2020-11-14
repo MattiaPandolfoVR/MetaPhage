@@ -14,8 +14,8 @@ params.file_phix_alone = "-"
 
 // microbial taxonomy 
 params.skip_kraken = false 
-params.mod_kraken2 = "miniBAV"
-params.file_kraken2_db = "-"                                                                                                                                     
+params.mod_kraken2 = "custom"
+params.file_kraken2_db = "./db/kraken2/prova/hash.k2d"                                                                                                                                     
 
 // Assembly 
 params.skip_spades = false
@@ -140,15 +140,16 @@ else {
 }
 
 /* STEP 2 - short reads alignment */
+
 process kraken2 {
-    conda "bioconda::kraken2==2.1.0"
+    conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
     
-    tag "$seqID"
+    tag "$seqID"/*
     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy',
         saveAs: {filename -> 
                     if filename.endsWith(".kraken") ? "$filename" : null
                     else if filename.endsWith(".txt") ? "$filename" : null
-                }
+                }*/
 
     when:
     !params.skip_kraken
@@ -161,12 +162,12 @@ process kraken2 {
     file("*.txt")
 
     script:
-    path_file_kraken2_db = file("$workflow.projectDir/db/kraken2/${file_kraken2_db}").text.replace("hash.kd2", "")
+    path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
     """
     kraken2 \
     --report-zero-counts \
     --threads ${task.cpus} \
-    --db ${path_file_kraken2_db} \
+    --db $workflow.projectDir/${path_file_kraken2_db} \
     --report ${seqID}_report.txt \
     --paired ${reads[0]} ${reads[1]} 
     """
