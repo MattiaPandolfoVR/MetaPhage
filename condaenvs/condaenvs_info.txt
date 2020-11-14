@@ -1,3 +1,0 @@
-This is the place where all conda envs are going to be stored.
-Conda envs for this pipeline are automatically created at runtime.
-The contents of this folder are omitted from github.
