@@ -9,7 +9,7 @@ params.adapter_reverse = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
 params.mean_quality = 15
 params.trimming_quality = 15
 params.keep_phix = false
-params.mod_phix = "-" 
+params.mod_phix = "WA11" 
 params.file_phix_alone = "-" 
 
 // microbial taxonomy 
@@ -55,6 +55,7 @@ process db_manager {
 
     output:
     file("db_manager.log")
+    file("file_phix_alone") into ch_file_phix_alone
 
     script:
     """
@@ -68,6 +69,7 @@ process db_manager {
 /* STEP 1 - quality check  and trimming */
 process fastp {
     conda "bioconda::fastp==0.20.1"
+    
     tag "$seqID"
     publishDir "${params.outdir}/fastp/qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
@@ -76,7 +78,7 @@ process fastp {
     tuple val(seqID), file(reads) from ch_reads_fastp
 
     output:
-    tuple val(seqID), file("*_trimmed.fastq.gz") into ch_fastp_phix
+    tuple val(seqID), file("*_trimmed.fastq") into ch_fastp_phix
     file("${seqID}_qc_report.html")
 
     script:
@@ -91,8 +93,39 @@ process fastp {
     --adapter_sequence_r2=${params.adapter_reverse} \
     -i ${reads[0]} \
     -I ${reads[1]} \
-    -o "${seqID}_R1_trimmed.fastq.gz" \
-    -O "${seqID}_R2_trimmed.fastq.gz" \
-    -h "${seqID}_qc_report.html"
+    -o ${seqID}_R1_trimmed.fastq \
+    -O ${seqID}_R2_trimmed.fastq \
+    -h ${seqID}_qc_report.html
+    """
+}
+
+process remove_phix {
+    conda "bioconda::htstream==1.0.0"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/hts_SeqScreener/", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".fastq.gz") ? "$filename" : null}
+
+    when:
+    !params.keep_phix
+
+    input:
+    file file_phix_alone from ch_file_phix_alone
+    tuple val(seqID), file(reads) from ch_fastp_phix
+
+    output:
+    tuple val(seqID), file("dephixed*.fastq.gz") into ch_phix_kraken2
+
+    script:
+    path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
+    """
+    hts_SeqScreener \
+    -1 ${reads[0]} \
+    -2 ${reads[1]} \
+    --seq $workflow.projectDir/${path_file_phix_alone} \
+    --check-read-2 \
+    --gzip-output \
+    --prefix dephixed_${seqID} \
+    --force
     """
 }

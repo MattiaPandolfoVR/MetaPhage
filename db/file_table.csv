@@ -1,2 +1,3 @@
 file;modality;filepath;url
-file_phix_alone;standard;./db/phix/GCA_002596845.1_ASM259684v1_genomic.fna.gz;https://github.com/nf-core/mag/raw/master/assets/data/GCA_002596845.1_ASM259684v1_genomic.fna.gz
+file_phix_alone;WA11;./db/phix/WA11.fasta;https://www.ebi.ac.uk/ena/browser/api/fasta/DQ079895.1?download=true
+file_phix_alone;phiX174;./db/phix/phiX174.fasta;https://www.ebi.ac.uk/ena/browser/api/fasta/AF176027.1?download=true
