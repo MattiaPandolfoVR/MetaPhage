@@ -128,5 +128,5 @@ Specify the modality of the short read alignment with Kraken2. There are 3 possi
 This pipeline consists of several modules. The image below summarizes them all.
 
 <p align="center">
-  <img src="./slides/pipeline_2020_11_15.drawio.svg">
+  <img src="./slides/pipeline_2020_11_18.drawio.svg">
 </p>

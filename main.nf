@@ -15,7 +15,10 @@ params.file_phix_alone = "-"
 // microbial taxonomy 
 params.skip_kraken2 = false 
 params.mod_kraken2 = "miniBAV"
-params.file_kraken2_db = "-"                                                                                                                                     
+params.file_kraken2_db = "-"
+params.skip_bracken = false 
+params.bracken_read_length = 100
+params.bracken_abundance_level = "S"                                                                                                                                    
 
 // Assembly 
 params.skip_spades = false
@@ -58,7 +61,7 @@ process db_manager {
     output:
     file("db_manager.log")
     file("file_phix_alone") into ch_file_phix_alone
-    file("file_kraken2_db") into ch_file_kraken2_db
+    file("file_kraken2_db") into ch_file_kraken2_db, ch_file_bracken_db
 
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
@@ -141,13 +144,12 @@ else {
 }
 
 /* STEP 2 - short reads alignment */
-
 process kraken2 {
     conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
     
     tag "$seqID"
     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy',
-        saveAs: {filename -> (filename.endsWith(".kraken") || filename.endsWith(".txt")) ? "$filename" : null}
+        saveAs: {filename -> (filename.endsWith(".kraken2") || filename.endsWith(".txt")) ? "$filename" : null}
 
     when:
     !params.skip_kraken2
@@ -157,7 +159,9 @@ process kraken2 {
     tuple val(seqID), file(reads) from ch_trimm_kraken2
 
     output:
-    file("*.txt")
+    file("${seqID}_output.kraken2") 
+    file("${seqID}_report.txt") into ch_kraken2_bracken
+    val(seqID) into ch_seqID_bracken
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
@@ -166,7 +170,39 @@ process kraken2 {
     --report-zero-counts \
     --threads ${task.cpus} \
     --db $workflow.projectDir/${path_file_kraken2_db} \
+    --output ${seqID}_output.kraken2 \
     --report ${seqID}_report.txt \
     --paired ${reads[0]} ${reads[1]} 
     """
 }
+
+process bracken {
+    conda "bioconda::bracken==2.5"
+    
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".txt") ? "$filename" : null}
+
+    when:
+    !params.skip_bracken
+
+    input:
+    file file_bracken_db from ch_file_bracken_db
+    file report from ch_kraken2_bracken
+    val seqID from ch_seqID_bracken
+
+    output:
+    file("${seqID}_abundancies.txt")
+
+    script:
+    path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
+    """
+    bracken \
+    -d $workflow.projectDir/${path_file_bracken_db} \
+    -i ${report} \
+    -o ${seqID}_abundancies.txt \
+    -r ${params.bracken_read_length}
+    -l ${params.bracken_abundance_level} 
+    """
+}
+
