@@ -163,6 +163,7 @@ def manage(projectDir, df_file_table, df_last_settings,
                 # as described here https://janakiev.com/blog/python-shell-commands/ 
                 logging.info('%s is missing. It will downloaded from %s with the following command:\n\nwget -O %s %s \n'
                              %(relative_path, url, path_to_check, url))
+                print("Downloading phix db...")
                 # launch the command and get its verbose into log
                 process = subprocess.Popen(['wget', '-O', path_to_check, url], 
                            stdout=subprocess.PIPE,  stderr=subprocess.STDOUT)
@@ -170,13 +171,13 @@ def manage(projectDir, df_file_table, df_last_settings,
                     while True:
                         output = process.stdout.readline().decode()
                         if output:
-                            print(output.rstrip("\n"))
                             logging.info(output.rstrip("\n")) # rstrip remove the trailing endline
                         else:
                             break
                 # keep checking stdout/stderr until the child exits
                 while process.poll() is None:
                     check_io()
+                print("OK")
                 logging.info("This download is complete.\n\n\n\n\n")
                 
             else: # this file IS already downloaded in the specified location
@@ -209,6 +210,7 @@ def manage(projectDir, df_file_table, df_last_settings,
                 # as described here https://janakiev.com/blog/python-shell-commands/ 
                 logging.info('%s is missing. It will downloaded from %s with the following command:\n\nwget -O %s %s \n'
                              %(relative_path, url, path_to_check.replace("hash.k2d", "archive.tgz"), url))
+                print("Downloading kraken2 db...")
                 # launch the command and get its verbose into log
                 process = subprocess.Popen(['wget', '-O', path_to_check.replace("hash.k2d", "archive.tgz"), url], 
                            stdout=subprocess.PIPE,  stderr=subprocess.STDOUT)
@@ -216,13 +218,13 @@ def manage(projectDir, df_file_table, df_last_settings,
                     while True:
                         output = process.stdout.readline().decode()
                         if output:
-                            print(output.rstrip("\n"))
                             logging.info(output.rstrip("\n")) # rstrip remove the trailing endline
                         else:
                             break
                 # keep checking stdout/stderr until the child exits
                 while process.poll() is None:
                     check_io()
+                print("OK!")
                 logging.info("This download is complete.\n\n\n\n\n")
 
                 # extract pre-compiled databases
