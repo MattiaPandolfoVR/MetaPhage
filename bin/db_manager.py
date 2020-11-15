@@ -170,6 +170,7 @@ def manage(projectDir, df_file_table, df_last_settings,
                     while True:
                         output = process.stdout.readline().decode()
                         if output:
+                            print(output.rstrip("\n"))
                             logging.info(output.rstrip("\n")) # rstrip remove the trailing endline
                         else:
                             break
@@ -215,6 +216,7 @@ def manage(projectDir, df_file_table, df_last_settings,
                     while True:
                         output = process.stdout.readline().decode()
                         if output:
+                            print(output.rstrip("\n"))
                             logging.info(output.rstrip("\n")) # rstrip remove the trailing endline
                         else:
                             break

@@ -1,3 +1,3 @@
 file;modality;filepath
 file_phix_alone;phiX174;./db/phix/phiX174.fasta
-file_kraken2_db;custom;./db/kraken2/prova/hash.k2d
+file_kraken2_db;miniBAV;./db/kraken2/miniBAV/hash.k2d

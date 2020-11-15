@@ -14,8 +14,8 @@ params.file_phix_alone = "-"
 
 // microbial taxonomy 
 params.skip_kraken2 = false 
-params.mod_kraken2 = "custom"
-params.file_kraken2_db = "./db/kraken2/prova/hash.k2d"                                                                                                                                     
+params.mod_kraken2 = "miniBAV"
+params.file_kraken2_db = "-"                                                                                                                                     
 
 // Assembly 
 params.skip_spades = false
@@ -49,6 +49,7 @@ else
 
 /* STEP 0 - check presence and download required files */
 process db_manager {
+    echo true
     conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1 conda-forge::tar==1.29"
     
     publishDir "${params.outdir}/", mode: 'copy',
