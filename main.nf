@@ -13,7 +13,7 @@ params.mod_phix = "phiX174"
 params.file_phix_alone = "-" 
 
 // microbial taxonomy 
-params.skip_kraken = false 
+params.skip_kraken2 = false 
 params.mod_kraken2 = "custom"
 params.file_kraken2_db = "./db/kraken2/prova/hash.k2d"                                                                                                                                     
 
@@ -144,15 +144,12 @@ else {
 process kraken2 {
     conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
     
-    tag "$seqID"/*
+    tag "$seqID"
     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy',
-        saveAs: {filename -> 
-                    if filename.endsWith(".kraken") ? "$filename" : null
-                    else if filename.endsWith(".txt") ? "$filename" : null
-                }*/
+        saveAs: {filename -> (filename.endsWith(".kraken") || filename.endsWith(".txt")) ? "$filename" : null}
 
     when:
-    !params.skip_kraken
+    !params.skip_kraken2
 
     input:
     file file_kraken2_db from ch_file_kraken2_db
