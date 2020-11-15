@@ -226,13 +226,22 @@ def manage(projectDir, df_file_table, df_last_settings,
                     check_io()
                 print("OK!")
                 logging.info("This download is complete.\n\n\n\n\n")
-
-                # extract pre-compiled databases
+                
                 logging.info("Decompressing %s...\n\n\n\n\n" % (path_to_check.replace("hash.k2d", "archive.tgz")))
-                os.popen('tar zxvf %s' % (path_to_check.replace("hash.k2d", "archive.tgz")))
-                os.popen('mv %s %s' % (path_to_check.replace("hash.k2d", "minikraken2_v*_8GB/*"), path_to_check.replace("hash.k2d", "")))
-                os.popen('rm -r %s' % (path_to_check.replace("hash.k2d", "minikraken2_v*_8GB")))
-                os.popen('rm %s' % (path_to_check.replace("hash.k2d", "archive.tgz")))
+                # extract .tgz archive
+                logging.info('tar zxvf %s --directory %s' % (path_to_check.replace("hash.k2d", "archive.tgz"), path_to_check.replace("hash.k2d", "")))
+                output = os.popen('tar zxvf %s --directory %s' % (path_to_check.replace("hash.k2d", "archive.tgz"), path_to_check.replace("hash.k2d", "")))
+                logging.info(output.read())
+                # # move the folder's content une level up
+                logging.info('mv %s %s' % (path_to_check.replace("hash.k2d", "minikraken2_v*_8GB/*"), path_to_check.replace("hash.k2d", "")))
+                output = os.popen('mv %s %s' % (path_to_check.replace("hash.k2d", "minikraken2_v*_8GB/*"), path_to_check.replace("hash.k2d", "")))
+                # remove the empty folder
+                logging.info('rm -r %s' % (path_to_check.replace("hash.k2d", "minikraken2_v*_8GB")))
+                output = os.popen('rm -r %s' % (path_to_check.replace("hash.k2d", "minikraken2_v*_8GB")))
+                # remove the original archive
+                logging.info('rm %s' % (path_to_check.replace("hash.k2d", "archive.tgz")))
+                output = os.popen('rm %s' % (path_to_check.replace("hash.k2d", "archive.tgz")))
+                
                 
             else: # this file IS already downloaded in the specified location
                 logging.info('%s is already downloaded in the specified path. No need to download it again.\n\n\n\n\n'
