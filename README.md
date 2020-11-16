@@ -111,11 +111,34 @@ Specify the modality of phix removal. There are 3 possibilities:
 - `WA11` search and remove the complete genome of Coliphage WA11 (GenBank: DQ079895.1, <https://www.ncbi.nlm.nih.gov/nuccore/DQ079895>). Genome is automatically downloaded if not already present in `./db/phix/`.
 - `custom` search and remove the sequence specified with `--file_phix_alone` (path to the .fasta file).
 
+### `--skip_kraken2`
+
+Specify whether to perform the short read alignment with Kraken2 or not. Default is `false`.
+
+### `--mod_kraken2`
+
+Specify the modality of the short read alignment with Kraken2. There are 3 possibilities:
+
+- `miniBAV` (default) align against RefSeq bacteria, archaea, and viral libraries. Pre-built database taken from <https://ccb.jhu.edu/software/kraken2/downloads.shtml>.
+- `miniBAVH` align against RefSeq bacteria, archaea, and viral libraries, and against the GRCh38 human genome. Pre-built database taken from <https://ccb.jhu.edu/software/kraken2/downloads.shtml>.
+- `custom` align using your custom database. With this modality you have to specify also `--file_kraken2_db`, which is the path to the `hash.k2d` file. `opts.k2d` and `taxo.k2d` files MUST be placed in the same folder of `hash.k2d`.
+
+### `--skip_bracken`
+
+Specify whether to perform the quantification with Bracken or not. Default is `false`.
+
+### `--bracken_read_length`
+
+Specify the read length to be used in Bracken (default is `100`). The databases provided with `--mod_kraken2 miniBAV` and `--mod_kraken2 miniBAVH` include files for read lengths 100, 150, or 200.
+
+### `--bracken_abundance_level`
+
+Specifies the taxonomic rank to analyze (default is `S`). Options are `D`, `P`, `C`, `O`, `F`, `G`, and `S`. Each classification at this specified rank will receive an estimated number of reads belonging to that rank after abundance estimation.
 
 # Structure
 
 This pipeline consists of several modules. The image below summarizes them all.
 
 <p align="center">
-  <img src="./slides/pipeline_2020_11_15.drawio.svg">
+  <img src="./slides/pipeline_2020_11_18.drawio.svg">
 </p>

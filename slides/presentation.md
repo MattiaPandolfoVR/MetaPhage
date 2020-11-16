@@ -28,15 +28,15 @@ Gira solo al Quadram:
 
 ---
 
-### Update **15 novembre**
+### Update **18 novembre**
 
-![bg left:40% 95%](pipeline_2020_11_15.drawio.svg)
+![bg left:40% 95%](pipeline_2020_11_18.drawio.svg)
 
 
 :white_check_mark: esclusivamente path relativi
 :white_check_mark: pkg conda si installano da soli
 :white_check_mark: iniziata la scrittura del manuale
-:x: database da scaricare a mano
+:white_check_mark: **dbs gestiti automaticamente**
 :x: ancora nessun supporto Docker
 
 :exclamation: rimozione delle strutture nf-core
