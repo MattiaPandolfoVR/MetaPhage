@@ -192,6 +192,8 @@ process bracken {
 
     output:
     file("${seqID}_abundancies.txt")
+    file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
+    val(seqID) into (ch_seqID_krona)
 
     script:
     path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
@@ -205,3 +207,31 @@ process bracken {
     """
 }
 
+process krona {
+    conda "bioconda::krona==2.7.1 anaconda::python==3.7"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
+
+    when:
+    !params.skip_kraken2 && !params.skip_bracken
+
+    input:
+    file report_bracken from ch_bracken_krona
+    val seqID from ch_seqID_krona
+
+    output:
+    file("${seqID}_krona_abundancies.html")
+
+    script:
+    """
+    python $workflow.projectDir/bin/kreport2krona.py \
+    --report-file ${report_bracken} \
+    --output to_krona.txt 
+
+    ktImportText \
+    to_krona.txt \
+    -o ${seqID}_krona_abundancies.html
+    """
+}
