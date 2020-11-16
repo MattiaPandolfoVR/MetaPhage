@@ -270,12 +270,14 @@ process metaSPAdes {
 }
 
 process quast {
+    conda "bioconda::quast==5.0.2"
+
     tag "$seqID"
     publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy',
         saveAs: { filename -> filename.endsWith(".tsv") ? "$filename" : null }
 
     when:
-    !params.skip_spades || !params.skip_quast 
+    !params.skip_metaspades || !params.skip_quast 
 
     input:
     tuple val(seqID), file(scaffold) from ch_metaspades_quast
