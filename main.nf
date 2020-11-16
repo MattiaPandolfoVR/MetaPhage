@@ -112,7 +112,7 @@ process fastp {
 /* STEP 1b - phix removal */
 if(!params.keep_phix) {
     process remove_phix {
-        conda "bioconda::htstream==1.0.0"
+        conda "bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
 
         tag "$seqID"
         publishDir "${params.outdir}/hts_SeqScreener/", mode: 'copy',
@@ -133,8 +133,7 @@ if(!params.keep_phix) {
         -2 ${reads[1]} \
         --seq $workflow.projectDir/${path_file_phix_alone} \
         --check-read-2 \
-        --gzip-output \
-        --prefix dephixed_${seqID} \
+        --fastq-output dephixed_${seqID} \
         --force
         """
     }
