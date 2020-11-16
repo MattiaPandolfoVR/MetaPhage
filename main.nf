@@ -268,3 +268,28 @@ process metaSPAdes {
     mv contigs.fasta ${seqID}_contigs.fasta
     """
 }
+
+process quast {
+    tag "$seqID"
+    publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy',
+        saveAs: { filename -> filename.endsWith(".tsv") ? "$filename" : null }
+
+    when:
+    !params.skip_spades || !params.skip_quast 
+
+    input:
+    tuple val(seqID), file(scaffold) from ch_metaspades_quast
+
+    output:
+    file("$seqID/quast/*") into ch_quast_results
+
+    script:
+    """
+    metaquast.py \
+    -t ${task.cpus} \
+    --rna-finding \
+    --max-ref-number 0 \
+    -l ${seqID} ${scaffold} \
+    -o "${seqID}/quast/"
+    """
+} 
