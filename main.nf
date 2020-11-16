@@ -215,14 +215,14 @@ process krona {
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
 
     when:
-    !params.skip_kracken && !params.skip_bracken
+    !params.skip_kraken2 && !params.skip_bracken
 
     input:
     file report_bracken from ch_bracken_krona
     val seqID from ch_seqID_krona
 
     output:
-    file("${seqID}_krona_abundancies")
+    file("${seqID}_krona_abundancies.html")
 
     script:
     """
