@@ -3,3 +3,4 @@
 work/*
 output*/*
 .nextflow*
+._*

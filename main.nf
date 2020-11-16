@@ -60,8 +60,8 @@ process db_manager {
 
     output:
     file("db_manager.log")
-    file("file_phix_alone") into ch_file_phix_alone
-    file("file_kraken2_db") into ch_file_kraken2_db, ch_file_bracken_db
+    file("file_phix_alone") into (ch_file_phix_alone)
+    file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
 
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
@@ -87,7 +87,7 @@ process fastp {
     tuple val(seqID), file(reads) from ch_reads_fastp
 
     output:
-    tuple val(seqID), file("*_trimmed.fastq*") into ch_fastp_phix
+    tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
 
     script:
@@ -159,8 +159,8 @@ process kraken2 {
 
     output:
     file("${seqID}_output.kraken2") 
-    file("${seqID}_report.txt") into ch_kraken2_bracken
-    val(seqID) into ch_seqID_bracken
+    file("${seqID}_report.txt") into (ch_kraken2_bracken)
+    val(seqID) into (ch_seqID_bracken)
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
