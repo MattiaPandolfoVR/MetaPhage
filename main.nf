@@ -177,8 +177,7 @@ process kraken2 {
 
 process bracken {
     conda "bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m"
-    errorStrategy "ignore" // bracken completes but raises an error that otherwise would block the pipeline
-    
+
     tag "$seqID"
     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".txt") ? "$filename" : null}
@@ -201,7 +200,7 @@ process bracken {
     -d $workflow.projectDir/${path_file_bracken_db} \
     -i ${report} \
     -o ${seqID}_abundancies.txt \
-    -r ${params.bracken_read_length}
+    -r ${params.bracken_read_length} \
     -l ${params.bracken_abundance_level} 
     """
 }
