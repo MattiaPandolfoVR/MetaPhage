@@ -21,7 +21,7 @@ params.bracken_read_length = 100
 params.bracken_abundance_level = "S"                                                                                                                                    
 
 // Assembly 
-params.skip_spades = false
+params.skip_metaspades = false
 params.skip_quast = false
 
 // Phage-hunting - Vibrant 
@@ -123,7 +123,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_spades)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
@@ -139,7 +139,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_spades; ch_trimm_kraken2}
+    ch_fastp_phix.into {ch_trimm_metaspades; ch_trimm_kraken2}
 }
 
 /* STEP 2 - short reads alignment */
@@ -192,6 +192,8 @@ process bracken {
 
     output:
     file("${seqID}_abundancies.txt")
+    file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
+    val(seqID) into (ch_seqID_krona)
 
     script:
     path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
@@ -202,6 +204,68 @@ process bracken {
     -o ${seqID}_abundancies.txt \
     -r ${params.bracken_read_length} \
     -l ${params.bracken_abundance_level} 
+    """
+}
+
+process krona {
+    conda "bioconda::krona==2.7.1 anaconda::python==3.7"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
+
+    when:
+    !params.skip_kraken2 && !params.skip_bracken
+
+    input:
+    file report_bracken from ch_bracken_krona
+    val seqID from ch_seqID_krona
+
+    output:
+    file("${seqID}_krona_abundancies.html")
+
+    script:
+    """
+    python $workflow.projectDir/bin/kreport2krona.py \
+    --report-file ${report_bracken} \
+    --output to_krona.txt 
+
+    ktImportText \
+    to_krona.txt \
+    -o ${seqID}_krona_abundancies.html
+    """
+}
+
+/* STEP 3 - assembly */
+process metaSPAdes {
+    conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/assembly/$seqID", mode: 'copy',
+        saveAs: {filename -> filename.endsWith(".fasta") ? "$filename" : null}
+    
+    when:
+    !params.skip_metaspades
+
+    input:
+    tuple val(seqID), file(reads) from ch_trimm_metaspades
+
+    output:
+    tuple val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
+    tuple val(seqID), file("${seqID}_contigs.fasta")
+
+    script:
+    """    
+    spades.py \
+    --meta \
+    --threads ${task.cpus} \
+    --memory ${task.memory.toGiga()} \
+    --pe1-1 ${reads[0]} \
+    --pe1-2 ${reads[1]} \
+    -o ./
+
+    mv scaffolds.fasta ${seqID}_scaffolds.fasta
+    mv contigs.fasta ${seqID}_contigs.fasta
     """
 }
 
