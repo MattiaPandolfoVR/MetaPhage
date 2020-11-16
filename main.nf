@@ -259,7 +259,7 @@ process metaSPAdes {
     spades.py \
     --meta \
     --threads ${task.cpus} \
-    --memory ${task.memory.toString().replace(" GB", "")} \
+    --memory ${task.memory.toGiga()} \
     --pe1-1 ${reads[0]} \
     --pe1-2 ${reads[1]} \
     -o ./
