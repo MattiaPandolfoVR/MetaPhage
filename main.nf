@@ -292,7 +292,7 @@ process quast {
     publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy'
 
     when:
-    !params.skip_metaspades || !params.skip_quast 
+    !params.skip_metaspades && !params.skip_quast 
 
     input:
     tuple val(seqID), file(scaffold) from ch_metaspades_quast
