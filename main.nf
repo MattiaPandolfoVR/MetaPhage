@@ -277,14 +277,13 @@ process metaSPAdes {
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
-    //def input = params.singleEnd ? "--s1 ${reads[0]}" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"             //check when metaspades accepts single-end read libraries!
+    def input = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"  //check when metaspades accepts single-end read libraries!
     """    
     spades.py \
     --meta \
     --threads ${task.cpus} \
     --memory ${task.memory.toGiga()} \
-    --pe1-1 ${reads[0]} \
-    --pe1-2 ${reads[1]} \
+    $input \
     -o ./
 
     mv scaffolds.fasta ${seqID}_scaffolds.fasta
@@ -308,14 +307,15 @@ process megahit {
     tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast)
 
     script:
-    def input = params.singleEnd ? "-r ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+    def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
     """
     megahit \
-    -t ${task.cpus} \
-    -m ${task.memory.toBytes()} \
+    --num-cpu-threads ${task.cpus} \
+    --memory ${task.memory.toBytes()} \
     $input \
-    -o result \
+    --out-dir result \
     --out-prefix ${seqID}
+
     mv result/${seqID}.contigs.fa ${seqID}_contigs.fasta
     """
 }
@@ -324,31 +324,27 @@ process quast {
     conda "bioconda::quast==5.0.2"
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/assembly/", mode: 'copy'
+    publishDir "${params.outdir}/assembly/${assembler}/quast/${seqID}", mode: 'copy'
 
     when:
-
     !params.skip_metaspades && !params.skip_megahit && !params.skip_quast 
 
-
     input:
-    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_quast.mix(ch_megahit_quast)
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
 
     output:
-    file("${assembler}/quast/${seqID}/report.html")
-    file("${assembler}/quast/${seqID}/report.pdf")
-    file("${assembler}/quast/${seqID}/report.tsv")
+    file("report.html")
+    file("report.pdf")
+    file("report.tsv")
 
     script:
     """
     metaquast.py \
-    -t ${task.cpus} \
+    --threads ${task.cpus} \
     --rna-finding \
     --max-ref-number 0 \
-    -l ${seqID} ${scaffold} \
-    -o ./
-
-    mkdir -p ./${assembler}/quast/${seqID}
-    mv ./report.* ./${assembler}/quast/${seqID}/
+    --labels ${seqID} \
+    -o ./ \
+    ${scaffold}
     """
 } 
