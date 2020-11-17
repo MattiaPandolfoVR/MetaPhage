@@ -22,6 +22,7 @@ params.bracken_abundance_level = "S"
 
 // Assembly 
 params.skip_metaspades = false
+params.skip_megahit = false
 params.skip_quast = false
 
 // Phage-hunting - Vibrant 
@@ -94,9 +95,9 @@ process fastp {
     file("${seqID}_qc_report.html")
 
     script:
-    def ext = (params.keep_phix == true) ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
-    def inp = (params.singleEnd == true) ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
-    def out = (params.singleEnd == true) ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
+    def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
+    def inp = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
+    def out = params.singleEnd ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
     """
     fastp \
     -w ${task.cpus} \
@@ -124,12 +125,12 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2)//, ch_trimm_metaspades)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
-        def inp = (params.singleEnd == true) ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
-        def check = (params.singleEnd == true) ? "" : "--check-read-2"
+        def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        def check = params.singleEnd ? "" : "--check-read-2"
         """
         hts_SeqScreener \
         $inp \
@@ -177,121 +178,153 @@ process kraken2 {
     """
 }
 
-// process bracken {
-//     conda "bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m"
+process bracken {
+    conda "bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m"
 
-//     tag "$seqID"
-//     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
-//     when:
-//     !params.skip_bracken
+    when:
+    !params.skip_bracken
 
-//     input:
-//     file file_bracken_db from ch_file_bracken_db
-//     file report from ch_kraken2_bracken
-//     val seqID from ch_seqID_bracken
+    input:
+    file file_bracken_db from ch_file_bracken_db
+    file report from ch_kraken2_bracken
+    val seqID from ch_seqID_bracken
 
-//     output:
-//     file("${seqID}_abundancies.txt")
-//     file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
-//     val(seqID) into (ch_seqID_krona)
+    output:
+    file("${seqID}_abundancies.txt")
+    file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
+    val(seqID) into (ch_seqID_krona)
 
-//     script:
-//     path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
-//     """
-//     bracken \
-//     -d $workflow.projectDir/${path_file_bracken_db} \
-//     -i ${report} \
-//     -o ${seqID}_abundancies.txt \
-//     -r ${params.bracken_read_length} \
-//     -l ${params.bracken_abundance_level} 
-//     """
-// }
+    script:
+    path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
+    """
+    bracken \
+    -d $workflow.projectDir/${path_file_bracken_db} \
+    -i ${report} \
+    -o ${seqID}_abundancies.txt \
+    -r ${params.bracken_read_length} \
+    -l ${params.bracken_abundance_level} 
+    """
+}
 
-// process krona {
-//     conda "bioconda::krona==2.7.1 anaconda::python==3.7"
+process krona {
+    conda "bioconda::krona==2.7.1 anaconda::python==3.7"
 
-//     tag "$seqID"
-//     publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
 
-//     when:
-//     !params.skip_kraken2 && !params.skip_bracken
+    when:
+    !params.skip_kraken2 && !params.skip_bracken
 
-//     input:
-//     file report_bracken from ch_bracken_krona
-//     val seqID from ch_seqID_krona
+    input:
+    file report_bracken from ch_bracken_krona
+    val seqID from ch_seqID_krona
 
-//     output:
-//     file("${seqID}_krona_abundancies.html")
+    output:
+    file("${seqID}_krona_abundancies.html")
 
-//     script:
-//     """
-//     python $workflow.projectDir/bin/kreport2krona.py \
-//     --report-file ${report_bracken} \
-//     --output to_krona.txt 
+    script:
+    """
+    python $workflow.projectDir/bin/kreport2krona.py \
+    --report-file ${report_bracken} \
+    --output to_krona.txt 
 
-//     ktImportText \
-//     to_krona.txt \
-//     -o ${seqID}_krona_abundancies.html
-//     """
-// }
+    ktImportText \
+    to_krona.txt \
+    -o ${seqID}_krona_abundancies.html
+    """
+}
 
-// /* STEP 3 - assembly */
-// process metaSPAdes {
-//     conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
+/* STEP 3 - assembly */
+process metaSPAdes {
+    conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
 
-//     tag "$seqID"
-//     publishDir "${params.outdir}/assembly/$seqID", mode: 'copy'
+    tag "$seqID"
+    publishDir "${params.outdir}/assembly/metaspades/$seqID", mode: 'copy'
     
-//     when:
-//     !params.skip_metaspades
+    when:
+    !params.singleEnd && !params.skip_metaspades
 
-//     input:
-//     tuple val(seqID), file(reads) from ch_trimm_metaspades
+    input:
+    tuple val(seqID), file(reads) from ch_trimm_metaspades
 
-//     output:
-//     tuple val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
-//     tuple val(seqID), file("${seqID}_contigs.fasta")
+    output:
+    tuple val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
+    tuple val(seqID), file("${seqID}_contigs.fasta")
 
-//     script:
-//     """    
-//     spades.py \
-//     --meta \
-//     --threads ${task.cpus} \
-//     --memory ${task.memory.toGiga()} \
-//     --pe1-1 ${reads[0]} \
-//     --pe1-2 ${reads[1]} \
-//     -o ./
+    script:
+    //def input = params.singleEnd ? "--s1 ${reads[0]}" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"             //check when metaspades accepts single-end read libraries!
+    """    
+    spades.py \
+    --meta \
+    --threads ${task.cpus} \
+    --memory ${task.memory.toGiga()} \
+    --pe1-1 ${reads[0]} \
+    --pe1-2 ${reads[1]} \
+    -o ./
 
-//     mv scaffolds.fasta ${seqID}_scaffolds.fasta
-//     mv contigs.fasta ${seqID}_contigs.fasta
-//     """
-// }
+    mv scaffolds.fasta ${seqID}_scaffolds.fasta
+    mv contigs.fasta ${seqID}_contigs.fasta
+    """
+}
 
-// process quast {
-//     conda "bioconda::quast==5.0.2"
+process megahit {
+    conda "bioconda::megahit==1.2.9"
 
-//     tag "$seqID"
-//     publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy'
+    tag "$seqID"
+    publishDir "${params.outdir}/assembly/", mode: 'copy'
 
-//     when:
-//     !params.skip_metaspades || !params.skip_quast 
+    when:
+    !params.skip_megahit
 
-//     input:
-//     tuple val(seqID), file(scaffold) from ch_metaspades_quast
+    input:
+    tuple val(seqID), file(reads) from ch_trimm_megahit
 
-//     output:
-//     file("report.html")
-//     file("report.pdf")
-//     file("report.tsv")
+    output:
+    //tuple val(seqID), file("${seqID}.contigs.fasta") into ch_megahit_quast
+    tuple val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa")
 
-//     script:
-//     """
-//     metaquast.py \
-//     -t ${task.cpus} \
-//     --rna-finding \
-//     --max-ref-number 0 \
-//     -l ${seqID} ${scaffold} \
-//     -o ./
-//     """
-// } 
+    script:
+    def input = params.singleEnd ? "-r ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+    """
+    megahit \
+    -t ${task.cpus} \
+    -m ${task.memory.toBytes()} \
+    $input \
+    -o ./megahit \
+    --out-prefix ${seqID}
+
+    mkdir ./megahit/${seqID}
+    mv ./megahit/${seqID}.contigs.fa ./megahit/${seqID}/${seqID}.contigs.fa
+    """
+}
+
+process quast {
+    conda "bioconda::quast==5.0.2"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/assembly/quast/${seqID}", mode: 'copy'
+
+    when:
+    !params.singleEnd && !params.skip_metaspades && !params.skip_quast 
+
+    input:
+    tuple val(seqID), file(scaffold) from ch_metaspades_quast
+
+    output:
+    file("report.html")
+    file("report.pdf")
+    file("report.tsv")
+
+    script:
+    """
+    metaquast.py \
+    -t ${task.cpus} \
+    --rna-finding \
+    --max-ref-number 0 \
+    -l ${seqID} ${scaffold} \
+    -o ./
+    """
+} 
