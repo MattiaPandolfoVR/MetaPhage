@@ -159,7 +159,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_metaspades; ch_trimm_kraken2}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit}
 }
 
 /* STEP 2 - short reads alignment */
@@ -264,7 +264,7 @@ process metaSPAdes {
     }
 
     tag "$seqID"
-    publishDir "${params.outdir}/assembly/metaspades/$seqID", mode: 'copy'
+    publishDir "${params.outdir}/assembly/metaspades/${seqID}", mode: 'copy'
     
     when:
     !params.singleEnd && !params.skip_metaspades
@@ -273,7 +273,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -296,7 +296,7 @@ process megahit {
     conda "bioconda::megahit==1.2.9"
 
     tag "$seqID"
-    publishDir "${params.outdir}/assembly/", mode: 'copy'
+    publishDir "${params.outdir}/assembly/megahit/${seqID}", mode: 'copy'
 
     when:
     !params.skip_megahit
@@ -305,8 +305,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa") into ch_megahit_quast
-    tuple val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa")
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast)
 
     script:
     def input = params.singleEnd ? "-r ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -315,11 +314,9 @@ process megahit {
     -t ${task.cpus} \
     -m ${task.memory.toBytes()} \
     $input \
-    -o megahit \
+    -o result \
     --out-prefix ${seqID}
-
-    mkdir megahit/${seqID}
-    mv megahit/${seqID}.contigs.fa megahit/${seqID}/${seqID}.contigs.fa
+    mv result/${seqID}.contigs.fa ${seqID}_contigs.fasta
     """
 }
 
