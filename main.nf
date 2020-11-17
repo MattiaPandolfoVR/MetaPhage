@@ -124,7 +124,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") //into (ch_trimm_kraken2, ch_trimm_metaspades)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2)//, ch_trimm_metaspades)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
@@ -144,38 +144,38 @@ else {
     ch_fastp_phix.into {ch_trimm_metaspades; ch_trimm_kraken2}
 }
 
-// /* STEP 2 - short reads alignment */
-// process kraken2 {
-//     conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
+/* STEP 2 - short reads alignment */
+process kraken2 {
+    conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
     
-//     tag "$seqID"
-//     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
+    tag "$seqID"
+    publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
 
-//     when:
-//     !params.skip_kraken2
+    when:
+    !params.skip_kraken2
 
-//     input:
-//     file file_kraken2_db from ch_file_kraken2_db
-//     tuple val(seqID), file(reads) from ch_trimm_kraken2
+    input:
+    file file_kraken2_db from ch_file_kraken2_db
+    tuple val(seqID), file(reads) from ch_trimm_kraken2
 
-//     output:
-//     file("${seqID}_output.txt") 
-//     file("${seqID}_report.txt") into (ch_kraken2_bracken)
-//     val(seqID) into (ch_seqID_bracken)
+    output:
+    file("${seqID}_output.txt") 
+    file("${seqID}_report.txt") into (ch_kraken2_bracken)
+    val(seqID) into (ch_seqID_bracken)
 
-//     script:
-//     path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
-//     def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
-//     """
-//     kraken2 \
-//     --report-zero-counts \
-//     --threads ${task.cpus} \
-//     --db $workflow.projectDir/${path_file_kraken2_db} \
-//     --output ${seqID}_output.txt \
-//     --report ${seqID}_report.txt \
-//     --paired ${reads[0]} ${reads[1]} 
-//     """
-// }
+    script:
+    path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
+    def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
+    """
+    kraken2 \
+    --report-zero-counts \
+    --threads ${task.cpus} \
+    --db $workflow.projectDir/${path_file_kraken2_db} \
+    --output ${seqID}_output.txt \
+    --report ${seqID}_report.txt \
+    $input
+    """
+}
 
 // process bracken {
 //     conda "bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m"
