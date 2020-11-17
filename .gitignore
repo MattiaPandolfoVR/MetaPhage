@@ -4,3 +4,4 @@ work/*
 output*/*
 .nextflow*
 ._*
+mainQuadram.nf
