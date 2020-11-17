@@ -35,16 +35,18 @@ params.skip_vcontact2 = false
   
 /* FILE INPUT */
 
-if (params.readPaths) {                 // declared in profile config
-    if (params.singleEnd == true) {     // declared in profile config
-        error "singleEnd mode not supported yet"
+if (params.readPaths) {         // declared in profile config
+    if (params.singleEnd) {     // declared in profile config
+        ch_reads_fastp = Channel.fromPath("${params.readPaths}/*_single.fastq.gz", checkIfExists: true)
+            .map { file -> tuple(file.simpleName, file) }
+            .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths or params.list_fa in your config file!" }
     } else {
-        Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz")
-            .set {ch_reads_fastp}
+        Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
+            .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths or params.list_fa in your config file!" }
+            .set { ch_reads_fastp }
     }
-}
-else
-    error "No input files supplied, please check your config file"
+} else
+    error "No input files supplied! Please check params.readPaths or params.list_fa in your config file!"
 
 
 
@@ -75,10 +77,11 @@ process db_manager {
    
 }
 
-/* STEP 1a - quality check  and trimming */
+/* STEP 1a - quality check and trimming */
 process fastp {
+    echo true
     conda "bioconda::fastp==0.20.1"
-    
+
     tag "$seqID"
     publishDir "${params.outdir}/fastp_qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
@@ -92,6 +95,8 @@ process fastp {
 
     script:
     { ext = (params.keep_phix == true) ? ".gz" : "" } // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
+    { inp = (params.singleEnd == true) ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"}
+    { out = (params.singleEnd == true) ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"}
     """
     fastp \
     -w ${task.cpus} \
@@ -101,10 +106,8 @@ process fastp {
     --cut_mean_quality ${params.trimming_quality} \
     --adapter_sequence=${params.adapter_forward} \
     --adapter_sequence_r2=${params.adapter_reverse} \
-    -i ${reads[0]} \
-    -I ${reads[1]} \
-    -o ${seqID}_R1_trimmed.fastq${ext} \
-    -O ${seqID}_R2_trimmed.fastq${ext} \
+    $inp \
+    $out \
     -h ${seqID}_qc_report.html
     """
 }
