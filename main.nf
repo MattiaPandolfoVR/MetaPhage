@@ -22,6 +22,7 @@ params.bracken_abundance_level = "S"
 
 // Assembly 
 params.skip_metaspades = false
+params.skip_megahit = false
 params.skip_quast = false
 
 // Phage-hunting - Vibrant 
@@ -35,16 +36,19 @@ params.skip_vcontact2 = false
   
 /* FILE INPUT */
 
-if (params.readPaths) {                 // declared in profile config
-    if (params.singleEnd == true) {     // declared in profile config
-        error "singleEnd mode not supported yet"
+if (params.readPaths) {         // declared in profile config
+    if (params.singleEnd) {     // declared in profile config
+        Channel.fromPath("${params.readPaths}/*_single.fastq.gz", checkIfExists: true)
+            .map { file -> tuple(file.simpleName, file) }
+            .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
+            .set { ch_reads_fastp } 
     } else {
-        Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz")
-            .set {ch_reads_fastp}
+        Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
+            .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
+            .set { ch_reads_fastp }
     }
-}
-else
-    error "No input files supplied, please check your config file"
+} else
+    error "No input files supplied! Please check params.readPaths in your config file!"
 
 
 
@@ -92,10 +96,10 @@ process db_manager {
    
 }
 
-/* STEP 1a - quality check  and trimming */
+/* STEP 1a - quality check and trimming */
 process fastp {
     conda "bioconda::fastp==0.20.1"
-    
+
     tag "$seqID"
     publishDir "${params.outdir}/fastp_qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
@@ -108,7 +112,9 @@ process fastp {
     file("${seqID}_qc_report.html")
 
     script:
-    { ext = (params.keep_phix == true) ? ".gz" : "" } // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
+    def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
+    def inp = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
+    def out = params.singleEnd ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
     """
     fastp \
     -w ${task.cpus} \
@@ -118,10 +124,8 @@ process fastp {
     --cut_mean_quality ${params.trimming_quality} \
     --adapter_sequence=${params.adapter_forward} \
     --adapter_sequence_r2=${params.adapter_reverse} \
-    -i ${reads[0]} \
-    -I ${reads[1]} \
-    -o ${seqID}_R1_trimmed.fastq${ext} \
-    -O ${seqID}_R2_trimmed.fastq${ext} \
+    $inp \
+    $out \
     -h ${seqID}_qc_report.html
     """
 }
@@ -138,16 +142,17 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
+        def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        def check = params.singleEnd ? "" : "--check-read-2"
         """
         hts_SeqScreener \
-        -1 ${reads[0]} \
-        -2 ${reads[1]} \
+        $inp \
         --seq $workflow.projectDir/${path_file_phix_alone} \
-        --check-read-2 \
+        $check \
         --fastq-output dephixed_${seqID} \
         --force
         """
@@ -178,6 +183,7 @@ process kraken2 {
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
+    def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     """
     kraken2 \
     --report-zero-counts \
@@ -185,7 +191,7 @@ process kraken2 {
     --db $workflow.projectDir/${path_file_kraken2_db} \
     --output ${seqID}_output.txt \
     --report ${seqID}_report.txt \
-    --paired ${reads[0]} ${reads[1]} 
+    $input
     """
 }
 
@@ -258,19 +264,20 @@ process metaSPAdes {
     }
 
     tag "$seqID"
-    publishDir "${params.outdir}/assembly/$seqID", mode: 'copy'
+    publishDir "${params.outdir}/assembly/metaspades/$seqID", mode: 'copy'
     
     when:
-    !params.skip_metaspades
+    !params.singleEnd && !params.skip_metaspades
 
     input:
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
+    //def input = params.singleEnd ? "--s1 ${reads[0]}" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"             //check when metaspades accepts single-end read libraries!
     """    
     spades.py \
     --meta \
@@ -285,22 +292,55 @@ process metaSPAdes {
     """
 }
 
+process megahit {
+    conda "bioconda::megahit==1.2.9"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/assembly/", mode: 'copy'
+
+    when:
+    !params.skip_megahit
+
+    input:
+    tuple val(seqID), file(reads) from ch_trimm_megahit
+
+    output:
+    tuple val("megahit"), val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa") into ch_megahit_quast
+    tuple val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa")
+
+    script:
+    def input = params.singleEnd ? "-r ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+    """
+    megahit \
+    -t ${task.cpus} \
+    -m ${task.memory.toBytes()} \
+    $input \
+    -o megahit \
+    --out-prefix ${seqID}
+
+    mkdir megahit/${seqID}
+    mv megahit/${seqID}.contigs.fa megahit/${seqID}/${seqID}.contigs.fa
+    """
+}
+
 process quast {
     conda "bioconda::quast==5.0.2"
 
-    tag "$seqID"
-    publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy'
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/assembly/", mode: 'copy'
 
     when:
-    !params.skip_metaspades && !params.skip_quast 
+
+    !params.skip_metaspades && !params.skip_megahit && !params.skip_quast 
+
 
     input:
-    tuple val(seqID), file(scaffold) from ch_metaspades_quast
+    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_quast.mix(ch_megahit_quast)
 
     output:
-    file("report.html")
-    file("report.pdf")
-    file("report.tsv")
+    file("${assembler}/quast/${seqID}/report.html")
+    file("${assembler}/quast/${seqID}/report.pdf")
+    file("${assembler}/quast/${seqID}/report.tsv")
 
     script:
     """
@@ -310,5 +350,8 @@ process quast {
     --max-ref-number 0 \
     -l ${seqID} ${scaffold} \
     -o ./
+
+    mkdir -p ./${assembler}/quast/${seqID}
+    mv ./report.* ./${assembler}/quast/${seqID}/
     """
 } 
