@@ -128,7 +128,7 @@ if(!params.keep_phix) {
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
-        def inp = (params.singleEnd == true) ? "-1 ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        def inp = (params.singleEnd == true) ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = (params.singleEnd == true) ? "" : "--check-read-2"
         """
         hts_SeqScreener \
@@ -165,6 +165,7 @@ else {
 
 //     script:
 //     path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
+//     def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
 //     """
 //     kraken2 \
 //     --report-zero-counts \
