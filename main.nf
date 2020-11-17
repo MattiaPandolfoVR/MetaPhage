@@ -196,7 +196,7 @@ process bracken {
     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
     when:
-    !params.skip_bracken
+    !params.skip_kraken2 && !params.skip_bracken
 
     input:
     file file_bracken_db from ch_file_bracken_db
