@@ -80,7 +80,7 @@ process fastp {
     conda "bioconda::fastp==0.20.1"
     
     tag "$seqID"
-    publishDir "${params.outdir}/fastp/qc/", mode: 'copy',
+    publishDir "${params.outdir}/fastp_qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
 
     input:
@@ -115,8 +115,6 @@ if(!params.keep_phix) {
         conda "bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
 
         tag "$seqID"
-        publishDir "${params.outdir}/hts_SeqScreener/", mode: 'copy',
-            saveAs: {filename -> filename.endsWith(".fastq.gz") ? "$filename" : null}
 
         input:
         file file_phix_alone from ch_file_phix_alone
@@ -147,8 +145,7 @@ process kraken2 {
     conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
     
     tag "$seqID"
-    publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy',
-        saveAs: {filename -> (filename.endsWith(".kraken2") || filename.endsWith(".txt")) ? "$filename" : null}
+    publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
 
     when:
     !params.skip_kraken2
@@ -158,7 +155,7 @@ process kraken2 {
     tuple val(seqID), file(reads) from ch_trimm_kraken2
 
     output:
-    file("${seqID}_output.kraken2") 
+    file("${seqID}_output.txt") 
     file("${seqID}_report.txt") into (ch_kraken2_bracken)
     val(seqID) into (ch_seqID_bracken)
 
@@ -169,7 +166,7 @@ process kraken2 {
     --report-zero-counts \
     --threads ${task.cpus} \
     --db $workflow.projectDir/${path_file_kraken2_db} \
-    --output ${seqID}_output.kraken2 \
+    --output ${seqID}_output.txt \
     --report ${seqID}_report.txt \
     --paired ${reads[0]} ${reads[1]} 
     """
@@ -179,8 +176,7 @@ process bracken {
     conda "bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m"
 
     tag "$seqID"
-    publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".txt") ? "$filename" : null}
+    publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
     when:
     !params.skip_bracken
@@ -211,8 +207,7 @@ process krona {
     conda "bioconda::krona==2.7.1 anaconda::python==3.7"
 
     tag "$seqID"
-    publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
+    publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
 
     when:
     !params.skip_kraken2 && !params.skip_bracken
@@ -241,8 +236,7 @@ process metaSPAdes {
     conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
 
     tag "$seqID"
-    publishDir "${params.outdir}/assembly/$seqID", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".fasta") ? "$filename" : null}
+    publishDir "${params.outdir}/assembly/$seqID", mode: 'copy'
     
     when:
     !params.skip_metaspades
@@ -273,8 +267,7 @@ process quast {
     conda "bioconda::quast==5.0.2"
 
     tag "$seqID"
-    publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy',
-        saveAs: { filename -> filename.endsWith(".tsv") ? "$filename" : null }
+    publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy'
 
     when:
     !params.skip_metaspades || !params.skip_quast 
@@ -283,7 +276,9 @@ process quast {
     tuple val(seqID), file(scaffold) from ch_metaspades_quast
 
     output:
-    file("$seqID/quast/*") into ch_quast_results
+    file("report.html")
+    file("report.pdf")
+    file("report.tsv")
 
     script:
     """
@@ -292,6 +287,6 @@ process quast {
     --rna-finding \
     --max-ref-number 0 \
     -l ${seqID} ${scaffold} \
-    -o "${seqID}/quast/"
+    -o ./
     """
 } 
