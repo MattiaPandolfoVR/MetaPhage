@@ -250,7 +250,12 @@ process krona {
 
 /* STEP 3 - assembly */
 process metaSPAdes {
-    conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
+    if (cursystem.contains('Mac')) {
+        conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==10.0.1"
+    }
+    else { // spades on Linux has slightly different dependencies
+        conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
+    }
 
     tag "$seqID"
     publishDir "${params.outdir}/assembly/$seqID", mode: 'copy'
