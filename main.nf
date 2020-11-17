@@ -251,7 +251,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into ch_metaspades_quast
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -283,7 +283,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    //tuple val(seqID), file("${seqID}.contigs.fasta") into ch_megahit_quast
+    tuple val("megahit"), val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa") into ch_megahit_quast
     tuple val(seqID), file("megahit/${seqID}/${seqID}.contigs.fa")
 
     script:
@@ -293,30 +293,30 @@ process megahit {
     -t ${task.cpus} \
     -m ${task.memory.toBytes()} \
     $input \
-    -o ./megahit \
+    -o megahit \
     --out-prefix ${seqID}
 
-    mkdir ./megahit/${seqID}
-    mv ./megahit/${seqID}.contigs.fa ./megahit/${seqID}/${seqID}.contigs.fa
+    mkdir megahit/${seqID}
+    mv megahit/${seqID}.contigs.fa megahit/${seqID}/${seqID}.contigs.fa
     """
 }
 
 process quast {
     conda "bioconda::quast==5.0.2"
 
-    tag "$seqID"
-    publishDir "${params.outdir}/assembly/quast/${seqID}", mode: 'copy'
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/assembly/", mode: 'copy'
 
     when:
-    !params.singleEnd && !params.skip_metaspades && !params.skip_quast 
+    !params.skip_metaspades && !params.skip_megahit && !params.skip_quast 
 
     input:
-    tuple val(seqID), file(scaffold) from ch_metaspades_quast
+    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_quast.mix(ch_megahit_quast)
 
     output:
-    file("report.html")
-    file("report.pdf")
-    file("report.tsv")
+    file("${assembler}/quast/${seqID}/report.html")
+    file("${assembler}/quast/${seqID}/report.pdf")
+    file("${assembler}/quast/${seqID}/report.tsv")
 
     script:
     """
@@ -326,5 +326,8 @@ process quast {
     --max-ref-number 0 \
     -l ${seqID} ${scaffold} \
     -o ./
+
+    mkdir -p ./${assembler}/quast/${seqID}
+    mv ./report.* ./${assembler}/quast/${seqID}/
     """
 } 
