@@ -50,6 +50,23 @@ else
 
 /* PROCESSES */
 
+def welcomeScreen() {
+    println '''
+        ====================================================
+         __  __      _        _____  _                      
+        |  \\/  |    | |      |  __ \\| |                     
+        | \\  / | ___| |_ __ _| |__) | |__   __ _  __ _  ___ 
+        | |\\/| |/ _ \\ __/ _` |  ___/| '_ \\ / _` |/ _` |/ _ \\
+        | |  | |  __/ || (_| | |    | | | | (_| | (_| |  __/
+        |_|  |_|\\___|\\__\\__,_|_|    |_| |_|\\__,_|\\__, |\\___|
+                                                  __/ |     
+                                                 |___/      
+        ====================================================
+        '''.stripIndent()
+}
+def cursystem = System.properties['os.name']
+welcomeScreen()
+
 /* STEP 0 - check presence and download required files */
 process db_manager {
     echo true
@@ -179,7 +196,7 @@ process bracken {
     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
     when:
-    !params.skip_bracken
+    !params.skip_kraken2 && !params.skip_bracken
 
     input:
     file file_bracken_db from ch_file_bracken_db
@@ -233,7 +250,12 @@ process krona {
 
 /* STEP 3 - assembly */
 process metaSPAdes {
-    conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
+    if (cursystem.contains('Mac')) {
+        conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==10.0.1"
+    }
+    else { // spades on Linux has slightly different dependencies
+        conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0"
+    }
 
     tag "$seqID"
     publishDir "${params.outdir}/assembly/$seqID", mode: 'copy'
@@ -270,7 +292,7 @@ process quast {
     publishDir "${params.outdir}/assembly/$seqID/quast", mode: 'copy'
 
     when:
-    !params.skip_metaspades || !params.skip_quast 
+    !params.skip_metaspades && !params.skip_quast 
 
     input:
     tuple val(seqID), file(scaffold) from ch_metaspades_quast
