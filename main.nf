@@ -50,6 +50,23 @@ else
 
 /* PROCESSES */
 
+def welcomeScreen() {
+    println '''
+        ====================================================
+         __  __      _        _____  _                      
+        |  \\/  |    | |      |  __ \\| |                     
+        | \\  / | ___| |_ __ _| |__) | |__   __ _  __ _  ___ 
+        | |\\/| |/ _ \\ __/ _` |  ___/| '_ \\ / _` |/ _` |/ _ \\
+        | |  | |  __/ || (_| | |    | | | | (_| | (_| |  __/
+        |_|  |_|\\___|\\__\\__,_|_|    |_| |_|\\__,_|\\__, |\\___|
+                                                  __/ |     
+                                                 |___/      
+        ====================================================
+        '''.stripIndent()
+}
+def cursystem = System.properties['os.name']
+welcomeScreen()
+
 /* STEP 0 - check presence and download required files */
 process db_manager {
     echo true
