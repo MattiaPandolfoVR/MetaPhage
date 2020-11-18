@@ -368,13 +368,13 @@ process vibrant {
     file("*")
 
     script:
-    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
+    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text.replaceAll("standard/", "standard")
     """
     VIBRANT_run.py \
     -t ${task.cpus} \
     -i ${scaffold} \
-    -f nucl \
     -folder ./ \
-    -d $workflow.projectDir/${path_file_vibrant_db}
+    -d $workflow.projectDir/${path_file_vibrant_db}/databases/ \
+    -m $workflow.projectDir/${path_file_vibrant_db}/files/ 
     """
 }
