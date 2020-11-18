@@ -1,6 +1,7 @@
 .DS_Store
 .nextflow/*
 work/*
+db/*
 output*/*
 .nextflow*
 ._*

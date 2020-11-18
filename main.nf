@@ -75,7 +75,7 @@ welcomeScreen()
 /* STEP 0 - check presence and download required files */
 process db_manager {
     if (params.db_manager_reports) { echo true }
-    conda "anaconda::wget==1.20.1 conda-forge::tar==1.29"
+    conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1 conda-forge::tar==1.29"
 
     output:
     file("file_phix_alone") into (ch_file_phix_alone)

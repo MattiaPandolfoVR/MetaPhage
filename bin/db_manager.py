@@ -55,10 +55,13 @@ def manage(projectDir,
         else:
             sys.stdout.write("db_manager: " + phrase + "\n")
 
+
     
     varDir = projectDir + "bin/groovy_vars/"
     checkCreate(varDir)
     echo("\n")
+
+
     #################################
     # phix ##########################
     #################################
@@ -74,8 +77,9 @@ def manage(projectDir,
     elif mod_phix == "phiX174":
         if not os.path.exists(mod_folder + "phiX174.fasta"):
             url = "https://www.ebi.ac.uk/ena/browser/api/fasta/AF176027.1?download=true"
-            echo(mod_folder + "phiX174.fasta" + ' absent, downloading it from ' + url + ". Please wait...")
-            output = os.popen('wget -O ' + mod_folder + "phiX174.fasta" + ' ' + url) 
+            echo("Downloading " + mod_folder + "phiX174.fasta" + " ...")
+            os.popen('wget -O ' + mod_folder + "phiX174.fasta" + ' ' + url).read()
+            echo("OK")
         else:
             echo(mod_folder + "phiX174.fasta" + ' already present!')
         makeChannel("file_phix_alone", "db/phix/phiX174.fasta")
@@ -83,8 +87,9 @@ def manage(projectDir,
     elif mod_phix == "WA11":
         if not os.path.exists(mod_folder + "WA11.fasta"):
             url = "https://www.ebi.ac.uk/ena/browser/api/fasta/DQ079895.1?download=true"
-            echo(mod_folder + "WA11.fasta" + ' absent, downloading it from ' + url + ". Please wait...")
-            output = os.popen('wget -O ' + mod_folder + "WA11.fasta" + ' ' + url) 
+            echo("Downloading " + mod_folder + "WA11.fasta" + " ...")
+            os.popen('wget -O ' + mod_folder + "WA11.fasta" + ' ' + url).read() 
+            echo("OK")
         else:
             echo(mod_folder + "WA11.fasta" + ' already present!')
         makeChannel("file_phix_alone", "db/phix/WA11.fasta")
@@ -105,14 +110,14 @@ def manage(projectDir,
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "hash.k2d") or not os.path.exists(mod_folder + "opts.k2d") or not os.path.exists(mod_folder + "taxo.k2d"):
             url = "ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/old/minikraken2_v1_8GB_201904.tgz"
-            echo(mod_folder + "*" + ' absent, downloading it from ' + url + ". Please wait...")
-            output = os.popen('wget -O ' + mod_folder + "archive.tgz" + ' ' + url) 
-            echo("Decompressing...")
-            output = os.popen('tar zxvf %s --directory %s' % (mod_folder + "archive.tgz", mod_folder))
-            output = os.popen('mv %s %s' % (mod_folder + "minikraken2_v1_8GB/*", mod_folder))
-            output = os.popen('rm -rf %s' % (mod_folder + "minikraken2_v1_8GB"))
-            output = os.popen('rm %s' % (mod_folder + "archive.tgz"))
-            echo("OK")
+            echo("Downloading " + mod_folder + "*" + " ...")
+            os.popen('wget -O ' + mod_folder + "archive.tgz" + ' ' + url).read() # note for future: without read(), wget won't pass  to tar!!!
+            echo("Decompressing ...")
+            os.popen('tar zxvf %s --directory %s' % (mod_folder + "archive.tgz", mod_folder)).read() # note for future: without read(), tar won't extract anything!!!
+            os.popen('mv %s %s' % (mod_folder + "minikraken2_v1_8GB/*", mod_folder)).read()
+            os.popen('rm -rf %s' % (mod_folder + "minikraken2_v1_8GB")).read()
+            os.popen('rm %s' % (mod_folder + "archive.tgz")).read()
+            echo("OK") 
         else:
             echo(mod_folder + "*" + ' already present!')
         makeChannel("file_kraken2_db", rel_path)
@@ -123,13 +128,13 @@ def manage(projectDir,
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "hash.k2d") or not os.path.exists(mod_folder + "opts.k2d") or not os.path.exists(mod_folder + "taxo.k2d"):
             url = "ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/old/minikraken2_v2_8GB_201904.tgz"
-            echo(mod_folder + "*" + ' absent, downloading it from ' + url + ". Please wait...")
-            output = os.popen('wget -O ' + mod_folder + "archive.tgz" + ' ' + url) 
-            echo("Decompressing...")
-            output = os.popen('tar zxvf %s --directory %s' % (mod_folder + "archive.tgz", mod_folder))
-            output = os.popen('mv %s %s' % (mod_folder + "minikraken2_v2_8GB/*", mod_folder))
-            output = os.popen('rm -rf %s' % (mod_folder + "minikraken2_v2_8GB"))
-            output = os.popen('rm %s' % (mod_folder + "archive.tgz"))
+            echo("Downloading " + mod_folder + "*" + " ...")
+            os.popen('wget -O ' + mod_folder + "archive.tgz" + ' ' + url).read() # note for future: without read(), wget won't pass  to tar!!!
+            echo("Decompressing ...")
+            os.popen('tar zxvf %s --directory %s' % (mod_folder + "archive.tgz", mod_folder)).read() # note for future: without output.read(), tar won't extract anything!!!
+            os.popen('mv %s %s' % (mod_folder + "minikraken2_v2_8GB/*", mod_folder)).read()
+            os.popen('rm -rf %s' % (mod_folder + "minikraken2_v2_8GB")).read()
+            os.popen('rm %s' % (mod_folder + "archive.tgz")).read()
             echo("OK")
         else:
             echo(mod_folder + "*" + ' already present!')
