@@ -73,8 +73,7 @@ welcomeScreen()
 
 /* STEP 0 - check presence and download required files */
 process db_manager {
-    echo true
-    conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1 conda-forge::tar==1.29"
+    conda "anaconda::wget==1.20.1 conda-forge::tar==1.29"
     
     publishDir "${params.outdir}/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".log") ? "$filename" : null}
@@ -87,7 +86,7 @@ process db_manager {
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
     """
-    python -u $workflow.projectDir/bin/db_manager.py \
+    python $workflow.projectDir/bin/db_manager.py \
     --mod_phix ${params.mod_phix} \
     --file_phix_alone ${params.file_phix_alone} \
     --mod_kraken2 ${params.mod_kraken2} \
@@ -145,7 +144,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
 
         script:
-        path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
+        path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
         def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = params.singleEnd ? "" : "--check-read-2"
         """
@@ -182,7 +181,7 @@ process kraken2 {
     val(seqID) into (ch_seqID_bracken)
 
     script:
-    path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
+    path_file_kraken2_db = file("$workflow.projectDir/bin/groovy_vars/${file_kraken2_db}").text
     def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     """
     kraken2 \
@@ -215,7 +214,7 @@ process bracken {
     val(seqID) into (ch_seqID_krona)
 
     script:
-    path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
+    path_file_bracken_db = file("$workflow.projectDir/bin/groovy_vars/${file_bracken_db}").text
     """
     bracken \
     -d $workflow.projectDir/${path_file_bracken_db} \
