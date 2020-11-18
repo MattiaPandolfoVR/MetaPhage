@@ -2,6 +2,7 @@
 
 
 /* CONFIGURATION VARIABLES */
+params.db_manager_reports = false
 
 // Trimming 
 params.adapter_forward = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
@@ -73,13 +74,10 @@ welcomeScreen()
 
 /* STEP 0 - check presence and download required files */
 process db_manager {
+    if (params.db_manager_reports) { echo true }
     conda "anaconda::wget==1.20.1 conda-forge::tar==1.29"
-    
-    publishDir "${params.outdir}/", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".log") ? "$filename" : null}
 
     output:
-    file("db_manager.log")
     file("file_phix_alone") into (ch_file_phix_alone)
     file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
 
