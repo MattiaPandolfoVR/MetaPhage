@@ -1,5 +1,0 @@
-file;modality;filepath;url
-file_phix_alone;WA11;./db/phix/WA11.fasta;https://www.ebi.ac.uk/ena/browser/api/fasta/DQ079895.1?download=true
-file_phix_alone;phiX174;./db/phix/phiX174.fasta;https://www.ebi.ac.uk/ena/browser/api/fasta/AF176027.1?download=true
-file_kraken2_db;miniBAV;./db/kraken2/miniBAV/hash.k2d;ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/old/minikraken2_v1_8GB_201904.tgz
-file_kraken2_db;miniBAVH;./db/kraken2/miniBAVH/hash.k2d;ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/old/minikraken2_v2_8GB_201904.tgz

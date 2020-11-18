@@ -2,6 +2,7 @@
 
 
 /* CONFIGURATION VARIABLES */
+params.db_manager_reports = false
 
 // Trimming 
 params.adapter_forward = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
@@ -73,14 +74,10 @@ welcomeScreen()
 
 /* STEP 0 - check presence and download required files */
 process db_manager {
-    echo true
+    if (params.db_manager_reports) { echo true }
     conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1 conda-forge::tar==1.29"
-    
-    publishDir "${params.outdir}/", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".log") ? "$filename" : null}
 
     output:
-    file("db_manager.log")
     file("file_phix_alone") into (ch_file_phix_alone)
     file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
 
@@ -145,7 +142,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
 
         script:
-        path_file_phix_alone = file("$workflow.projectDir/db/groovy_vars/${file_phix_alone}").text
+        path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
         def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = params.singleEnd ? "" : "--check-read-2"
         """
@@ -182,7 +179,7 @@ process kraken2 {
     val(seqID) into (ch_seqID_bracken)
 
     script:
-    path_file_kraken2_db = file("$workflow.projectDir/db/groovy_vars/${file_kraken2_db}").text.replace("hash.k2d", "")
+    path_file_kraken2_db = file("$workflow.projectDir/bin/groovy_vars/${file_kraken2_db}").text
     def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     """
     kraken2 \
@@ -215,7 +212,7 @@ process bracken {
     val(seqID) into (ch_seqID_krona)
 
     script:
-    path_file_bracken_db = file("$workflow.projectDir/db/groovy_vars/${file_bracken_db}").text.replace("hash.k2d", "")
+    path_file_bracken_db = file("$workflow.projectDir/bin/groovy_vars/${file_bracken_db}").text
     """
     bracken \
     -d $workflow.projectDir/${path_file_bracken_db} \
