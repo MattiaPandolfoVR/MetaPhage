@@ -84,7 +84,7 @@ process db_manager {
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
     """
-    python $workflow.projectDir/bin/db_manager.py \
+    python -u $workflow.projectDir/bin/db_manager.py \
     --mod_phix ${params.mod_phix} \
     --file_phix_alone ${params.file_phix_alone} \
     --mod_kraken2 ${params.mod_kraken2} \
