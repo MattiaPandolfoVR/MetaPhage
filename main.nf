@@ -28,7 +28,8 @@ params.skip_quast = false
 
 // Phage-hunting - Vibrant 
 params.skip_vibrant = false 
-params.mod_vibrant = "-"                                                          
+params.mod_vibrant = "standard"    
+params.file_vibrant_db = "-"                                                      
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = false                                                                               
@@ -80,6 +81,7 @@ process db_manager {
     output:
     file("file_phix_alone") into (ch_file_phix_alone)
     file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
+    file("file_vibrant_db") into (ch_file_vibrant_db)
 
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
@@ -88,7 +90,9 @@ process db_manager {
     --mod_phix ${params.mod_phix} \
     --file_phix_alone ${params.file_phix_alone} \
     --mod_kraken2 ${params.mod_kraken2} \
-    --file_kraken2_db ${params.file_kraken2_db}  
+    --file_kraken2_db ${params.file_kraken2_db} \
+    --mod_vibrant ${params.mod_vibrant} \
+    --file_vibrant_db ${params.file_vibrant_db}
     """
    
 }
@@ -270,7 +274,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -301,7 +305,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -345,3 +349,27 @@ process quast {
     ${scaffold}
     """
 } 
+
+/* STEP 4 - phage mining */
+process vibrant {
+    conda "bioconda::vibrant==1.2.1"
+
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/mining/vibrant/${assembler}/quast/${seqID}", mode: 'copy'
+
+    when:
+    !params.skip_vibrant
+
+    input:
+    file file_vibrant_db from ch_file_vibrant_db
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
+
+    output:
+    file("*")
+
+    script:
+    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
+    """
+    echo "hello world"
+    """
+}
