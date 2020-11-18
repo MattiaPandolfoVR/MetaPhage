@@ -355,7 +355,7 @@ process vibrant {
     conda "bioconda::vibrant==1.2.1"
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/vibrant/${assembler}/quast/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/mining/vibrant/${assembler}/${seqID}", mode: 'copy'
 
     when:
     !params.skip_vibrant
@@ -374,8 +374,7 @@ process vibrant {
     -t ${task.cpus} \
     -i ${scaffold} \
     -f nucl \
-    --folder ./ \
-    -d $workflow.projectDir/${path_file_vibrant_db}/databases/ \
-    -d $workflow.projectDir/${path_file_vibrant_db}/files/ 
+    -folder ./ \
+    -d $workflow.projectDir/${path_file_vibrant_db}
     """
 }
