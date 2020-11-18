@@ -76,7 +76,7 @@ welcomeScreen()
 /* STEP 0 - check presence and download required files */
 process db_manager {
     if (params.db_manager_reports) { echo true }
-    conda "anaconda::pandas==1.1.3 anaconda::wget==1.20.1 conda-forge::tar==1.29"
+    conda "bioconda::vibrant==1.2.1 conda-forge::tar==1.29"
 
     output:
     file("file_phix_alone") into (ch_file_phix_alone)
@@ -370,6 +370,12 @@ process vibrant {
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
     """
-    echo "hello world"
+    VIBRANT_run.py \
+    -t ${task.cpus} \
+    -i ${scaffold} \
+    -f nucl \
+    --folder ./ \
+    -d $workflow.projectDir/${path_file_vibrant_db}/databases/ \
+    -d $workflow.projectDir/${path_file_vibrant_db}/files/ 
     """
 }
