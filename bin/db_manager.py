@@ -22,6 +22,8 @@ options.add_argument('-k', '--mod_kraken2', dest='mod_kraken2', metavar='STRING'
 options.add_argument('-k1', '--file_kraken2_db', dest='file_kraken2_db', metavar='PATH', default=None)
 options.add_argument('-b', '--mod_vibrant', dest='mod_vibrant', metavar='STRING', default=None)
 options.add_argument('-b1', '--file_vibrant_db', dest='file_vibrant_db', metavar='PATH', default=None)
+options.add_argument('-g', '--mod_phigaro', dest='mod_phigaro', metavar='STRING', default=None)
+options.add_argument('-g1', '--file_phigaro_config', dest='file_phigaro_config', metavar='PATH', default=None)
 
 
 
@@ -35,7 +37,8 @@ def error(msg):
 def manage(projectDir, 
            mod_phix, file_phix_alone,
            mod_kraken2, file_kraken2_db,
-           mod_vibrant, file_vibrant_db):
+           mod_vibrant, file_vibrant_db,
+           mod_phigaro, file_phigaro_config):
 
     
     def checkCreate(path):
@@ -261,6 +264,33 @@ def manage(projectDir,
         else:
             echo(mod_folder + "*" + ' already present!')
         makeChannel("file_vibrant_db", rel_path)
+
+
+    #################################
+    # phigaro #######################
+    #################################
+    if mod_phigaro == "custom":
+        if file_phigaro_config == "-":
+            error('With --mod_phigaro custom you have to specify also --file_phigaro_config')
+        else:
+            makeChannel("file_phigaro_config", file_phigaro_config)
+    
+    elif mod_phigaro == "standard":
+        rel_path = "db/phigaro/standard/"
+        mod_folder = projectDir + rel_path
+        checkCreate(mod_folder)
+        if not os.path.exists(mod_folder + "allpvoghmms.h3f") or not os.path.exists(mod_folder + "allpvoghmms.h3i") or not os.path.exists(mod_folder + "allpvoghmms.h3m") or not os.path.exists(mod_folder + "allpvoghmms.h3p"):
+            echo("Downloading " + mod_folder + "*" + " ...")
+            stri = os.popen('wget -O %sallpvoghmms http://download.ripcm.com/phigaro/allpvoghmms' % (mod_folder)).read()
+            os.popen('wget -O %sallpvoghmms.h3f http://download.ripcm.com/phigaro/allpvoghmms.h3f' % (mod_folder)).read()
+            os.popen('wget -O %sallpvoghmms.h3i http://download.ripcm.com/phigaro/allpvoghmms.h3i' % (mod_folder)).read()
+            os.popen('wget -O %sallpvoghmms.h3m http://download.ripcm.com/phigaro/allpvoghmms.h3m' % (mod_folder)).read()
+            os.popen('wget -O %sallpvoghmms.h3p http://download.ripcm.com/phigaro/allpvoghmms.h3p' % (mod_folder)).read()
+            
+            echo("OK") 
+        else:
+            echo(mod_folder + "*" + ' already present!')
+        makeChannel("file_phigaro_config", rel_path)
     
 
 
@@ -276,6 +306,7 @@ if __name__ == "__main__":
     manage(projectDir, 
            parameters.mod_phix, parameters.file_phix_alone,
            parameters.mod_kraken2, parameters.file_kraken2_db,
-           parameters.mod_vibrant, parameters.file_vibrant_db)
+           parameters.mod_vibrant, parameters.file_vibrant_db,
+           parameters.mod_phigaro, parameters.file_phigaro_config)
 
     
