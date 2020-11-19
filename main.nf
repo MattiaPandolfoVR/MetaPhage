@@ -28,7 +28,7 @@ params.skip_quast = false
 
 // Phage-hunting - Vibrant 
 params.skip_vibrant = false 
-params.mod_vibrant = "old"    
+params.mod_vibrant = "legacy"    
 params.file_vibrant_db = "-"                                                      
 
 // Viral Taxonomy - vContact2 
@@ -354,7 +354,7 @@ process quast {
 
 /* STEP 4 - phage mining */
 process vibrant {
-    if (params.mod_vibrant == "old") {
+    if (params.mod_vibrant == "legacy") {
         conda "bioconda::vibrant==1.0.1"
     }
     else {
@@ -377,7 +377,7 @@ process vibrant {
 
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
-    if (params.mod_vibrant == "old")
+    if (params.mod_vibrant == "legacy")
         """
         VIBRANT_run.py \
         -t ${task.cpus} \

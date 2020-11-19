@@ -206,8 +206,8 @@ def manage(projectDir,
             echo(mod_folder + "*" + ' already present!')
         makeChannel("file_vibrant_db", rel_path)
 
-    elif mod_vibrant == "old":
-        rel_path = "db/vibrant/old/"
+    elif mod_vibrant == "legacy":
+        rel_path = "db/vibrant/legacy/"
         mod_folder = projectDir + rel_path
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "KEGG_profiles_prokaryotes.HMM") or not os.path.exists(mod_folder + "Pfam-A_v32.HMM") or not os.path.exists(mod_folder + "VOGDB94_phage.HMM"):
