@@ -2,6 +2,7 @@
 .nextflow/*
 work/*
 db/*
+bin/groovy_vars/*
 output*/*
 .nextflow*
 ._*
