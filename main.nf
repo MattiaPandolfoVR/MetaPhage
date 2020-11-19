@@ -28,7 +28,7 @@ params.skip_quast = false
 
 // Phage-hunting - Vibrant 
 params.skip_vibrant = false 
-params.mod_vibrant = "standard"    
+params.mod_vibrant = "old"    
 params.file_vibrant_db = "-"                                                      
 
 // Viral Taxonomy - vContact2 
@@ -77,6 +77,8 @@ welcomeScreen()
 process db_manager {
     if (params.db_manager_reports) { echo true }
     conda "bioconda::vibrant==1.2.1 conda-forge::tar==1.29"
+
+    tag "Downloading..."
 
     output:
     file("file_phix_alone") into (ch_file_phix_alone)
@@ -352,7 +354,13 @@ process quast {
 
 /* STEP 4 - phage mining */
 process vibrant {
-    conda "bioconda::vibrant==1.2.1"
+    if (params.mod_vibrant == "old") {
+        conda "bioconda::vibrant==1.0.1"
+    }
+    else {
+       conda "bioconda::vibrant==1.2.1"
+    }
+    
 
     tag "$assembler-$seqID"
     publishDir "${params.outdir}/mining/vibrant/${assembler}/${seqID}", mode: 'copy'
@@ -368,13 +376,31 @@ process vibrant {
     file("*")
 
     script:
-    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text.replaceAll("standard/", "standard")
-    """
-    VIBRANT_run.py \
-    -t ${task.cpus} \
-    -i ${scaffold} \
-    -folder ./ \
-    -d $workflow.projectDir/${path_file_vibrant_db}/databases/ \
-    -m $workflow.projectDir/${path_file_vibrant_db}/files/ 
-    """
+    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
+    if (params.mod_vibrant == "old")
+        """
+        VIBRANT_run.py \
+        -t ${task.cpus} \
+        -i ${scaffold} \
+        -k $workflow.projectDir/${path_file_vibrant_db}KEGG_profiles_prokaryotes.HMM \
+        -p $workflow.projectDir/${path_file_vibrant_db}Pfam-A_v32.HMM \
+        -v $workflow.projectDir/${path_file_vibrant_db}VOGDB94_phage.HMM \
+        -e $workflow.projectDir/${path_file_vibrant_db}Pfam-A_plasmid_v32.HMM \
+        -a $workflow.projectDir/${path_file_vibrant_db}Pfam-A_phage_v32.HMM \
+        -c $workflow.projectDir/${path_file_vibrant_db}VIBRANT_categories.tsv \
+        -n $workflow.projectDir/${path_file_vibrant_db}VIBRANT_names.tsv \
+        -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
+        -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
+        -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
+        """
+    else 
+        """
+        VIBRANT_run.py \
+        -t ${task.cpus} \
+        -i ${scaffold} \
+        -folder ./ \
+        -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
+        -m $workflow.projectDir/${path_file_vibrant_db}files/ 
+        """
+    
 }

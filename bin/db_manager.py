@@ -205,6 +205,62 @@ def manage(projectDir,
         else:
             echo(mod_folder + "*" + ' already present!')
         makeChannel("file_vibrant_db", rel_path)
+
+    elif mod_vibrant == "old":
+        rel_path = "db/vibrant/old/"
+        mod_folder = projectDir + rel_path
+        checkCreate(mod_folder)
+        if not os.path.exists(mod_folder + "KEGG_profiles_prokaryotes.HMM") or not os.path.exists(mod_folder + "Pfam-A_v32.HMM") or not os.path.exists(mod_folder + "VOGDB94_phage.HMM"):
+            echo("Downloading " + mod_folder + "*" + " ...")
+            os.popen('wget http://fileshare.csb.univie.ac.at/vog/vog94/vog.hmm.tar.gz').read()
+            os.popen('wget ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam32.0/Pfam-A.hmm.gz').read()
+            os.popen('wget ftp://ftp.genome.jp/pub/db/kofam/archives/2019-08-10/profiles.tar.gz').read()
+            echo("Decompressing ...")
+            os.popen('mkdir profile_names').read()
+            # vog
+            os.popen('tar -xzf vog.hmm.tar.gz').read()
+            os.popen('for v in VOG*.hmm; do cat $v >> vog_temp.HMM; done').read()
+            os.popen('rm VOG0*.hmm').read()
+            os.popen('rm VOG1*.hmm').read()
+            os.popen('rm VOG2*.hmm').read()
+            os.popen('wget -O profile_names/VIBRANT_vog_profiles.txt https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/master/databases/profile_names/VIBRANT_vog_profiles.txt').read()
+            os.popen('hmmfetch -o VOGDB94_phage.HMM -f vog_temp.HMM profile_names/VIBRANT_vog_profiles.txt').read()
+            os.popen('hmmpress VOGDB94_phage.HMM').read()
+            os.popen('rm vog_temp.HMM vog.hmm.tar.gz').read()
+            # pfam
+            os.popen('gunzip Pfam-A.hmm.gz').read()
+            os.popen('wget -O profile_names/VIBRANT_pfam-plasmid_profiles.txt https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/databases/profile_names/VIBRANT_pfam-plasmid_profiles.txt').read()
+            os.popen('hmmfetch -o Pfam-A_plasmid_v32.HMM -f Pfam-A.hmm profile_names/VIBRANT_pfam-plasmid_profiles.txt').read()
+            os.popen('wget -O profile_names/VIBRANT_pfam-phage_profiles.txt https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/databases/profile_names/VIBRANT_pfam-phage_profiles.txt').read()
+            os.popen('hmmfetch -o Pfam-A_phage_v32.HMM -f Pfam-A.hmm profile_names/VIBRANT_pfam-phage_profiles.txt').read()
+            os.popen('mv Pfam-A.hmm Pfam-A_v32.HMM').read()
+            os.popen('hmmpress Pfam-A_plasmid_v32.HMM').read()
+            os.popen('hmmpress Pfam-A_phage_v32.HMM').read()
+            os.popen('hmmpress Pfam-A_v32.HMM').read()
+            # kegg
+            os.popen('tar -xzf profiles.tar.gz').read()
+            os.popen('for k in profiles/K*.hmm; do cat $k >> kegg_temp.HMM; done').read()
+            os.popen('wget -O profile_names/VIBRANT_kegg_profiles.txt https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/master/databases/profile_names/VIBRANT_kegg_profiles.txt').read()
+            os.popen('hmmfetch -o KEGG_profiles_prokaryotes.HMM -f kegg_temp.HMM profile_names/VIBRANT_kegg_profiles.txt').read()
+            os.popen('hmmpress KEGG_profiles_prokaryotes.HMM').read()
+            os.popen('rm -R profiles').read()
+            os.popen('rm kegg_temp.HMM profiles.tar.gz').read()
+            # move to mod_folder/databases/
+            os.popen('rm -R profile_names').read()
+            os.popen('mv VOG* %s' % (mod_folder)).read()
+            os.popen('mv Pfam* %s' % (mod_folder)).read()
+            os.popen('mv KEGG* %s' % (mod_folder)).read()
+            # now fill mod_folder/files/
+            os.popen('wget -O %sVIBRANT_AMGs.tsv https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/files/VIBRANT_AMGs.tsv' % (mod_folder)).read()
+            os.popen('wget -O %sVIBRANT_KEGG_pathways_summary.tsv https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/files/VIBRANT_KEGG_pathways_summary.tsv' % (mod_folder)).read()
+            os.popen('wget -O %sVIBRANT_categories.tsv https://raw.githubusercontent.com/AnantharamanLab/VIBRANT/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/files/VIBRANT_categories.tsv' % (mod_folder)).read()
+            os.popen('wget -O %sVIBRANT_machine_model.sav https://github.com/AnantharamanLab/VIBRANT/raw/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/files/VIBRANT_machine_model.sav' % (mod_folder)).read()
+            os.popen('wget -O %sVIBRANT_names.tsv https://github.com/AnantharamanLab/VIBRANT/raw/7a59d65ee21e7a23f9579914b9eb3bc83149b62f/files/VIBRANT_names.tsv' % (mod_folder)).read()
+            
+            echo("OK") 
+        else:
+            echo(mod_folder + "*" + ' already present!')
+        makeChannel("file_vibrant_db", rel_path)
     
 
 
