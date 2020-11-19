@@ -32,7 +32,7 @@ params.mod_vibrant = "legacy"
 params.file_vibrant_db = "-"                                                      
 
 // Viral Taxonomy - vContact2 
-params.skip_vcontact2 = false                                                                               
+params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
 
 
   
@@ -363,7 +363,7 @@ process vibrant {
     
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/vibrant/${assembler}/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
     when:
     !params.skip_vibrant
@@ -374,6 +374,7 @@ process vibrant {
 
     output:
     file("*")
+    tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
 
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
@@ -402,5 +403,41 @@ process vibrant {
         -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
         -m $workflow.projectDir/${path_file_vibrant_db}files/ 
         """
-    
+}
+
+/* STEP 5 - viral taxonomy */
+process vcontact2 {
+    conda "bioconda::vcontact2==0.9.19"
+
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}/${seqID}", mode: 'copy'
+
+    when:
+    !params.skip_vcontact2
+
+    input:
+    tuple val(assembler), val(seqID), file(phages_combined) from ch_vibrant_vcontact2
+
+    output:
+    file("*")
+
+    script:
+    """
+    $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
+
+    $workflow.projectDir/bin/vcontact2_gene2genome.py \
+    -p ${phages_combined}.simple.faa \
+    -o viral_genomes_g2g.csv \
+    -s 'Prodigal-FAA'
+
+    vcontact2 \
+    -t ${task.cpus} \
+    --raw-proteins ${phages_combined}.simple.faa \
+    --proteins-fp viral_genomes_g2g.csv \
+    --db 'ProkaryoticViralRefSeq94-Merged' \
+    --pcs-mode MCL \
+    --vcs-mode ClusterONE \
+    --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
+    --output-dir ./
+    """
 }
