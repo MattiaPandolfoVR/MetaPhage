@@ -29,7 +29,10 @@ params.skip_quast = false
 // Phage-hunting - Vibrant 
 params.skip_vibrant = false 
 params.mod_vibrant = "legacy"    
-params.file_vibrant_db = "-"                                                      
+params.file_vibrant_db = "-" 
+params.skip_phigaro = false 
+params.mod_phigaro = "standard"    
+params.file_phigaro_config = "-"                                                      
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
@@ -76,7 +79,7 @@ welcomeScreen()
 /* STEP 0 - check presence and download required files */
 process db_manager {
     if (params.db_manager_reports) { echo true }
-    conda "bioconda::vibrant==1.2.1 conda-forge::tar==1.29"
+    conda "bioconda::vibrant==1.2.1 conda-forge::tar==1.29 bioconda::phigaro==2.3.0"
 
     tag "Downloading..."
 
@@ -84,19 +87,21 @@ process db_manager {
     file("file_phix_alone") into (ch_file_phix_alone)
     file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
     file("file_vibrant_db") into (ch_file_vibrant_db)
+    file("file_phigaro_config") into (ch_file_phigaro_config)
 
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
     """
-    python -u $workflow.projectDir/bin/db_manager.py \
+    python $workflow.projectDir/bin/db_manager.py \
     --mod_phix ${params.mod_phix} \
     --file_phix_alone ${params.file_phix_alone} \
     --mod_kraken2 ${params.mod_kraken2} \
     --file_kraken2_db ${params.file_kraken2_db} \
     --mod_vibrant ${params.mod_vibrant} \
-    --file_vibrant_db ${params.file_vibrant_db}
+    --file_vibrant_db ${params.file_vibrant_db} \
+    --mod_phigaro ${params.mod_phigaro} \
+    --file_phigaro_config ${params.file_phigaro_config}
     """
-   
 }
 
 /* STEP 1a - quality check and trimming */
@@ -276,7 +281,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -307,7 +312,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -403,6 +408,40 @@ process vibrant {
         -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
         -m $workflow.projectDir/${path_file_vibrant_db}files/ 
         """
+}
+
+process phigaro {
+    conda "bioconda::phigaro==2.3.0"
+
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy'
+
+    when:
+    !params.skip_phigaro
+
+    input:
+    file file_phigaro_config from ch_file_phigaro_config // this act just like a timer
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_phigaro, ch_megahit_phigaro)
+
+    output:
+    file("*")
+
+    script:
+    path_file_phigaro_config = file("$workflow.projectDir/bin/groovy_vars/${file_phigaro_config}").text
+    """
+    python $workflow.projectDir/bin/phigaro_config_creator.py
+
+    printf 'Y\n' | phigaro \
+    --threads ${task.cpus} \
+    --fasta-file ${scaffold} \
+    --config config.yml \
+    --print-vogs \
+    --extension html \
+    --output phigaro_${seqID} \
+    --not-open \
+    --save-fasta \
+    --mode basic
+    """
 }
 
 /* STEP 5 - viral taxonomy */
