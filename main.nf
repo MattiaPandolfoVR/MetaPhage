@@ -57,7 +57,7 @@ if (params.readPaths) {         // declared in profile config
 /* PROCESSES */
 
 def welcomeScreen() {
-    println '''
+    println """
         ====================================================
          __  __      _        _____  _                      
         |  \\/  |    | |      |  __ \\| |                     
@@ -68,7 +68,7 @@ def welcomeScreen() {
                                                   __/ |     
                                                  |___/      
         ====================================================
-        '''.stripIndent()
+        """.stripIndent()
 }
 def cursystem = System.properties['os.name']
 welcomeScreen()

@@ -114,12 +114,12 @@ def manage(projectDir,
         if not os.path.exists(mod_folder + "hash.k2d") or not os.path.exists(mod_folder + "opts.k2d") or not os.path.exists(mod_folder + "taxo.k2d"):
             url = "ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/old/minikraken2_v1_8GB_201904.tgz"
             echo("Downloading " + mod_folder + "*" + " ...")
-            os.popen('wget -O ' + mod_folder + "archive.tgz" + ' ' + url).read() # note for future: without read(), wget won't pass  to tar!!!
+            os.popen('wget -O ' + mod_folder + "minikraken2_v1_8GB_201904.tgz" + ' ' + url).read() # note for future: without read(), wget won't pass  to tar!!!
             echo("Decompressing ...")
-            os.popen('tar zxvf %s --directory %s' % (mod_folder + "archive.tgz", mod_folder)).read() # note for future: without read(), tar won't extract anything!!!
+            os.popen('tar zxvf %s --directory %s' % (mod_folder + "minikraken2_v1_8GB_201904.tgz", mod_folder)).read() # note for future: without read(), tar won't extract anything!!!
             os.popen('mv %s %s' % (mod_folder + "minikraken2_v1_8GB/*", mod_folder)).read()
             os.popen('rm -rf %s' % (mod_folder + "minikraken2_v1_8GB")).read()
-            os.popen('rm %s' % (mod_folder + "archive.tgz")).read()
+            os.popen('rm %s' % (mod_folder + "minikraken2_v1_8GB_201904.tgz")).read()
             echo("OK") 
         else:
             echo(mod_folder + "*" + ' already present!')
@@ -132,12 +132,12 @@ def manage(projectDir,
         if not os.path.exists(mod_folder + "hash.k2d") or not os.path.exists(mod_folder + "opts.k2d") or not os.path.exists(mod_folder + "taxo.k2d"):
             url = "ftp://ftp.ccb.jhu.edu/pub/data/kraken2_dbs/old/minikraken2_v2_8GB_201904.tgz"
             echo("Downloading " + mod_folder + "*" + " ...")
-            os.popen('wget -O ' + mod_folder + "archive.tgz" + ' ' + url).read() # note for future: without read(), wget won't pass  to tar!!!
+            os.popen('wget -O ' + mod_folder + "minikraken2_v2_8GB_201904.tgz" + ' ' + url).read() # note for future: without read(), wget won't pass  to tar!!!
             echo("Decompressing ...")
-            os.popen('tar zxvf %s --directory %s' % (mod_folder + "archive.tgz", mod_folder)).read() # note for future: without output.read(), tar won't extract anything!!!
+            os.popen('tar zxvf %s --directory %s' % (mod_folder + "minikraken2_v2_8GB_201904.tgz", mod_folder)).read() # note for future: without output.read(), tar won't extract anything!!!
             os.popen('mv %s %s' % (mod_folder + "minikraken2_v2_8GB_201904_UPDATE/*", mod_folder)).read()
             os.popen('rm -rf %s' % (mod_folder + "minikraken2_v2_8GB_201904_UPDATE")).read()
-            os.popen('rm %s' % (mod_folder + "archive.tgz")).read()
+            os.popen('rm %s' % (mod_folder + "minikraken2_v2_8GB_201904.tgz")).read()
             echo("OK")
         else:
             echo(mod_folder + "*" + ' already present!')
