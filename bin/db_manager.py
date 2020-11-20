@@ -284,7 +284,7 @@ def manage(projectDir,
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "allpvoghmms.h3f") or not os.path.exists(mod_folder + "allpvoghmms.h3i") or not os.path.exists(mod_folder + "allpvoghmms.h3m") or not os.path.exists(mod_folder + "allpvoghmms.h3p"):
             echo("Downloading " + mod_folder + "*" + " ...")
-            stri = os.popen('wget -O %sallpvoghmms http://download.ripcm.com/phigaro/allpvoghmms' % (mod_folder)).read()
+            os.popen('wget -O %sallpvoghmms http://download.ripcm.com/phigaro/allpvoghmms' % (mod_folder)).read()
             os.popen('wget -O %sallpvoghmms.h3f http://download.ripcm.com/phigaro/allpvoghmms.h3f' % (mod_folder)).read()
             os.popen('wget -O %sallpvoghmms.h3i http://download.ripcm.com/phigaro/allpvoghmms.h3i' % (mod_folder)).read()
             os.popen('wget -O %sallpvoghmms.h3m http://download.ripcm.com/phigaro/allpvoghmms.h3m' % (mod_folder)).read()
@@ -312,6 +312,25 @@ def manage(projectDir,
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "file1") or not os.path.exists(mod_folder + "file2"):
             echo("Downloading " + mod_folder + "*" + " ...")
+            echo("--mod_virsorter2 standard NOT SUPPORTED YET")
+
+            echo("OK") 
+        else:
+            echo(mod_folder + "*" + ' already present!')
+        makeChannel("file_virsorter2_db", rel_path)
+
+    elif mod_virsorter2 == "legacy":
+        rel_path = "db/virsorter2/legacy/"
+        mod_folder = projectDir + rel_path
+        checkCreate(mod_folder)
+        if not os.path.exists(mod_folder + "PFAM_27/Pfam-A.hmm") or not os.path.exists(mod_folder + "PFAM_27/Pfam-B.hmm") or not os.path.exists(mod_folder + "Phage_gene_catalog/Pool_clusters.hmm") or not os.path.exists(mod_folder + "Phage_gene_catalog_plus_viromes/Pool_clusters.hmm"):
+            echo("Downloading " + mod_folder + "*" + " ...")
+            # as described here: http://merenlab.org/2018/02/08/importing-virsorter-annotations/ 
+            os.popen('wget -O %svirsorter-data-v2.tar.gz https://zenodo.org/record/1168727/files/virsorter-data-v2.tar.gz' % (mod_folder)).read()
+            os.popen('tar zxvf %s --directory %s' % (mod_folder + "virsorter-data-v2.tar.gz", mod_folder)).read()
+            os.popen('mv %s/* %s' % (mod_folder + "virsorter-data", mod_folder)).read()
+            os.popen('rm -R %s' % (mod_folder + "virsorter-data")).read()
+            os.popen('rm %s' % (mod_folder + "virsorter-data-v2.tar.gz")).read()
             
             echo("OK") 
         else:
