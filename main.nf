@@ -36,7 +36,10 @@ params.file_phigaro_config = "-"
 params.skip_virsorter2 = false 
 params.mod_virsorter2 = "legacy"    
 params.file_virsorter2_db = "-"  
-params.virsorter2_viromes = false                                                   
+params.virsorter2_viromes = false  
+params.skip_virfinder = false 
+params.mod_virfinder = "standard"    
+params.file_virfinder_db = "-"                                                  
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
@@ -287,7 +290,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter2)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter2, ch_metaspades_virfinder)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -318,7 +321,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter2)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter2, ch_megahit_virfinder)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -487,6 +490,28 @@ process virsorter2 {
         """
         echo $workflow.projectDir/${path_file_virsorter2_db}
         """
+}
+
+process virfinder {
+    conda "bioconda::r-virfinder==1.1"
+
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/mining/virfinder/${assembler}", mode: 'copy'
+
+    when:
+    !params.skip_virfinder
+
+    input:
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
+
+    output:
+    file("*")
+
+    script:
+    """
+    Rscript $workflow.projectDir/bin/virfinder_execute.R ${scaffold}
+    mv results.txt ${seqID}_results.txt
+    """
 }
 
 /* STEP 5 - viral taxonomy */
