@@ -32,7 +32,10 @@ params.mod_vibrant = "legacy"
 params.file_vibrant_db = "-" 
 params.skip_phigaro = false 
 params.mod_phigaro = "standard"    
-params.file_phigaro_config = "-"                                                      
+params.file_phigaro_config = "-"  
+params.skip_virsorter2 = false 
+params.mod_virsorter2 = "standard"    
+params.file_virsorter2_db = "-"                                                     
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
@@ -88,6 +91,7 @@ process db_manager {
     file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
     file("file_vibrant_db") into (ch_file_vibrant_db)
     file("file_phigaro_config") into (ch_file_phigaro_config)
+    file("file_virsorter2_db") into (ch_file_virsorter2_db)
 
     script:
     println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
@@ -100,7 +104,9 @@ process db_manager {
     --mod_vibrant ${params.mod_vibrant} \
     --file_vibrant_db ${params.file_vibrant_db} \
     --mod_phigaro ${params.mod_phigaro} \
-    --file_phigaro_config ${params.file_phigaro_config}
+    --file_phigaro_config ${params.file_phigaro_config} \
+    --mod_virsorter2 ${params.mod_virsorter2} \
+    --file_virsorter2_db ${params.file_virsorter2_db}
     """
 }
 
@@ -281,7 +287,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter2)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -312,7 +318,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter2)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -441,6 +447,29 @@ process phigaro {
     --not-open \
     --save-fasta \
     --mode basic
+    """
+}
+
+process virsorter2 {
+    conda "bioconda::virsorter==2.0.beta"
+
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/mining/virsorter2/${assembler}", mode: 'copy'
+
+    when:
+    !params.skip_virsorter2
+
+    input:
+    file file_virsorter2_db from ch_file_virsorter2_db 
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter2, ch_megahit_virsorter2)
+
+    output:
+    //file("*")
+
+    script:
+    path_file_virsorter2_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter2_db}").text
+    """
+    echo $workflow.projectDir/${path_file_virsorter2_db}
     """
 }
 
