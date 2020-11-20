@@ -26,16 +26,17 @@ params.skip_metaspades = false
 params.skip_megahit = false
 params.skip_quast = false
 
-// Phage-hunting - Vibrant 
+// Phage-hunting 
 params.skip_vibrant = false 
 params.mod_vibrant = "legacy"    
 params.file_vibrant_db = "-" 
 params.skip_phigaro = false 
 params.mod_phigaro = "standard"    
-params.file_phigaro_config = "-"  
+params.file_phigaro_config = "-" 
 params.skip_virsorter2 = false 
-params.mod_virsorter2 = "standard"    
-params.file_virsorter2_db = "-"                                                     
+params.mod_virsorter2 = "legacy"    
+params.file_virsorter2_db = "-"  
+params.virsorter2_viromes = false                                                   
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
@@ -84,7 +85,7 @@ process db_manager {
     if (params.db_manager_reports) { echo true }
     conda "bioconda::vibrant==1.2.1 conda-forge::tar==1.29 bioconda::phigaro==2.3.0"
 
-    tag "Downloading..."
+    tag "Downloading missing databases..."
 
     output:
     file("file_phix_alone") into (ch_file_phix_alone)
@@ -94,7 +95,6 @@ process db_manager {
     file("file_virsorter2_db") into (ch_file_virsorter2_db)
 
     script:
-    println "\n\nChecking presence of required databases. Downloading missing databases… (a detailed log will be created at ./output/db_manager.log). Several GB may to be downloaded: this could take long time!\nWait please...\n\n"
     """
     python $workflow.projectDir/bin/db_manager.py \
     --mod_phix ${params.mod_phix} \
@@ -451,10 +451,15 @@ process phigaro {
 }
 
 process virsorter2 {
-    conda "bioconda::virsorter==2.0.beta"
+    if (params.mod_virsorter2 == "legacy") {
+        conda "bioconda::virsorter==1.0.6"
+    }
+    else {
+       conda "bioconda::virsorter==2.0.beta"
+    }
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter2/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virsorter2/${assembler}/${seqID}", mode: 'copy'
 
     when:
     !params.skip_virsorter2
@@ -464,13 +469,24 @@ process virsorter2 {
     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter2, ch_megahit_virsorter2)
 
     output:
-    //file("*")
+    file("*")
 
     script:
     path_file_virsorter2_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter2_db}").text
-    """
-    echo $workflow.projectDir/${path_file_virsorter2_db}
-    """
+    def viromes = params.virsorter2_viromes ? "2" : "1"
+    if (params.mod_virsorter2 == "legacy")
+        """
+        wrapper_phage_contigs_sorter_iPlant.pl \
+        -f ${scaffold} \
+        --db $viromes \
+        --wdir ./ \
+        --ncpu ${task.cpus} \
+        --data-dir $workflow.projectDir/${path_file_virsorter2_db}
+        """
+    else 
+        """
+        echo $workflow.projectDir/${path_file_virsorter2_db}
+        """
 }
 
 /* STEP 5 - viral taxonomy */
