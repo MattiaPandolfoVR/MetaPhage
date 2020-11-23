@@ -140,5 +140,5 @@ Specifies the taxonomic rank to analyze (default is `S`). Options are `D`, `P`, 
 This pipeline consists of several modules. The image below summarizes them all.
 
 <p align="center">
-  <img src="./slides/pipeline_2020_11_18.drawio.svg">
+  <img src="./slides/pipeline_2020_12_01.drawio.svg">
 </p>
