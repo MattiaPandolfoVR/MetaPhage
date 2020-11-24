@@ -152,7 +152,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_bwa)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -169,7 +169,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_bwa}
 }
 
 /* STEP 2 - short reads alignment */
@@ -283,7 +283,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_bwa)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -504,6 +504,27 @@ process virfinder {
     """
     Rscript $workflow.projectDir/bin/virfinder_execute.R ${scaffold}
     mv results.txt ${seqID}_results.txt
+    """
+}
+
+/* STEP X - binning */
+process bwa {
+    conda "bioconda::bwa==0.7.3a"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/mapping/bwa", mode: 'copy'
+
+    input:
+    tuple val(seqID), file(reads) from ch_trimm_bwa
+    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_bwa
+
+    output:
+    file("*")
+
+    script:
+    """
+    bwa index ${scaffold}
+    bwa mem -t ${task.cpus} ${scaffold} ${reads[0]} ${reads[1]} > ${seqID}.sam
     """
 }
 
