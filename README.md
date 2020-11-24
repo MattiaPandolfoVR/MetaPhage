@@ -50,6 +50,27 @@ conda install wget==1.20.1 -c anaconda
 conda install graphviz==2.42.3 -c conda-forge
 conda install fastp==0.20.1 -c bioconda
 conda install htstream==1.0.0 -c bioconda
+conda install boost==1.70.0 -c conda-forge
+conda install tar==1.29 -c conda-forge
+conda install kraken2==2.1.0 -c conda-forge
+conda install llvm-openmp==11.0.0 -c conda-forge
+conda install bracken==2.5.3 -c bioconda
+conda install libcxx==9.0.1 -c conda-forge
+conda install llvm-openmp==10.0.1 -c conda-forge
+conda install python=3.7 -c conda-forge
+conda install python_abi==3.7=1_cp37m -c conda-forge
+conda install krona==2.7.1 -c bioconda
+conda install spades==3.14.1 -c bioconda
+conda install llvm-openmp==8.0.0 -c conda-forge
+conda install megahit==1.2.9 -c bioconda
+conda install quast==5.0.2 -c bioconda
+conda install vibrant==1.0.1 -c bioconda
+conda install vibrant==1.2.1 -c bioconda
+conda install phigaro==2.3.0 -c bioconda
+conda install virsorter==1.0.6 -c bioconda
+conda install virsorter==2.0.beta -c bioconda
+conda install r-virfinder==1.1 -c bioconda
+conda install vcontact2==0.9.19 -c bioconda
 ```
 
 # Usage
