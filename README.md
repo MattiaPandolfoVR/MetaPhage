@@ -109,7 +109,7 @@ Specify the modality of phix removal. There are 3 possibilities:
 
 - `phiX174` (default) search and remove the complete genome of Coliphage phiX174 isolate S1 (GenBank: AF176027.1, <https://www.ncbi.nlm.nih.gov/nuccore/AF176027>). Genome is automatically downloaded if not already present in `./db/phix/`.
 - `WA11` search and remove the complete genome of Coliphage WA11 (GenBank: DQ079895.1, <https://www.ncbi.nlm.nih.gov/nuccore/DQ079895>). Genome is automatically downloaded if not already present in `./db/phix/`.
-- `custom` search and remove the sequence specified with `--file_phix_alone` (path to the .fasta file).
+- `custom` search and remove the sequence specified with `--file_phix_alone` (path to the .fasta file; the path is relative to the pipeline's root directory, for example `--file_phix_alone ./db/phix/genome.fasta`).
 
 ### `--skip_kraken2`
 
@@ -121,7 +121,7 @@ Specify the modality of the short read alignment with Kraken2. There are 3 possi
 
 - `miniBAV` (default) align against RefSeq bacteria, archaea, and viral libraries. Pre-built database taken from <https://ccb.jhu.edu/software/kraken2/downloads.shtml>.
 - `miniBAVH` align against RefSeq bacteria, archaea, and viral libraries, and against the GRCh38 human genome. Pre-built database taken from <https://ccb.jhu.edu/software/kraken2/downloads.shtml>.
-- `custom` align using your custom database. With this modality you have to specify also `--file_kraken2_db`, which is the path to the `hash.k2d` file. `opts.k2d` and `taxo.k2d` files MUST be placed in the same folder of `hash.k2d`.
+- `custom` align using your custom database. With this modality you have to specify also `--file_kraken2_db`, which is the path to the folder containing the `hash.k2d`, `opts.k2d` and `taxo.k2d` files. The path is relative to the pipeline's root directory, for example `--file_kraken2_db ./db/kraken2/folder/`.
 
 ### `--skip_bracken`
 
@@ -129,11 +129,59 @@ Specify whether to perform the quantification with Bracken or not. Default is `f
 
 ### `--bracken_read_length`
 
-Specify the read length to be used in Bracken (default is `100`). The databases provided with `--mod_kraken2 miniBAV` and `--mod_kraken2 miniBAVH` include files for read lengths 100, 150, or 200.
+Specify the read length to be used in Bracken (default is `100`). The databases provided with `--mod_kraken2 miniBAV` and `--mod_kraken2 miniBAVH` include files for read lengths 100, 150, or 200. Files for custom read lengths must be placed in the same folder of `hash.k2d` (use the `--file_kraken2_db` parameter, see above).
 
 ### `--bracken_abundance_level`
 
 Specifies the taxonomic rank to analyze (default is `S`). Options are `D`, `P`, `C`, `O`, `F`, `G`, and `S`. Each classification at this specified rank will receive an estimated number of reads belonging to that rank after abundance estimation.
+
+### `--skip_metaspades`
+
+Specify whether to perform the assembly with metaSPAdes or not. Default is `false`.
+
+### `--skip_megahit`
+
+Specify whether to perform the assembly with MEGAHIT or not. Default is `false`.
+
+### `--skip_quast`
+
+Specify whether to perform the assembly evaluation with QUAST or not. Default is `false`.
+
+### `--skip_vibrant`
+
+Specify whether to perform the phage mining with VIBRANT or not. Default is `false`.
+
+### `--mod_vibrant`
+
+Specify the modality of the phage mining with VIBRANT. There are 2 possibilities:
+
+- `legacy` (default) use VIBRANT 1.0.1.
+
+- `standard` use VIBRANT 1.2.1. **Not working yet** (does not produce output).
+
+### `--skip_phigaro
+
+Specify whether to perform the phage mining with Phigaro or not. Default is `false`.
+
+### `--skip_virsorter`
+
+Specify whether to perform the phage mining with VirSorter or not. Default is `false`.
+
+### `--mod_virsorter`
+
+Specify the modality of the phage mining with VirSorter. There are 2 possibilities:
+
+- `legacy` (default) use VirSorter 1.0.6.
+
+- `standard` use VirSorter 2.0.beta. **Not working yet** (does not produce output).   
+
+### `--virsorter_viromes`
+
+Specify whether to perform the phage mining with VirSorter with the option "virome" enabled. Default is `false`.
+
+### `--skip_virfinder`
+
+Specify whether to perform the phage mining with VirFinder or not. Default is `false`.
 
 # Structure
 

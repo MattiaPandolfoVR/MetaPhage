@@ -33,13 +33,11 @@ params.file_vibrant_db = "-"
 params.skip_phigaro = false 
 params.mod_phigaro = "standard"    
 params.file_phigaro_config = "-" 
-params.skip_virsorter2 = false 
-params.mod_virsorter2 = "legacy"    
-params.file_virsorter2_db = "-"  
-params.virsorter2_viromes = false  
-params.skip_virfinder = false 
-params.mod_virfinder = "standard"    
-params.file_virfinder_db = "-"                                                  
+params.skip_virsorter = false 
+params.mod_virsorter = "legacy"    
+params.file_virsorter_db = "-"  
+params.virsorter_viromes = false  
+params.skip_virfinder = false                                                 
 
 // Viral Taxonomy - vContact2 
 params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
@@ -95,7 +93,7 @@ process db_manager {
     file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
     file("file_vibrant_db") into (ch_file_vibrant_db)
     file("file_phigaro_config") into (ch_file_phigaro_config)
-    file("file_virsorter2_db") into (ch_file_virsorter2_db)
+    file("file_virsorter_db") into (ch_file_virsorter_db)
 
     script:
     """
@@ -108,8 +106,8 @@ process db_manager {
     --file_vibrant_db ${params.file_vibrant_db} \
     --mod_phigaro ${params.mod_phigaro} \
     --file_phigaro_config ${params.file_phigaro_config} \
-    --mod_virsorter2 ${params.mod_virsorter2} \
-    --file_virsorter2_db ${params.file_virsorter2_db}
+    --mod_virsorter ${params.mod_virsorter} \
+    --file_virsorter_db ${params.file_virsorter_db}
     """
 }
 
@@ -290,7 +288,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter2, ch_metaspades_virfinder)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -321,7 +319,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter2, ch_megahit_virfinder)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -453,8 +451,8 @@ process phigaro {
     """
 }
 
-process virsorter2 {
-    if (params.mod_virsorter2 == "legacy") {
+process virsorter {
+    if (params.mod_virsorter == "legacy") {
         conda "bioconda::virsorter==1.0.6"
     }
     else {
@@ -462,33 +460,33 @@ process virsorter2 {
     }
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter2/${assembler}/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virsorter/${assembler}/${seqID}", mode: 'copy'
 
     when:
-    !params.skip_virsorter2
+    !params.skip_virsorter
 
     input:
-    file file_virsorter2_db from ch_file_virsorter2_db 
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter2, ch_megahit_virsorter2)
+    file file_virsorter_db from ch_file_virsorter_db 
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter, ch_megahit_virsorter)
 
     output:
     file("*")
 
     script:
-    path_file_virsorter2_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter2_db}").text
-    def viromes = params.virsorter2_viromes ? "2" : "1"
-    if (params.mod_virsorter2 == "legacy")
+    path_file_virsorter_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter_db}").text
+    def viromes = params.virsorter_viromes ? "2" : "1"
+    if (params.mod_virsorter == "legacy")
         """
         wrapper_phage_contigs_sorter_iPlant.pl \
         -f ${scaffold} \
         --db $viromes \
         --wdir ./ \
         --ncpu ${task.cpus} \
-        --data-dir $workflow.projectDir/${path_file_virsorter2_db}
+        --data-dir $workflow.projectDir/${path_file_virsorter_db}
         """
     else 
         """
-        echo $workflow.projectDir/${path_file_virsorter2_db}
+        echo $workflow.projectDir/${path_file_virsorter_db}
         """
 }
 

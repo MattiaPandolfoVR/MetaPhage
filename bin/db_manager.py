@@ -24,8 +24,8 @@ options.add_argument('-b', '--mod_vibrant', dest='mod_vibrant', metavar='STRING'
 options.add_argument('-b1', '--file_vibrant_db', dest='file_vibrant_db', metavar='PATH', default=None)
 options.add_argument('-g', '--mod_phigaro', dest='mod_phigaro', metavar='STRING', default=None)
 options.add_argument('-g1', '--file_phigaro_config', dest='file_phigaro_config', metavar='PATH', default=None)
-options.add_argument('-s', '--mod_virsorter2', dest='mod_virsorter2', metavar='STRING', default=None)
-options.add_argument('-s1', '--file_virsorter2_db', dest='file_virsorter2_db', metavar='PATH', default=None)
+options.add_argument('-s', '--mod_virsorter', dest='mod_virsorter', metavar='STRING', default=None)
+options.add_argument('-s1', '--file_virsorter_db', dest='file_virsorter_db', metavar='PATH', default=None)
 
 
 
@@ -41,7 +41,7 @@ def manage(projectDir,
            mod_kraken2, file_kraken2_db,
            mod_vibrant, file_vibrant_db,
            mod_phigaro, file_phigaro_config,
-           mod_virsorter2, file_virsorter2_db):
+           mod_virsorter, file_virsorter_db):
 
     
     def checkCreate(path):
@@ -298,29 +298,29 @@ def manage(projectDir,
 
     
     #################################
-    # virsorter2 ####################
+    # virsorter #####################
     #################################
-    if mod_virsorter2 == "custom":
-        if file_virsorter2_db == "-":
-            error('With --mod_virsorter2 custom you have to specify also --file_virsorter2_db')
+    if mod_virsorter == "custom":
+        if file_virsorter_db == "-":
+            error('With --mod_virsorter custom you have to specify also --file_virsorter_db')
         else:
-            makeChannel("file_virsorter2_db", file_virsorter2_db)
+            makeChannel("file_virsorter_db", file_virsorter_db)
     
-    elif mod_virsorter2 == "standard":
-        rel_path = "db/virsorter2/standard/"
+    elif mod_virsorter == "standard":
+        rel_path = "db/virsorter/standard/"
         mod_folder = projectDir + rel_path
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "file1") or not os.path.exists(mod_folder + "file2"):
             echo("Downloading " + mod_folder + "*" + " ...")
-            echo("--mod_virsorter2 standard NOT SUPPORTED YET")
+            echo("--mod_virsorter standard NOT SUPPORTED YET")
 
             echo("OK") 
         else:
             echo(mod_folder + "*" + ' already present!')
-        makeChannel("file_virsorter2_db", rel_path)
+        makeChannel("file_virsorter_db", rel_path)
 
-    elif mod_virsorter2 == "legacy":
-        rel_path = "db/virsorter2/legacy/"
+    elif mod_virsorter == "legacy":
+        rel_path = "db/virsorter/legacy/"
         mod_folder = projectDir + rel_path
         checkCreate(mod_folder)
         if not os.path.exists(mod_folder + "PFAM_27/Pfam-A.hmm") or not os.path.exists(mod_folder + "PFAM_27/Pfam-B.hmm") or not os.path.exists(mod_folder + "Phage_gene_catalog/Pool_clusters.hmm") or not os.path.exists(mod_folder + "Phage_gene_catalog_plus_viromes/Pool_clusters.hmm"):
@@ -335,7 +335,7 @@ def manage(projectDir,
             echo("OK") 
         else:
             echo(mod_folder + "*" + ' already present!')
-        makeChannel("file_virsorter2_db", rel_path)
+        makeChannel("file_virsorter_db", rel_path)
     
 
 
@@ -353,6 +353,6 @@ if __name__ == "__main__":
            parameters.mod_kraken2, parameters.file_kraken2_db,
            parameters.mod_vibrant, parameters.file_vibrant_db,
            parameters.mod_phigaro, parameters.file_phigaro_config,
-           parameters.mod_virsorter2, parameters.file_virsorter2_db)
+           parameters.mod_virsorter, parameters.file_virsorter_db)
 
     
