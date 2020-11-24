@@ -98,16 +98,11 @@ process db_manager {
     script:
     """
     python $workflow.projectDir/bin/db_manager.py \
-    --mod_phix ${params.mod_phix} \
-    --file_phix_alone ${params.file_phix_alone} \
-    --mod_kraken2 ${params.mod_kraken2} \
-    --file_kraken2_db ${params.file_kraken2_db} \
-    --mod_vibrant ${params.mod_vibrant} \
-    --file_vibrant_db ${params.file_vibrant_db} \
-    --mod_phigaro ${params.mod_phigaro} \
-    --file_phigaro_config ${params.file_phigaro_config} \
-    --mod_virsorter ${params.mod_virsorter} \
-    --file_virsorter_db ${params.file_virsorter_db}
+    --mod_phix ${params.mod_phix} --keep_phix ${params.keep_phix} --file_phix_alone ${params.file_phix_alone} \
+    --mod_kraken2 ${params.mod_kraken2} --skip_kraken2 ${params.skip_kraken2} --file_kraken2_db ${params.file_kraken2_db} \
+    --mod_vibrant ${params.mod_vibrant} --skip_vibrant ${params.skip_vibrant} --file_vibrant_db ${params.file_vibrant_db} \
+    --mod_phigaro ${params.mod_phigaro} --skip_phigaro ${params.skip_phigaro} --file_phigaro_config ${params.file_phigaro_config} \
+    --mod_virsorter ${params.mod_virsorter} --skip_virsorter ${params.skip_virsorter} --file_virsorter_db ${params.file_virsorter_db}
     """
 }
 
