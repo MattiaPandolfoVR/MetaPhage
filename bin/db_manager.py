@@ -17,19 +17,19 @@ options = parser.add_argument_group("Options")
 options.add_argument('-v', '--version', action='version', version= software + " v" + version)
 # what follow are ALL the parameters passed by nextflow
 options.add_argument('-p', '--mod_phix', dest='mod_phix', metavar='STRING', default=None)
-options.add_argument('-p0', '--keep_phix', dest='keep_phix', metavar='BOOL', default=None, type=bool)
+options.add_argument('-p0', '--keep_phix', dest='keep_phix', metavar='STRING', default=None)
 options.add_argument('-p1', '--file_phix_alone', dest='file_phix_alone', metavar='PATH', default=None)
 options.add_argument('-k', '--mod_kraken2', dest='mod_kraken2', metavar='STRING', default=None)
-options.add_argument('-k0', '--skip_kraken2', dest='skip_kraken2', metavar='BOOL', default=None, type=bool)
+options.add_argument('-k0', '--skip_kraken2', dest='skip_kraken2', metavar='STRING', default=None)
 options.add_argument('-k1', '--file_kraken2_db', dest='file_kraken2_db', metavar='PATH', default=None)
 options.add_argument('-b', '--mod_vibrant', dest='mod_vibrant', metavar='STRING', default=None)
-options.add_argument('-b0', '--skip_vibrant', dest='skip_vibrant', metavar='BOOL', default=None, type=bool)
+options.add_argument('-b0', '--skip_vibrant', dest='skip_vibrant', metavar='STRING', default=None)
 options.add_argument('-b1', '--file_vibrant_db', dest='file_vibrant_db', metavar='PATH', default=None)
 options.add_argument('-g', '--mod_phigaro', dest='mod_phigaro', metavar='STRING', default=None)
-options.add_argument('-g0', '--skip_phigaro', dest='skip_phigaro', metavar='BOOL', default=None, type=bool)
+options.add_argument('-g0', '--skip_phigaro', dest='skip_phigaro', metavar='STRING', default=None)
 options.add_argument('-g1', '--file_phigaro_config', dest='file_phigaro_config', metavar='PATH', default=None)
 options.add_argument('-s', '--mod_virsorter', dest='mod_virsorter', metavar='STRING', default=None)
-options.add_argument('-s0', '--skip_virsorter', dest='skip_virsorter', metavar='BOOL', default=None, type=bool)
+options.add_argument('-s0', '--skip_virsorter', dest='skip_virsorter', metavar='STRING', default=None)
 options.add_argument('-s1', '--file_virsorter_db', dest='file_virsorter_db', metavar='PATH', default=None)
 
 
@@ -79,7 +79,7 @@ def manage(projectDir,
     #################################
     # phix ##########################
     #################################
-    if keep_phix == False:
+    if keep_phix == "false":
         rel_path = "db/phix/"
         mod_folder = projectDir + rel_path
         checkCreate(mod_folder)
@@ -114,7 +114,7 @@ def manage(projectDir,
     #################################
     # kraken2 #######################
     #################################
-    if skip_kraken2 == False:
+    if skip_kraken2 == "false":
         if mod_kraken2 == "custom":
             if file_kraken2_db == "-":
                 error('With --mod_kraken2 custom you have to specify also --file_kraken2_db')
@@ -164,7 +164,7 @@ def manage(projectDir,
     #################################
     # vibrant #######################
     #################################
-    if skip_vibrant == False:
+    if skip_vibrant == "false":
         if mod_vibrant == "custom":
             if file_vibrant_db == "-":
                 error('With --mod_vibrant custom you have to specify also --file_vibrant_db')
@@ -285,7 +285,7 @@ def manage(projectDir,
     #################################
     # phigaro #######################
     #################################
-    if skip_phigaro == False:
+    if skip_phigaro == "false":
         if mod_phigaro == "custom":
             if file_phigaro_config == "-":
                 error('With --mod_phigaro custom you have to specify also --file_phigaro_config')
@@ -309,13 +309,13 @@ def manage(projectDir,
                 echo(mod_folder + "*" + ' already present!')
             makeChannel("file_phigaro_config", rel_path)
     else:
-        makeChannel("file_phigaro_db", "UNUSED: skip_phigaro is True!")
+        makeChannel("file_phigaro_config", "UNUSED: skip_phigaro is True!")
 
     
     #################################
     # virsorter #####################
     #################################
-    if skip_virsorter == False:
+    if skip_virsorter == "false":
         if mod_virsorter == "custom":
             if file_virsorter_db == "-":
                 error('With --mod_virsorter custom you have to specify also --file_virsorter_db')
