@@ -55,7 +55,7 @@ if (params.readPaths) {         // declared in profile config
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .set { ch_reads_fastp }
+            .into { ch_reads_fastp ; ch_reads_bwa }
     }
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
@@ -152,7 +152,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_bwa)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -169,7 +169,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_bwa}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit}
 }
 
 /* STEP 2 - short reads alignment */
@@ -314,7 +314,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder, ch_megahit_bwa)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -508,23 +508,26 @@ process virfinder {
 }
 
 /* STEP X - binning */
-process bwa {
-    conda "bioconda::bwa==0.7.3a"
+process bwa_samtools {
+    conda "bioconda::bwa==0.7.3a bioconda::samtools==1.9"
 
     tag "$seqID"
     publishDir "${params.outdir}/mapping/bwa", mode: 'copy'
 
     input:
-    tuple val(seqID), file(reads) from ch_trimm_bwa
-    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_bwa
+    tuple val(seqID), file(raw_reads) from ch_reads_bwa
+    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_bwa, ch_megahit_bwa)
 
     output:
     file("*")
+    tuple val(seqID), file("${seqID}.sam") into (ch_bwa_samtools)
 
     script:
     """
     bwa index ${scaffold}
-    bwa mem -t ${task.cpus} ${scaffold} ${reads[0]} ${reads[1]} > ${seqID}.sam
+    bwa mem -t ${task.cpus} ${scaffold} ${raw_reads[0]} ${raw_reads[1]} > ${seqID}.sam
+    samtools view -S -b ${seqID}.sam > ${seqID}.bam
+    samtools index ${seqID}.bam
     """
 }
 
