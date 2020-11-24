@@ -159,7 +159,7 @@ Specify the modality of the phage mining with VIBRANT. There are 2 possibilities
 
 - `standard` use VIBRANT 1.2.1. **Not working yet** (does not produce output).
 
-### `--skip_phigaro
+### `--skip_phigaro`
 
 Specify whether to perform the phage mining with Phigaro or not. Default is `false`.
 
