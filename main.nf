@@ -520,14 +520,12 @@ process bwa_samtools {
 
     output:
     file("*")
-    tuple val(seqID), file("${seqID}.sam") into (ch_bwa_samtools)
 
     script:
     """
     bwa index ${scaffold}
     bwa mem -t ${task.cpus} ${scaffold} ${raw_reads[0]} ${raw_reads[1]} > ${seqID}.sam
     samtools view -S -b ${seqID}.sam > ${seqID}.bam
-    samtools index ${seqID}.bam
     """
 }
 
