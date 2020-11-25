@@ -283,9 +283,8 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_bowtie2, ch_metaspades_metabat2)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder)
     tuple val(seqID), file("${seqID}_contigs.fasta")
-    file "${seqID}_scaffolds.fasta" into ch_metaspades_collect
 
     script:
     def input = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"  //check when metaspades accepts single-end read libraries!
@@ -383,6 +382,7 @@ process vibrant {
     output:
     file("*")
     tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
+    file "**/*.phages_combined.fna" into (ch_vibrant_collect)
 
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
@@ -508,7 +508,25 @@ process virfinder {
     """
 }
 
+process collect {
+    tag "all"
+    publishDir "${params.outdir}/collect", mode: 'copy'
+
+    input:
+    file '*.fasta' from ch_vibrant_collect.collect()
+
+    output:
+    file("*")
+    file "concat.fasta" into (ch_collect_bowtie2)
+
+    script:
+    """
+    cat *.fasta > concat.fasta
+    """
+}
+
 /* STEP X - binning */
+/*
 process bowtie2_samtools {
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
@@ -543,6 +561,8 @@ process bowtie2_samtools {
     """
 }
 
+*/
+/*
 process metabat2 {
     conda "bioconda::metabat2==2.14"
 
@@ -576,24 +596,7 @@ process metabat2 {
     --verbose > ${seqID}_log.txt
     """
 }
-
-process collect_scaffold {
-    tag "all"
-    publishDir "${params.outdir}/collect", mode: 'copy'
-
-    input:
-    file '*.fasta' from ch_metaspades_collect.collect()
-
-    
-    output:
-    file("*")
-
-    script:
-    """
-    cat *.fasta > concat.fasta
-    """
-}
-
+*/
 
 /* STEP 5 - viral taxonomy */
 process vcontact2 {
