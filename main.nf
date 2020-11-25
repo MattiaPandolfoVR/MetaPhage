@@ -55,7 +55,7 @@ if (params.readPaths) {         // declared in profile config
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .into { ch_reads_fastp ; ch_reads_bwa }
+            .into { ch_reads_fastp }
     }
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
@@ -152,7 +152,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_bowtie2)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -169,7 +169,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_bowtie2}
 }
 
 /* STEP 2 - short reads alignment */
@@ -283,7 +283,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_bwa)
+    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_bowtie2, ch_metaspades_metabat2)
     tuple val(seqID), file("${seqID}_contigs.fasta")
 
     script:
@@ -314,7 +314,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder, ch_megahit_bwa)
+    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
 
     script:
     def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -508,26 +508,75 @@ process virfinder {
 }
 
 /* STEP X - binning */
-process bwa_samtools {
-    conda "bioconda::bwa==0.7.3a bioconda::samtools==1.9"
+process bowtie2_samtools {
+    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9"
 
     tag "$seqID"
-    publishDir "${params.outdir}/mapping/bwa", mode: 'copy'
+    publishDir "${params.outdir}/mapping/bowtie2", mode: 'copy'
 
     input:
-    tuple val(seqID), file(raw_reads) from ch_reads_bwa
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_bwa, ch_megahit_bwa)
+    tuple val(seqID), file(reads) from ch_trimm_bowtie2
+    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_bowtie2
 
+    output:
+    file("*")
+    tuple val(assembler), val(seqID), file("${seqID}.bam") into (ch_bowtie2_metabat2)
+
+    script:
+    """
+    bowtie2-build ${scaffold} ${seqID}_index --threads ${task.cpus}
+    bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}.sam 
+    samtools view -S -b ${seqID}.sam > ${seqID}.bam
+    samtools sort -@ ${task.cpus} ${seqID}.bam -o ${seqID}.sorted.bam
+    samtools index -@ ${task.cpus} ${seqID}.sorted.bam
+    """
+}
+/*
+process metabat2 {
+    conda "bioconda::metabat2==2.15"
+
+    tag "$seqID"
+    publishDir "${params.outdir}/binning/metabat2", mode: 'copy'
+
+    input:
+    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_metabat2
+    tuple val(assembler), val(seqID), file(alignment) from ch_bowtie2_metabat2
+    
     output:
     file("*")
 
     script:
     """
-    bwa index ${scaffold}
-    bwa mem -t ${task.cpus} ${scaffold} ${raw_reads[0]} ${raw_reads[1]} > ${seqID}.sam
-    samtools view -S -b ${seqID}.sam > ${seqID}.bam
+    # adapted from https://github.com/BinPro/CONCOCT/tree/1.1.0
+ 
+    # Slice contigs into smaller sequences
+    cut_up_fasta.py ${scaffold} \
+    -c 10000 \
+    -o 0 \
+    --merge_last \
+    -b contigs_10K.bed > contigs_10K.fa
+    
+    
+    # Generate coverage depth 
+    concoct_coverage_table.py contigs_10K.bed ${alignment} > coverage_table.tsv
+    
+    # Execute CONCOCT
+    concoct \
+    --composition_file contigs_10K.fa \
+    --coverage_file coverage_table.tsv \
+    -b concoct_output/
+    
+    # Merge sub-contig clustering into original contig clustering
+    merge_cutup_clustering.py concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+    
+    # Create output folder for bins
+    mkdir concoct_output/fasta_bins
+    
+    # Parse bins into different files
+    extract_fasta_bins.py ${scaffold} concoct_output
     """
 }
+*/
 
 /* STEP 5 - viral taxonomy */
 process vcontact2 {
