@@ -285,6 +285,7 @@ process metaSPAdes {
     output:
     tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_bowtie2, ch_metaspades_metabat2)
     tuple val(seqID), file("${seqID}_contigs.fasta")
+    file "${seqID}_scaffolds.fasta" into ch_metaspades_collect
 
     script:
     def input = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"  //check when metaspades accepts single-end read libraries!
@@ -509,7 +510,7 @@ process virfinder {
 
 /* STEP X - binning */
 process bowtie2_samtools {
-    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9"
+    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
     tag "$seqID"
     publishDir "${params.outdir}/mapping/bowtie2", mode: 'copy'
@@ -527,10 +528,18 @@ process bowtie2_samtools {
     echo "${seqID} : ${scaffold} : ${reads[0]} : ${reads[1]}" > echo_bowtie2_${seqID}.txt
 
     bowtie2-build --threads ${task.cpus} ${scaffold} ${seqID}_index
+
     bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}.sam 
+
     samtools view -S -b ${seqID}.sam > ${seqID}.bam
+
     samtools sort -@ ${task.cpus} ${seqID}.bam -o ${seqID}.sorted.bam
+
     samtools index -@ ${task.cpus} ${seqID}.sorted.bam
+
+    samtools flagstat -@ ${task.cpus} ${seqID}.sorted.bam > mappingstats_${seqID}.txt
+
+    qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}.sorted.bam 
     """
 }
 
@@ -565,6 +574,23 @@ process metabat2 {
     --seed 1 \
     --unbinned \
     --verbose > ${seqID}_log.txt
+    """
+}
+
+process collect_scaffold {
+    tag "all"
+    publishDir "${params.outdir}/collect", mode: 'copy'
+
+    input:
+    file '*.fasta' from ch_metaspades_collect.collect()
+
+    
+    output:
+    file("*")
+
+    script:
+    """
+    cat *.fasta > concat.fasta
     """
 }
 
