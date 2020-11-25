@@ -55,7 +55,7 @@ if (params.readPaths) {         // declared in profile config
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .into { ch_reads_fastp }
+            .into { ch_reads_fastp ; ch_reads_bowtie2 }
     }
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
@@ -515,25 +515,27 @@ process bowtie2_samtools {
     publishDir "${params.outdir}/mapping/bowtie2", mode: 'copy'
 
     input:
+    // raw_reads or reads ? Seems it make no difference...
+    tuple val(seqID), file(raw_reads) from ch_reads_bowtie2
     tuple val(seqID), file(reads) from ch_trimm_bowtie2
     tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_bowtie2
 
     output:
     file("*")
-    tuple val(assembler), val(seqID), file("${seqID}.bam") into (ch_bowtie2_metabat2)
+    tuple val(assembler), val(seqID), file("${seqID}.sorted.bam") into (ch_bowtie2_metabat2)
 
     script:
     """
     bowtie2-build ${scaffold} ${seqID}_index --threads ${task.cpus}
-    bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}.sam 
+    bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${raw_reads[0]} -2 ${raw_reads[1]} -S ${seqID}.sam 
     samtools view -S -b ${seqID}.sam > ${seqID}.bam
     samtools sort -@ ${task.cpus} ${seqID}.bam -o ${seqID}.sorted.bam
     samtools index -@ ${task.cpus} ${seqID}.sorted.bam
     """
 }
-/*
+
 process metabat2 {
-    conda "bioconda::metabat2==2.15"
+    conda "bioconda::metabat2==2.14"
 
     tag "$seqID"
     publishDir "${params.outdir}/binning/metabat2", mode: 'copy'
@@ -547,36 +549,22 @@ process metabat2 {
 
     script:
     """
-    # adapted from https://github.com/BinPro/CONCOCT/tree/1.1.0
- 
-    # Slice contigs into smaller sequences
-    cut_up_fasta.py ${scaffold} \
-    -c 10000 \
-    -o 0 \
-    --merge_last \
-    -b contigs_10K.bed > contigs_10K.fa
+    jgi_summarize_bam_contig_depths \
+    --outputDepth ${seqID}_depth.txt \
+    --percentIdentity 97 \
+    ${alignment}
     
-    
-    # Generate coverage depth 
-    concoct_coverage_table.py contigs_10K.bed ${alignment} > coverage_table.tsv
-    
-    # Execute CONCOCT
-    concoct \
-    --composition_file contigs_10K.fa \
-    --coverage_file coverage_table.tsv \
-    -b concoct_output/
-    
-    # Merge sub-contig clustering into original contig clustering
-    merge_cutup_clustering.py concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
-    
-    # Create output folder for bins
-    mkdir concoct_output/fasta_bins
-    
-    # Parse bins into different files
-    extract_fasta_bins.py ${scaffold} concoct_output
+    metabat2 \
+    --numThreads ${task.cpus} \
+    -i ${scaffold} \
+    -a ${seqID}_depth.txt \
+    -o ${seqID}_bins/ \
+    --minContig 2000 \
+    --seed 1 \
+    --verbose > ${seqID}_log.txt
     """
 }
-*/
+
 
 /* STEP 5 - viral taxonomy */
 process vcontact2 {
