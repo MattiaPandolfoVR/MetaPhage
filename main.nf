@@ -55,7 +55,7 @@ if (params.readPaths) {         // declared in profile config
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .into { ch_reads_fastp ; ch_reads_bowtie2 }
+            .into { ch_reads_fastp }
     }
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
@@ -515,19 +515,19 @@ process bowtie2_samtools {
     publishDir "${params.outdir}/mapping/bowtie2", mode: 'copy'
 
     input:
-    // raw_reads or reads ? Seems it make no difference...
-    tuple val(seqID), file(raw_reads) from ch_reads_bowtie2
     tuple val(seqID), file(reads) from ch_trimm_bowtie2
     tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_bowtie2
 
     output:
     file("*")
-    tuple val(assembler), val(seqID), file("${seqID}.sorted.bam") into (ch_bowtie2_metabat2)
+    tuple val(assembler), val(seqID), file("${seqID}.sorted.bam"), file("${seqID}.sorted.bam.bai") into (ch_bowtie2_metabat2)
 
     script:
     """
-    bowtie2-build ${scaffold} ${seqID}_index --threads ${task.cpus}
-    bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${raw_reads[0]} -2 ${raw_reads[1]} -S ${seqID}.sam 
+    echo "${seqID} : ${scaffold} : ${reads[0]} : ${reads[1]}" > echo_bowtie2_${seqID}.txt
+
+    bowtie2-build --threads ${task.cpus} ${scaffold} ${seqID}_index
+    bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}.sam 
     samtools view -S -b ${seqID}.sam > ${seqID}.bam
     samtools sort -@ ${task.cpus} ${seqID}.bam -o ${seqID}.sorted.bam
     samtools index -@ ${task.cpus} ${seqID}.sorted.bam
@@ -542,25 +542,28 @@ process metabat2 {
 
     input:
     tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_metabat2
-    tuple val(assembler), val(seqID), file(alignment) from ch_bowtie2_metabat2
+    tuple val(assembler), val(seqID), file(alignment), file(index) from ch_bowtie2_metabat2
     
     output:
     file("*")
 
     script:
     """
+    echo "${seqID} : ${scaffold} : ${alignment} : ${index}" > echo_metabat2_${seqID}.txt
+
     jgi_summarize_bam_contig_depths \
     --outputDepth ${seqID}_depth.txt \
-    --percentIdentity 97 \
+    --percentIdentity 95 \
     ${alignment}
     
     metabat2 \
     --numThreads ${task.cpus} \
     -i ${scaffold} \
     -a ${seqID}_depth.txt \
-    -o ${seqID}_bins/ \
+    -o ${seqID}.metabat \
     --minContig 2000 \
     --seed 1 \
+    --unbinned \
     --verbose > ${seqID}_log.txt
     """
 }
