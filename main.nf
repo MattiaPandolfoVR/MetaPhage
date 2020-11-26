@@ -449,14 +449,14 @@ process phigaro {
 
 process virsorter {
     if (params.mod_virsorter == "legacy") {
-        conda "bioconda::virsorter==1.0.6"
+        conda "bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2"
     }
     else {
        conda "bioconda::virsorter==2.0.beta"
     }
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter/${assembler}/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
 
     when:
     !params.skip_virsorter
@@ -476,7 +476,7 @@ process virsorter {
         wrapper_phage_contigs_sorter_iPlant.pl \
         -f ${scaffold} \
         --db $viromes \
-        --wdir ./ \
+        --wdir ${seqID}_virsorter \
         --ncpu ${task.cpus} \
         --data-dir $workflow.projectDir/${path_file_virsorter_db}
         """
@@ -518,7 +518,7 @@ process cd_hit {
 
     output:
     file("*")
-    file "derep83.fasta.split/*.fasta" into (ch_collect_bowtie2)
+    file "splitted83/*.fasta" into (ch_collect_bowtie2)
 
     script:
     """
@@ -532,10 +532,13 @@ process cd_hit {
     -c 0.83 \
     -n 5 
 
-    seqkit split derep83.fasta --by-id
+    seqkit split derep83.fasta \
+    --by-id \
+    --force \
+    --out-dir splitted83
     """
 }
-
+/*
 process bowtie2 {
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
@@ -544,7 +547,7 @@ process bowtie2 {
 
     input:
     tuple val(seqID), file(reads) from ch_trimm_mapping
-    file consensus_scaffolds from ch_collect_bowtie2.collect()
+    file consensus_scaffolds from Channel.value(ch_collect_bowtie2.collect())
 
     output:
     file("*")
@@ -579,6 +582,7 @@ process bowtie2 {
     done
     """
 }
+*/
 
 /*
 process collect2 {
