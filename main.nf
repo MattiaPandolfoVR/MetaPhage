@@ -551,10 +551,8 @@ process bowtie2 {
 
     input:
     //tuple val(id), file(cons) from my_seqID.combine(onlyfiles.collect())
-    file(cons) from onlyfiles
-
-    //val onlyID from my_seqID.collect()
-    //tuple val(seqID_true), file(reads) from ch_trimm_mapping.collect()
+    file cons from onlyfiles.collect()
+    tuple val(seqID), file(reads) from ch_trimm_mapping
     //file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
     //file consensus_scaffolds from ch_trimm_mapping2.combine(ch_collect_bowtie2)
     //tuple val(assembler), val(seqID), file(splitted) from ch_collect_bowtie2
@@ -569,9 +567,37 @@ process bowtie2 {
 
     script:
     """
-    echo "giusto per" > giustoper.txt
-    echo "${cons}"
+    counter=0
+    for scaffold in ${cons}
+    do
+        #counter=\$((counter+1))
+        #mkdir \$counter
+
+        bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
+
+        bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
+
+        samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
+
+        samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
+
+        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
+
+        #samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > ${seqID}_mappingstats.txt
+
+        #qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}_\$scaffold.sorted.bam
+
+        #mv ${seqID}* \$counter
+        #cp \${scaffold} \$counter
+    done
     """
+    /*
+    """
+    python $workflow.projectDir/bin/aligner.py \
+    --samples ${onlyID} \
+    --viral_scaffolds ${cons}
+    """
+    */
 }
 //#touch ${seqID}_${reads[0]}_${reads[1]}.txt
 
