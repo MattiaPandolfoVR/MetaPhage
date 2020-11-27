@@ -559,14 +559,19 @@ process bowtie2 {
     counter=-1
     for scaffold in ${consensus_scaffolds}
     do
-        counter=\$((counter+1))
-        if [ \$counter -eq 0 ]; then
-		    continue
-	    fi
-        #echo "${seqID} : ${reads[0]} : ${reads[1]} : \$scaffold" > ${seqID}_\$scaffold.txt
-
+        #counter=\$((counter+1))
+        #if [ \$counter -eq 0 ]; then
+		#    continue
+	    #fi
+        
         mkdir \$counter
+        touch ${seqID}_${reads[0]}_${reads[1]}_\${counter}_\${scaffold}.txt
+        mv ${seqID}* \$counter
 
+    done
+    """
+}
+/*
         bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
 
         bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
@@ -575,17 +580,15 @@ process bowtie2 {
 
         samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
 
-        #samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
+        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
 
         #samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > ${seqID}_mappingstats.txt
 
         #qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}_\$scaffold.sorted.bam
 
         mv ${seqID}* \$counter
-        mv \${scaffold}* \$counter
-    done
-    """
-}
+        cp \${scaffold} \$counter
+*/
 
 /*
 process collect2 {
