@@ -120,7 +120,7 @@ process fastp {
     output:
     tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
-    val seqID into (ch_fastp_bowtie2)
+    val seqID into (my_seqID)
 
     script:
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
@@ -153,7 +153,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_mapping2)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -170,7 +170,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_mapping2}
 }
 
 /* STEP 2 - short reads alignment */
@@ -383,7 +383,7 @@ process vibrant {
     output:
     file("*")
     tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
-    file "**/*.phages_combined.fna" into (ch_vibrant_collect)
+    tuple val(assembler), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_collect)
 
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
@@ -509,13 +509,13 @@ process virfinder {
     """
 }
 
-process cd_hit {
+process cd_hit_vibrant {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     tag "all"
     publishDir "${params.outdir}/CD-HIT", mode: 'copy'
 
     input:
-    file '*.phages_combined.fna' from ch_vibrant_collect.collect()
+    tuple val(assembler), val(seqID), file(scaffolds) from ch_vibrant_collect.groupTuple()
 
     output:
     file("*")
@@ -523,7 +523,7 @@ process cd_hit {
 
     script:
     """
-    cat *.phages_combined.fna > concat.fasta
+    cat ${scaffolds} > concat.fasta
 
     cd-hit-est \
     -T ${task.cpus} \
@@ -539,7 +539,7 @@ process cd_hit {
     --out-dir splitted83
     """
 }
-
+/*
 process bowtie2 {
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
@@ -548,7 +548,34 @@ process bowtie2 {
 
     input:
     tuple val(seqID), file(reads) from ch_trimm_mapping
-    file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
+    //file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
+    //file consensus_scaffolds from ch_trimm_mapping2.combine(ch_collect_bowtie2)
+    file consensus_scaffolds from my_seqID.combine(ch_collect_bowtie2)
+
+
+    output:
+    file("*")
+    //file "${seqID}.sorted.bam" into (ch_bowtie2_collect2)
+
+    script:
+    """
+    touch ${seqID}_${reads[0]}_${reads[1]}.txt
+    """
+}
+*/
+/*
+process bowtie2 {
+    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
+
+    tag "${seqID}-all"
+    publishDir "${params.outdir}/bowtie2", mode: 'copy'
+
+    input:
+    tuple val(seqID), file(reads) from ch_trimm_mapping
+    //file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
+    //file consensus_scaffolds from ch_trimm_mapping2.combine(ch_collect_bowtie2)
+    file consensus_scaffolds from my_seqID.combine(ch_collect_bowtie2)
+
 
     output:
     file("*")
@@ -559,7 +586,7 @@ process bowtie2 {
     counter=-1
     for scaffold in ${consensus_scaffolds}
     do
-        #counter=\$((counter+1))
+        counter=\$((counter+1))
         #if [ \$counter -eq 0 ]; then
 		#    continue
 	    #fi
@@ -571,6 +598,7 @@ process bowtie2 {
     done
     """
 }
+*/
 /*
         bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
 
