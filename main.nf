@@ -120,6 +120,7 @@ process fastp {
     output:
     tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
+    val seqID into (ch_fastp_bowtie2)
 
     script:
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
@@ -538,7 +539,7 @@ process cd_hit {
     --out-dir splitted83
     """
 }
-/*
+
 process bowtie2 {
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
@@ -547,7 +548,7 @@ process bowtie2 {
 
     input:
     tuple val(seqID), file(reads) from ch_trimm_mapping
-    file consensus_scaffolds from Channel.value(ch_collect_bowtie2.collect())
+    file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
 
     output:
     file("*")
@@ -555,12 +556,15 @@ process bowtie2 {
 
     script:
     """
-    echo "${seqID}" > ${seqID}.txt
-
-    counter=0
+    counter=-1
     for scaffold in ${consensus_scaffolds}
     do
         counter=\$((counter+1))
+        if [ \$counter -eq 0 ]; then
+		    continue
+	    fi
+        #echo "${seqID} : ${reads[0]} : ${reads[1]} : \$scaffold" > ${seqID}_\$scaffold.txt
+
         mkdir \$counter
 
         bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
@@ -577,12 +581,11 @@ process bowtie2 {
 
         #qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}_\$scaffold.sorted.bam
 
-        mv \${scaffold}* \$counter
         mv ${seqID}* \$counter
+        mv \${scaffold}* \$counter
     done
     """
 }
-*/
 
 /*
 process collect2 {
