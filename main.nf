@@ -509,6 +509,8 @@ process virfinder {
     """
 }
 
+
+/* STEP X: dereplication and reads mapping */
 process cdhit {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     
@@ -577,41 +579,6 @@ process bowtie2 {
     """
 }
 
-/*
-process metabat2 {
-    conda "bioconda::metabat2==2.14"
-
-    tag "$seqID"
-    publishDir "${params.outdir}/binning/metabat2", mode: 'copy'
-
-    input:
-    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_metabat2
-    tuple val(assembler), val(seqID), file(alignment), file(index) from ch_bowtie2_metabat2
-    
-    output:
-    file("*")
-
-    script:
-    """
-    echo "${seqID} : ${scaffold} : ${alignment} : ${index}" > echo_metabat2_${seqID}.txt
-
-    jgi_summarize_bam_contig_depths \
-    --outputDepth ${seqID}_depth.txt \
-    --percentIdentity 95 \
-    ${alignment}
-    
-    metabat2 \
-    --numThreads ${task.cpus} \
-    -i ${scaffold} \
-    -a ${seqID}_depth.txt \
-    -o ${seqID}.metabat \
-    --minContig 2000 \
-    --seed 1 \
-    --unbinned \
-    --verbose > ${seqID}_log.txt
-    """
-}
-*/
 
 /* STEP 5 - viral taxonomy */
 process vcontact2 {
