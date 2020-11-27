@@ -509,17 +509,19 @@ process virfinder {
     """
 }
 
-process cd_hit_vibrant {
+process cdhit_vibrant {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
+    
     tag "all"
     publishDir "${params.outdir}/CD-HIT", mode: 'copy'
 
     input:
-    tuple val(assembler), val(seqID), file(scaffolds) from ch_vibrant_collect.groupTuple()
+    tuple val(assembler), val(seqID), file(scaffolds) from ch_vibrant_collect.groupTuple(by: 0)
 
     output:
     file("*")
-    file "splitted83/*.fasta" into (ch_collect_bowtie2)
+    tuple val(assembler), val(seqID), file("splitted83/*.fasta") into (ch_collect_bowtie2)
+    file("splitted83/*.fasta") into (onlyfiles)
 
     script:
     """
@@ -539,18 +541,26 @@ process cd_hit_vibrant {
     --out-dir splitted83
     """
 }
-/*
+
 process bowtie2 {
+    echo true 
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
-    tag "${seqID}-all"
+    tag "all"
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     input:
-    tuple val(seqID), file(reads) from ch_trimm_mapping
+    //tuple val(id), file(cons) from my_seqID.combine(onlyfiles.collect())
+    file(cons) from onlyfiles
+
+    //val onlyID from my_seqID.collect()
+    //tuple val(seqID_true), file(reads) from ch_trimm_mapping.collect()
     //file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
     //file consensus_scaffolds from ch_trimm_mapping2.combine(ch_collect_bowtie2)
-    file consensus_scaffolds from my_seqID.combine(ch_collect_bowtie2)
+    //tuple val(assembler), val(seqID), file(splitted) from ch_collect_bowtie2
+
+    
+    //file(splitted_bis) from ch_collect_bowtie2_bis
 
 
     output:
@@ -559,10 +569,12 @@ process bowtie2 {
 
     script:
     """
-    touch ${seqID}_${reads[0]}_${reads[1]}.txt
+    echo "giusto per" > giustoper.txt
+    echo "${cons}"
     """
 }
-*/
+//#touch ${seqID}_${reads[0]}_${reads[1]}.txt
+
 /*
 process bowtie2 {
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
