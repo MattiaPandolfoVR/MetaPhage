@@ -571,6 +571,8 @@ process bowtie2 {
         samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
 
         qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
+    
+        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count_${seqID}_\$scaffold.txt
     done
     """
 }
