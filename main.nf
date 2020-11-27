@@ -55,7 +55,7 @@ if (params.readPaths) {         // declared in profile config
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .set { ch_reads_fastp }
+            .into { ch_reads_fastp }
     }
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
@@ -120,6 +120,7 @@ process fastp {
     output:
     tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
+    val seqID into (my_seqID)
 
     script:
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
@@ -152,7 +153,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -169,7 +170,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping}
 }
 
 /* STEP 2 - short reads alignment */
@@ -382,6 +383,7 @@ process vibrant {
     output:
     file("*")
     tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
+    tuple val(assembler), val("vibrant"), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
@@ -448,14 +450,14 @@ process phigaro {
 
 process virsorter {
     if (params.mod_virsorter == "legacy") {
-        conda "bioconda::virsorter==1.0.6"
+        conda "bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2"
     }
     else {
        conda "bioconda::virsorter==2.0.beta"
     }
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter/${assembler}/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
 
     when:
     !params.skip_virsorter
@@ -475,7 +477,7 @@ process virsorter {
         wrapper_phage_contigs_sorter_iPlant.pl \
         -f ${scaffold} \
         --db $viromes \
-        --wdir ./ \
+        --wdir ${seqID}_virsorter \
         --ncpu ${task.cpus} \
         --data-dir $workflow.projectDir/${path_file_virsorter_db}
         """
@@ -506,6 +508,77 @@ process virfinder {
     mv results.txt ${seqID}_results.txt
     """
 }
+
+
+/* STEP X: dereplication and reads mapping */
+process cdhit {
+    conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
+    
+    tag "$miner"
+    publishDir "${params.outdir}/CD-HIT/${miner}", mode: 'copy'
+
+    input:
+    tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 1)
+
+    output:
+    file("*")
+    file("splitted83/*.fasta") into (ch_cdhit_bowtie2)
+
+    script:
+    """
+    cat ${scaffolds} > concat.fasta
+
+    cd-hit-est \
+    -T ${task.cpus} \
+    -M ${task.memory.toMega()} \
+    -i concat.fasta \
+    -o derep83.fasta \
+    -c 0.83 \
+    -n 5 
+
+    seqkit split derep83.fasta \
+    --by-id \
+    --force \
+    --out-dir splitted83
+    """
+}
+
+process bowtie2 {
+    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
+
+    tag "${seqID}"
+    publishDir "${params.outdir}/bowtie2", mode: 'copy'
+
+    input:
+    file consensus from ch_cdhit_bowtie2.collect()
+    tuple val(seqID), file(reads) from ch_trimm_mapping
+
+    output:
+    file("*")
+
+    script:
+    """
+    for scaffold in ${consensus}
+    do
+        bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
+
+        bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
+
+        samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
+
+        samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
+
+        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
+
+        samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
+
+        qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
+    
+        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count_${seqID}_\$scaffold.txt
+    done
+    """
+}
+
 
 /* STEP 5 - viral taxonomy */
 process vcontact2 {
