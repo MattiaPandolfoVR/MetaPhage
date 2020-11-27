@@ -153,7 +153,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_mapping2)
+        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -170,7 +170,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_mapping2}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping}
 }
 
 /* STEP 2 - short reads alignment */
@@ -383,7 +383,7 @@ process vibrant {
     output:
     file("*")
     tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
-    tuple val(assembler), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_collect)
+    tuple val(assembler), val("vibrant"), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
     script:
     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
@@ -509,19 +509,18 @@ process virfinder {
     """
 }
 
-process cdhit_vibrant {
+process cdhit {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     
-    tag "all"
-    publishDir "${params.outdir}/CD-HIT", mode: 'copy'
+    tag "$miner"
+    publishDir "${params.outdir}/CD-HIT/${miner}", mode: 'copy'
 
     input:
-    tuple val(assembler), val(seqID), file(scaffolds) from ch_vibrant_collect.groupTuple(by: 0)
+    tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 1)
 
     output:
     file("*")
-    tuple val(assembler), val(seqID), file("splitted83/*.fasta") into (ch_collect_bowtie2)
-    file("splitted83/*.fasta") into (onlyfiles)
+    file("splitted83/*.fasta") into (ch_cdhit_bowtie2)
 
     script:
     """
@@ -543,36 +542,22 @@ process cdhit_vibrant {
 }
 
 process bowtie2 {
-    echo true 
     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
 
-    tag "all"
+    tag "${seqID}"
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     input:
-    //tuple val(id), file(cons) from my_seqID.combine(onlyfiles.collect())
-    file cons from onlyfiles.collect()
+    file consensus from ch_cdhit_bowtie2.collect()
     tuple val(seqID), file(reads) from ch_trimm_mapping
-    //file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
-    //file consensus_scaffolds from ch_trimm_mapping2.combine(ch_collect_bowtie2)
-    //tuple val(assembler), val(seqID), file(splitted) from ch_collect_bowtie2
-
-    
-    //file(splitted_bis) from ch_collect_bowtie2_bis
-
 
     output:
     file("*")
-    //file "${seqID}.sorted.bam" into (ch_bowtie2_collect2)
 
     script:
     """
-    counter=0
-    for scaffold in ${cons}
+    for scaffold in ${consensus}
     do
-        #counter=\$((counter+1))
-        #mkdir \$counter
-
         bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
 
         bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
@@ -583,203 +568,13 @@ process bowtie2 {
 
         samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
 
-        #samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > ${seqID}_mappingstats.txt
+        samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
 
-        #qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}_\$scaffold.sorted.bam
-
-        #mv ${seqID}* \$counter
-        #cp \${scaffold} \$counter
-    done
-    """
-    /*
-    """
-    python $workflow.projectDir/bin/aligner.py \
-    --samples ${onlyID} \
-    --viral_scaffolds ${cons}
-    """
-    */
-}
-//#touch ${seqID}_${reads[0]}_${reads[1]}.txt
-
-/*
-process bowtie2 {
-    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
-
-    tag "${seqID}-all"
-    publishDir "${params.outdir}/bowtie2", mode: 'copy'
-
-    input:
-    tuple val(seqID), file(reads) from ch_trimm_mapping
-    //file consensus_scaffolds from ch_fastp_bowtie2.combine(ch_collect_bowtie2.collect())
-    //file consensus_scaffolds from ch_trimm_mapping2.combine(ch_collect_bowtie2)
-    file consensus_scaffolds from my_seqID.combine(ch_collect_bowtie2)
-
-
-    output:
-    file("*")
-    //file "${seqID}.sorted.bam" into (ch_bowtie2_collect2)
-
-    script:
-    """
-    counter=-1
-    for scaffold in ${consensus_scaffolds}
-    do
-        counter=\$((counter+1))
-        #if [ \$counter -eq 0 ]; then
-		#    continue
-	    #fi
-        
-        mkdir \$counter
-        touch ${seqID}_${reads[0]}_${reads[1]}_\${counter}_\${scaffold}.txt
-        mv ${seqID}* \$counter
-
+        qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
     done
     """
 }
-*/
-/*
-        bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
 
-        bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
-
-        samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
-
-        samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
-
-        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
-
-        #samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > ${seqID}_mappingstats.txt
-
-        #qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}_\$scaffold.sorted.bam
-
-        mv ${seqID}* \$counter
-        cp \${scaffold} \$counter
-*/
-
-/*
-process collect2 {
-    conda "bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
-
-    tag "all"
-    publishDir "${params.outdir}/collect2", mode: 'copy'
-
-    input:
-    file '*.sorted.bam' from ch_bowtie2_collect2.collect()
-
-    output:
-    file("*")
-    file("collect.sorted.bam") into (ch_collect2_metabat2)
-
-
-    script:
-    """
-    samtools merge -@ ${task.cpus} collect.sorted.bam *.sorted.bam
-
-    samtools index -@ ${task.cpus} collect.sorted.bam
-
-    samtools flagstat -@ ${task.cpus} collect.sorted.bam > mappingstats.txt
-
-    qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc -bam collect.sorted.bam 
-    """
-}
-*/
-/*
-process drep {
-    //conda "bioconda::drep==2.6.2 bioconda::checkm-genome bioconda::mash bioconda::mummer bioconda::prodigal"
-    conda "bioconda::drep==2.6.2"
-
-    tag "all"
-    publishDir "${params.outdir}/dereplication", mode: 'copy'
-
-    input:
-    file "concat.fasta" from ch_collect_drep
-
-    output:
-    file("*")
-
-    script:
-    """
-    which dRep > drep_v.txt
-    which checkm > checkm_v.txt
-
-    dRep dereplicate ./ \
-    -p ${task.cpus} \
-    -g concat.fasta 
-    """
-}
-*/
-/*
-process metabat2 {
-    conda "bioconda::metabat2==2.14"
-
-    tag "$seqID"
-    publishDir "${params.outdir}/binning/metabat2", mode: 'copy'
-
-    input:
-    file(concat) from ch_bowtie_metabat
-    file(alignment) from ch_collect2_metabat2
-    
-    output:
-    file("*")
-
-    script:
-    """
-
-    jgi_summarize_bam_contig_depths \
-    --outputDepth depth.txt \
-    --percentIdentity 95 \
-    ${alignment}
-    
-    metabat2 \
-    --numThreads ${task.cpus} \
-    -i ${concat} \
-    -a depth.txt \
-    -o metabat \
-    --minContig 2000 \
-    --seed 1 \
-    --unbinned \
-    --verbose > log.txt
-    """
-}
-*/
-
-/* STEP X - binning */
-/*
-process bowtie2_samtools {
-    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
-
-    tag "$seqID"
-    publishDir "${params.outdir}/mapping/bowtie2", mode: 'copy'
-
-    input:
-    tuple val(seqID), file(reads) from ch_trimm_bowtie2
-    tuple val(assembler), val(seqID), file(scaffold) from ch_metaspades_bowtie2
-
-    output:
-    file("*")
-    tuple val(assembler), val(seqID), file("${seqID}.sorted.bam"), file("${seqID}.sorted.bam.bai") into (ch_bowtie2_metabat2)
-
-    script:
-    """
-    echo "${seqID} : ${scaffold} : ${reads[0]} : ${reads[1]}" > echo_bowtie2_${seqID}.txt
-
-    bowtie2-build --threads ${task.cpus} ${scaffold} ${seqID}_index
-
-    bowtie2 -p ${task.cpus} -x ${seqID}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}.sam 
-
-    samtools view -S -b ${seqID}.sam > ${seqID}.bam
-
-    samtools sort -@ ${task.cpus} ${seqID}.bam -o ${seqID}.sorted.bam
-
-    samtools index -@ ${task.cpus} ${seqID}.sorted.bam
-
-    samtools flagstat -@ ${task.cpus} ${seqID}.sorted.bam > mappingstats_${seqID}.txt
-
-    qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID} -bam ${seqID}.sorted.bam 
-    """
-}
-
-*/
 /*
 process metabat2 {
     conda "bioconda::metabat2==2.14"
