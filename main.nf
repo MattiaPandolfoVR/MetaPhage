@@ -512,7 +512,7 @@ process virfinder {
 process cdhit {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     
-    tag "$miner"
+    tag "$assembler"
     publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
 
     input:
@@ -553,6 +553,7 @@ process bowtie2 {
 
     output:
     file("*")
+    file("count___*") into (ch_bowtie2_collector)
 
     script:
     """
@@ -574,6 +575,25 @@ process bowtie2 {
     
         samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
     done
+    """
+}
+
+process collector {
+    conda "anaconda::pandas==1.1.3"
+
+    tag "all"
+    publishDir "${params.outdir}/report/", mode: 'copy'
+
+    input:
+    file values from ch_bowtie2_collector.collect()
+
+    output:
+    tuple file("custom_plot_mqc.yaml"), file("custom_table_mqc.txt") into (ch_collector_multiqc)
+
+    script:
+    """
+    python $workflow.projectDir/bin/collector.py \
+    --alignments ${values}
     """
 }
 
@@ -623,6 +643,7 @@ process multiqc {
 
     input:
     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
+    tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
 
     output:
     file("*")
@@ -630,8 +651,8 @@ process multiqc {
     script:
     """
     multiqc \
-    --title "MultiPhate" \
+    --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
-    .
+    . ${custom_plot} ${custom_table}
     """
 }
