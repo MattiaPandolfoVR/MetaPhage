@@ -21,12 +21,27 @@ options.add_argument('-a', '--alignments', nargs="+", default=[], required=True)
 def manage(projectDir, alignments):
 
     results = pnd.DataFrame(data = {
-        'Category': [],
+        'Scaffold': [],
+        'Sample': [],
         'Value': []})
 
-    #for value in alignments:
+    for record in alignments:
+        f = open(record, "r")
+        value = int(f.read())
+        f.close()
+        sample = record.split("___")[1]
+        scaffold = record.split("___")[2].replace(".fasta.txt", "")
 
-    
+        results = results.append({
+            'Scaffold': scaffold,
+            'Sample': sample,
+            'Value': value,
+            }, ignore_index = True) 
+
+
+    #####################
+    # custom_plot #######
+    #####################
     
     content = """# id: 'Output from my script'
 # section_name: 'Custom data file'
@@ -39,12 +54,41 @@ def manage(projectDir, alignments):
 <-- REPLACE -->
 """
 
-
     string_eater = io.StringIO()
     datas = results.to_csv( path_or_buf = string_eater, header = False, index = False )
     #content = content.replace("<-- REPLACE -->", string_eater.getvalue())
     content = content.replace("<-- REPLACE -->", "Category_1,374\nCategory_2,229\nCategory_3,39\nCategory_4,253")
-    file_report = open("custom_report_mqc.csv", "w")
+    file_report = open("custom_plot_mqc.csv", "w")
+    file_report.write(content)
+    file_report.close()
+
+
+    #####################
+    # custom_table #######
+    #####################
+    
+    content = """# plot_type: 'table'
+# section_name: 'My section with a table'
+# description: 'a custom text introduction (a few sentences) for this section'
+# pconfig:
+#     namespace: 'Cust Data'
+# headers:
+#     Scaffold:
+#         title: 'Zero Column'
+#         description: 'Yahoooooooooo!'
+#     Sample:
+#         title: 'My Column'
+#         description: 'This is a longer hover text for my column'
+#     Value:
+#         title: 'Second Column'
+#         description: 'Hover description text'
+<-- REPLACE -->
+"""
+
+    string_eater = io.StringIO()
+    datas = results.to_csv( path_or_buf = string_eater, index = False, sep='\t' )
+    content = content.replace("<-- REPLACE -->", string_eater.getvalue())
+    file_report = open("custom_table_mqc.txt", "w")
     file_report.write(content)
     file_report.close()
 

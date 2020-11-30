@@ -587,7 +587,7 @@ process collector {
     file values from ch_bowtie2_collector.collect()
 
     output:
-    file("custom_report_mqc.csv") into (ch_collector_multiqc)
+    tuple file("custom_plot_mqc.csv"), file("custom_table_mqc.txt") into (ch_collector_multiqc)
 
     script:
     """
@@ -642,7 +642,7 @@ process multiqc {
 
     input:
     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
-    file(custom_report) from ch_collector_multiqc.collect().ifEmpty([])
+    tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
 
     output:
     file("*")
@@ -652,6 +652,6 @@ process multiqc {
     multiqc \
     --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
-    . ${custom_report}
+    . ${custom_plot} ${custom_table}
     """
 }
