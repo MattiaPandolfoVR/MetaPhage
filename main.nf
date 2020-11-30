@@ -120,6 +120,7 @@ process fastp {
     output:
     tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
+    file("${seqID}_fastp.json") into (ch_fastp_multiqc)
 
     script:
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
@@ -136,7 +137,8 @@ process fastp {
     --adapter_sequence_r2=${params.adapter_reverse} \
     $in \
     $out \
-    -h ${seqID}_qc_report.html
+    -h ${seqID}_qc_report.html \
+    -j ${seqID}_fastp.json
     """
 }
 
@@ -570,7 +572,7 @@ process bowtie2 {
 
         qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
     
-        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count_${seqID}_\$scaffold.txt
+        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
     done
     """
 }
@@ -609,5 +611,27 @@ process vcontact2 {
     --vcs-mode ClusterONE \
     --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
     --output-dir ./
+    """
+}
+
+/* STEP 7 - report generation */
+process multiqc {
+    conda "bioconda::multiqc==1.9=py_1 conda-forge::python==3.9.0"
+
+    tag "all"
+    publishDir "${params.outdir}/report/", mode: 'copy'
+
+    input:
+    file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
+
+    output:
+    file("*")
+
+    script:
+    """
+    multiqc \
+    --title "MultiPhate" \
+    --filename "MultiPhate_report.html" \
+    .
     """
 }
