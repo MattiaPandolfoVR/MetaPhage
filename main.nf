@@ -55,7 +55,7 @@ if (params.readPaths) {         // declared in profile config
     } else {
         Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .into { ch_reads_fastp }
+            .set { ch_reads_fastp }
     }
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
@@ -106,7 +106,7 @@ process db_manager {
     """
 }
 
-/* STEP 1a - quality check and trimming */
+/* STEP 1 - quality check and trimming */
 process fastp {
     conda "bioconda::fastp==0.20.1"
 
@@ -120,11 +120,10 @@ process fastp {
     output:
     tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
-    val seqID into (my_seqID)
 
     script:
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
-    def inp = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
+    def in = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
     def out = params.singleEnd ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
     """
     fastp \
@@ -135,13 +134,12 @@ process fastp {
     --cut_mean_quality ${params.trimming_quality} \
     --adapter_sequence=${params.adapter_forward} \
     --adapter_sequence_r2=${params.adapter_reverse} \
-    $inp \
+    $in \
     $out \
     -h ${seqID}_qc_report.html
     """
 }
 
-/* STEP 1b - phix removal */
 if(!params.keep_phix) {
     process remove_phix {
         conda "bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
@@ -153,7 +151,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping)
+        tuple val(seqID), file("dephixed_*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -368,7 +366,6 @@ process vibrant {
     else {
        conda "bioconda::vibrant==1.2.1"
     }
-    
 
     tag "$assembler-$seqID"
     publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
@@ -424,7 +421,7 @@ process phigaro {
     !params.skip_phigaro
 
     input:
-    file file_phigaro_config from ch_file_phigaro_config // this act just like a timer
+    file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_phigaro, ch_megahit_phigaro)
 
     output:
@@ -509,16 +506,15 @@ process virfinder {
     """
 }
 
-
-/* STEP X: dereplication and reads mapping */
+/* STEP 5: dereplication and reads mapping */
 process cdhit {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     
     tag "$miner"
-    publishDir "${params.outdir}/CD-HIT/${miner}", mode: 'copy'
+    publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
 
     input:
-    tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 1)
+    tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
 
     output:
     file("*")
@@ -579,8 +575,7 @@ process bowtie2 {
     """
 }
 
-
-/* STEP 5 - viral taxonomy */
+/* STEP 6 - viral taxonomy */
 process vcontact2 {
     conda "bioconda::vcontact2==0.9.19"
 
