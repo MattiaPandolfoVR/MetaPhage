@@ -21,9 +21,8 @@ options.add_argument('-a', '--alignments', nargs="+", default=[], required=True)
 def manage(projectDir, alignments):
 
     results = pnd.DataFrame(data = {
-        'Scaffold': [],
-        'Sample': [],
-        'Value': []})
+        'Scaffold': []})
+    results = results.set_index('Scaffold')
 
     for record in alignments:
         f = open(record, "r")
@@ -32,12 +31,12 @@ def manage(projectDir, alignments):
         sample = record.split("___")[1]
         scaffold = record.split("___")[2].replace(".fasta.txt", "")
 
-        results = results.append({
-            'Scaffold': scaffold,
-            'Sample': sample,
-            'Value': value,
-            }, ignore_index = True) 
-
+        if not scaffold in results.index:
+            results.append(pnd.Series(name=scaffold))
+        if not sample in results.columns:
+            results[sample] = None
+        results.at[scaffold, sample] = value
+    
 
     #####################
     # custom_plot #######
@@ -72,21 +71,11 @@ def manage(projectDir, alignments):
 # description: 'a custom text introduction (a few sentences) for this section'
 # pconfig:
 #     namespace: 'Cust Data'
-# headers:
-#     Scaffold:
-#         title: 'Zero Column'
-#         description: 'Yahoooooooooo!'
-#     Sample:
-#         title: 'My Column'
-#         description: 'This is a longer hover text for my column'
-#     Value:
-#         title: 'Second Column'
-#         description: 'Hover description text'
 <-- REPLACE -->
 """
 
     string_eater = io.StringIO()
-    datas = results.to_csv( path_or_buf = string_eater, index = False, sep='\t' )
+    datas = results.to_csv( path_or_buf = string_eater, sep='\t' )
     content = content.replace("<-- REPLACE -->", string_eater.getvalue())
     file_report = open("custom_table_mqc.txt", "w")
     file_report.write(content)

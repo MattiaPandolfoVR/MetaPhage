@@ -582,6 +582,7 @@ process collector {
     conda "anaconda::pandas==1.1.3"
 
     tag "all"
+    publishDir "${params.outdir}/report/", mode: 'copy'
 
     input:
     file values from ch_bowtie2_collector.collect()
