@@ -20,8 +20,7 @@ options.add_argument('-a', '--alignments', nargs="+", default=[], required=True)
 
 def manage(projectDir, alignments):
 
-    results = pnd.DataFrame(data = {
-        'Scaffold': []})
+    results = pnd.DataFrame(data = {'Scaffold': []})
     results = results.set_index('Scaffold')
 
     for record in alignments:
@@ -39,38 +38,12 @@ def manage(projectDir, alignments):
     
 
     #####################
-    # custom_plot #######
-    #####################
-    
-    content = """# id: 'Output from my script'
-# section_name: 'Custom data file'
-# description: 'This output is described in the file header. Any MultiQC installation will understand it without prior configuration.'
-# format: 'csv'
-# plot_type: 'bargraph'
-# pconfig:
-#    id: 'custom_bargraph_w_header'
-#    ylab: 'Number of things'
-<-- REPLACE -->
-"""
-
-    string_eater = io.StringIO()
-    datas = results.to_csv( path_or_buf = string_eater, header = False, index = False )
-    #content = content.replace("<-- REPLACE -->", string_eater.getvalue())
-    content = content.replace("<-- REPLACE -->", "Category_1,374\nCategory_2,229\nCategory_3,39\nCategory_4,253")
-    file_report = open("custom_plot_mqc.csv", "w")
-    file_report.write(content)
-    file_report.close()
-
-
-    #####################
     # custom_table #######
     #####################
     
     content = """# plot_type: 'table'
-# section_name: 'My section with a table'
-# description: 'a custom text introduction (a few sentences) for this section'
-# pconfig:
-#     namespace: 'Cust Data'
+# section_name: 'Custom table section'
+# description: 'A custom text introduction (a few sentences) for this section.'
 <-- REPLACE -->
 """
 
@@ -78,6 +51,31 @@ def manage(projectDir, alignments):
     datas = results.to_csv( path_or_buf = string_eater, sep='\t' )
     content = content.replace("<-- REPLACE -->", string_eater.getvalue())
     file_report = open("custom_table_mqc.txt", "w")
+    file_report.write(content)
+    file_report.close()
+
+
+    #####################
+    # custom_plot #######
+    #####################
+    
+    content = """id: 'Output from my script'
+section_name: 'Custom plot section'
+description: 'A custom text introduction (a few sentences) for this section.'
+plot_type: 'bargraph'
+pconfig:
+    id: 'custom_bargraph_w_header'
+    ylab: 'Number of things'
+data:
+"""
+
+    transposed = results.transpose()
+    for index, sample in transposed.iterrows():
+        content = content + "    " + index + ":\n"
+        for scaffold in sample.index:
+            content = content + "    " + "    " + scaffold + ": " + str(sample[scaffold]) + "\n"
+        
+    file_report = open("custom_plot_mqc.yaml", "w")
     file_report.write(content)
     file_report.close()
 

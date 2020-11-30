@@ -588,7 +588,7 @@ process collector {
     file values from ch_bowtie2_collector.collect()
 
     output:
-    tuple file("custom_plot_mqc.csv"), file("custom_table_mqc.txt") into (ch_collector_multiqc)
+    tuple file("custom_plot_mqc.yaml"), file("custom_table_mqc.txt") into (ch_collector_multiqc)
 
     script:
     """
