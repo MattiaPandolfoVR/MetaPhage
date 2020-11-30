@@ -66,8 +66,10 @@ def manage(projectDir,
     def echo(phrase):
         if phrase == "\n":
             sys.stdout.write("\n\n")
+            sys.stdout.flush()
         else:
             sys.stdout.write("db_manager: " + phrase + "\n")
+            sys.stdout.flush()
 
 
     
