@@ -28,8 +28,7 @@ def manage(projectDir, alignments):
 
     
     
-    content = """
-# id: "Output from my script'
+    content = """# id: 'Output from my script'
 # section_name: 'Custom data file'
 # description: 'This output is described in the file header. Any MultiQC installation will understand it without prior configuration.'
 # format: 'csv'
