@@ -371,7 +371,12 @@ process bowtie2_mapping {
     conda "bioconda::samtools==1.11 bioconda::bowtie2==2.4.2"
     
     tag "$seqID-$assembler"
-    publishDir "${params.outdir}/mapping/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/mapping/${assembler}", mode: 'copy',
+        saveAs: {filename ->
+                if(filename.endsWith(".fasta")) null
+                else if(filename.endsWith(".fastq.gz")) null
+                else filename
+                }
 
     input:
     tuple val(seqID), val(assembler), file(assembly), val(mapID), file(mapReads) from Channel.empty().mix(ch_metaspades_mapping, ch_megahit_mapping).combine(ch_trimm_mapping).flatMap{ tup -> if(tup[0] == tup[3]){ [tup] } }
