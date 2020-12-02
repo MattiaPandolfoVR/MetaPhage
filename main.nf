@@ -292,20 +292,19 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val("metaspades"), val(seqID), file("${seqID}_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder)
-    tuple val(seqID), file("${seqID}_contigs.fasta")
-
+    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_mapping, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder)
+    
     script:
-    def input = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"  //check when metaspades accepts single-end read libraries!
+    def in = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"
     """    
     spades.py \
     --meta \
     --threads ${task.cpus} \
     --memory ${task.memory.toGiga()} \
-    $input \
+    $in \
     -o ./
-    mv scaffolds.fasta ${seqID}_scaffolds.fasta
-    mv contigs.fasta ${seqID}_contigs.fasta
+    mv scaffolds.fasta ${seqID}_metaspades_scaffolds.fasta
+    mv contigs.fasta ${seqID}_metaspades_contigs.fasta
     """
 }
 
@@ -322,18 +321,18 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val("megahit"), val(seqID), file("${seqID}_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
-
+    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_mapping, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
+    
     script:
-    def input = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+    def in = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
     """
     megahit \
     --num-cpu-threads ${task.cpus} \
     --memory ${task.memory.toBytes()} \
-    $input \
+    $in \
     --out-dir result \
     --out-prefix ${seqID}
-    mv result/${seqID}.contigs.fa ${seqID}_contigs.fasta
+    mv result/${seqID}.contigs.fa ${seqID}_megahit_contigs.fasta
     """
 }
 
@@ -347,7 +346,7 @@ process quast {
     !params.skip_metaspades && !params.skip_megahit && !params.skip_quast 
 
     input:
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
 
     output:
     file("report.html")
@@ -364,290 +363,359 @@ process quast {
     -o ./ \
     ${scaffold}
     """
-} 
-
-/* STEP 4 - phage mining */
-process vibrant {
-    if (params.mod_vibrant == "legacy") {
-        conda "bioconda::vibrant==1.0.1"
-    }
-    else {
-       conda "bioconda::vibrant==1.2.1"
-    }
-
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
-
-    when:
-    !params.skip_vibrant
-
-    input:
-    file file_vibrant_db from ch_file_vibrant_db
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
-
-    output:
-    file("*")
-    tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
-    tuple val(assembler), val("vibrant"), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
-
-    script:
-    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
-    if (params.mod_vibrant == "legacy")
-        """
-        VIBRANT_run.py \
-        -t ${task.cpus} \
-        -i ${scaffold} \
-        -k $workflow.projectDir/${path_file_vibrant_db}KEGG_profiles_prokaryotes.HMM \
-        -p $workflow.projectDir/${path_file_vibrant_db}Pfam-A_v32.HMM \
-        -v $workflow.projectDir/${path_file_vibrant_db}VOGDB94_phage.HMM \
-        -e $workflow.projectDir/${path_file_vibrant_db}Pfam-A_plasmid_v32.HMM \
-        -a $workflow.projectDir/${path_file_vibrant_db}Pfam-A_phage_v32.HMM \
-        -c $workflow.projectDir/${path_file_vibrant_db}VIBRANT_categories.tsv \
-        -n $workflow.projectDir/${path_file_vibrant_db}VIBRANT_names.tsv \
-        -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
-        -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
-        -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
-        """
-    else 
-        """
-        VIBRANT_run.py \
-        -t ${task.cpus} \
-        -i ${scaffold} \
-        -folder ./ \
-        -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
-        -m $workflow.projectDir/${path_file_vibrant_db}files/ 
-        """
 }
 
-process phigaro {
-    conda "bioconda::phigaro==2.3.0"
+/* STEP 4 - Mapping */ 
 
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy'
-
-    when:
-    !params.skip_phigaro
-
-    input:
-    file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_phigaro, ch_megahit_phigaro)
-
-    output:
-    file("*")
-
-    script:
-    path_file_phigaro_config = file("$workflow.projectDir/bin/groovy_vars/${file_phigaro_config}").text
-    """
-    python $workflow.projectDir/bin/phigaro_config_creator.py
-    printf 'Y\n' | phigaro \
-    --threads ${task.cpus} \
-    --fasta-file ${scaffold} \
-    --config config.yml \
-    --print-vogs \
-    --extension html \
-    --output phigaro_${seqID} \
-    --not-open \
-    --save-fasta \
-    --mode basic
-    """
-}
-
-process virsorter {
-    if (params.mod_virsorter == "legacy") {
-        conda "bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2"
-    }
-    else {
-       conda "bioconda::virsorter==2.0.beta"
-    }
-
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
-
-    when:
-    !params.skip_virsorter
-
-    input:
-    file file_virsorter_db from ch_file_virsorter_db 
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter, ch_megahit_virsorter)
-
-    output:
-    file("*")
-
-    script:
-    path_file_virsorter_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter_db}").text
-    def viromes = params.virsorter_viromes ? "2" : "1"
-    if (params.mod_virsorter == "legacy")
-        """
-        wrapper_phage_contigs_sorter_iPlant.pl \
-        -f ${scaffold} \
-        --db $viromes \
-        --wdir ${seqID}_virsorter \
-        --ncpu ${task.cpus} \
-        --data-dir $workflow.projectDir/${path_file_virsorter_db}
-        """
-    else 
-        """
-        echo $workflow.projectDir/${path_file_virsorter_db}
-        """
-}
-
-process virfinder {
-    conda "bioconda::r-virfinder==1.1"
-
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virfinder/${assembler}", mode: 'copy'
-
-    when:
-    !params.skip_virfinder
-
-    input:
-    tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
-
-    output:
-    file("*")
-
-    script:
-    """
-    Rscript $workflow.projectDir/bin/virfinder_execute.R ${scaffold}
-    mv results.txt ${seqID}_results.txt
-    """
-}
-
-/* STEP 5: dereplication and reads mapping */
-process cdhit {
-    conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
+process bowtie2_mapping {
+    conda "bioconda::samtools==1.11 bioconda::bowtie2==2.4.2"
     
-    tag "$assembler"
-    publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
+    tag "$seqID-$assembler"
+    publishDir "${params.outdir}/mapping/${assembler}", mode: 'copy'
 
     input:
-    tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
+    tuple val(seqID), val(assembler), file(assembly), val(mapID), file(mapReads) from Channel.empty().mix(ch_metaspades_mapping, ch_megahit_mapping).combine(ch_trimm_mapping).flatMap{ tup -> if(tup[0] == tup[3]){ [tup] } }
 
     output:
-    file("*")
-    file("splitted83/*.fasta") into (ch_cdhit_bowtie2)
-
-    script:
-    """
-    cat ${scaffolds} > concat.fasta
-    cd-hit-est \
-    -T ${task.cpus} \
-    -M ${task.memory.toMega()} \
-    -i concat.fasta \
-    -o derep83.fasta \
-    -c 0.83 \
-    -n 5 
-    seqkit split derep83.fasta \
-    --by-id \
-    --force \
-    --out-dir splitted83
-    """
-}
-
-process bowtie2 {
-    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
-
-    tag "${seqID}"
-    publishDir "${params.outdir}/bowtie2", mode: 'copy'
-
-    input:
-    file consensus from ch_cdhit_bowtie2.collect()
-    tuple val(seqID), file(reads) from ch_trimm_mapping
-
-    output:
-    file("*")
-    file("count___*") into (ch_bowtie2_collector)
-
-    script:
-    """
-    for scaffold in ${consensus}
-    do
-        bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
-        bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
-        samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
-        samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
-        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
-        samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
-        qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
-    
-        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
-    done
-    """
-}
-
-process collector {
-    conda "anaconda::pandas==1.1.3"
-
-    tag "all"
-    publishDir "${params.outdir}/report/", mode: 'copy'
-
-    input:
-    file values from ch_bowtie2_collector.collect()
-
-    output:
-    tuple file("custom_plot_mqc.yaml"), file("custom_table_mqc.txt") into (ch_collector_multiqc)
-
-    script:
-    """
-    python $workflow.projectDir/bin/collector.py \
-    --alignments ${values}
-    """
-}
-
-/* STEP 6 - viral taxonomy */
-process vcontact2 {
-    conda "bioconda::vcontact2==0.9.19"
-
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}/${seqID}", mode: 'copy'
+    tuple val(assembler), val(seqID), file(assembly), file("*.bam") into ch_bowtie2_metabat2
+    tuple val(assembler), val(seqID), file(assembly), file(mapReads) into ch_bowtie2_maxbin2
+    tuple val(seqID), file("*.bam"), file("*.bam.bai")
 
     when:
-    !params.skip_vcontact2
-
-    input:
-    tuple val(assembler), val(seqID), file(phages_combined) from ch_vibrant_vcontact2
-
-    output:
-    file("*")
+    !params.skip_mapping
 
     script:
+    def name = "${assembler}-${seqID}-${mapID}"
+    def input = params.singleEnd ? "-U ${mapReads}" : "-1 ${mapReads[0]} -2 ${mapReads[1]}"
     """
-    $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
-    $workflow.projectDir/bin/vcontact2_gene2genome.py \
-    -p ${phages_combined}.simple.faa \
-    -o viral_genomes_g2g.csv \
-    -s 'Prodigal-FAA'
-    vcontact2 \
+    bowtie2-build \
+        --threads ${task.cpus} ${assembly} ref
+    bowtie2 \
+        -p ${task.cpus} \
+        -x ref $input | \
+    samtools view -@ ${task.cpus} -bS | \
+    samtools sort -@ ${task.cpus} -o "${name}.bam"
+    samtools index "${name}.bam"
+    """
+}
+
+/* Step 5 - Binning */ 
+
+process metabat2 {
+    conda "bioconda::metabat2==2.15"
+
+    tag "$seqID-$assembler"
+    publishDir "${params.outdir}/binning/metabat2/${assembler}", mode: 'copy'
+
+    when:
+    !params.skip_binning && !params.skip_metabat2
+
+    input:
+    tuple val(assembler), val(seqID), file(assembly), file(bam) from ch_bowtie2_metabat2
+    val(min_size) from params.min_contig_size
+
+    output:
+    //tuple val(seqID), file("metabat2/*") into ch_metabat2_das_tool
+    file("*.fa")
+    file("*.txt")
+
+    script:
+    def name = "${seqID}_${assembler}"
+    """
+    jgi_summarize_bam_contig_depths \
+    --outputDepth ${name}.depth.txt ${bam}
+    metabat2 \
     -t ${task.cpus} \
-    --raw-proteins ${phages_combined}.simple.faa \
-    --proteins-fp viral_genomes_g2g.csv \
-    --db 'ProkaryoticViralRefSeq94-Merged' \
-    --pcs-mode MCL \
-    --vcs-mode ClusterONE \
-    --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
-    --output-dir ./
+    -i ${assembly} \
+    -a "${name}.depth.txt" \
+    -o "${name}.metabat" \
+    -m ${min_size} \
+    -v --unbinned
     """
 }
 
-/* STEP 7 - report generation */
-process multiqc {
-    conda "bioconda::multiqc==1.9=py_1 conda-forge::python==3.9.0"
+// /* STEP 6 - phage mining */
+// process vibrant {
+//     if (params.mod_vibrant == "legacy") {
+//         conda "bioconda::vibrant==1.0.1"
+//     }
+//     else {
+//        conda "bioconda::vibrant==1.2.1"
+//     }
 
-    tag "all"
-    publishDir "${params.outdir}/report/", mode: 'copy'
+//     tag "$assembler-$seqID"
+//     publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
-    input:
-    file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
-    tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+//     when:
+//     !params.skip_vibrant
 
-    output:
-    file("*")
+//     input:
+//     file file_vibrant_db from ch_file_vibrant_db
+//     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
 
-    script:
-    """
-    multiqc \
-    --config $workflow.projectDir/bin/multiqc_config.yaml \
-    --filename "MultiPhate_report.html" \
-    . ${custom_plot} ${custom_table}
-    """
-}
+//     output:
+//     file("*")
+//     tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
+//     tuple val(assembler), val("vibrant"), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
+
+//     script:
+//     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
+//     if (params.mod_vibrant == "legacy")
+//         """
+//         VIBRANT_run.py \
+//         -t ${task.cpus} \
+//         -i ${scaffold} \
+//         -k $workflow.projectDir/${path_file_vibrant_db}KEGG_profiles_prokaryotes.HMM \
+//         -p $workflow.projectDir/${path_file_vibrant_db}Pfam-A_v32.HMM \
+//         -v $workflow.projectDir/${path_file_vibrant_db}VOGDB94_phage.HMM \
+//         -e $workflow.projectDir/${path_file_vibrant_db}Pfam-A_plasmid_v32.HMM \
+//         -a $workflow.projectDir/${path_file_vibrant_db}Pfam-A_phage_v32.HMM \
+//         -c $workflow.projectDir/${path_file_vibrant_db}VIBRANT_categories.tsv \
+//         -n $workflow.projectDir/${path_file_vibrant_db}VIBRANT_names.tsv \
+//         -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
+//         -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
+//         -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
+//         """
+//     else 
+//         """
+//         VIBRANT_run.py \
+//         -t ${task.cpus} \
+//         -i ${scaffold} \
+//         -folder ./ \
+//         -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
+//         -m $workflow.projectDir/${path_file_vibrant_db}files/ 
+//         """
+// }
+
+// process phigaro {
+//     conda "bioconda::phigaro==2.3.0"
+
+//     tag "$assembler-$seqID"
+//     publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy'
+
+//     when:
+//     !params.skip_phigaro
+
+//     input:
+//     file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
+//     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_phigaro, ch_megahit_phigaro)
+
+//     output:
+//     file("*")
+
+//     script:
+//     path_file_phigaro_config = file("$workflow.projectDir/bin/groovy_vars/${file_phigaro_config}").text
+//     """
+//     python $workflow.projectDir/bin/phigaro_config_creator.py
+//     printf 'Y\n' | phigaro \
+//     --threads ${task.cpus} \
+//     --fasta-file ${scaffold} \
+//     --config config.yml \
+//     --print-vogs \
+//     --extension html \
+//     --output phigaro_${seqID} \
+//     --not-open \
+//     --save-fasta \
+//     --mode basic
+//     """
+// }
+
+// process virsorter {
+//     if (params.mod_virsorter == "legacy") {
+//         conda "bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2"
+//     }
+//     else {
+//        conda "bioconda::virsorter==2.0.beta"
+//     }
+
+//     tag "$assembler-$seqID"
+//     publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
+
+//     when:
+//     !params.skip_virsorter
+
+//     input:
+//     file file_virsorter_db from ch_file_virsorter_db 
+//     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter, ch_megahit_virsorter)
+
+//     output:
+//     file("*")
+
+//     script:
+//     path_file_virsorter_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter_db}").text
+//     def viromes = params.virsorter_viromes ? "2" : "1"
+//     if (params.mod_virsorter == "legacy")
+//         """
+//         wrapper_phage_contigs_sorter_iPlant.pl \
+//         -f ${scaffold} \
+//         --db $viromes \
+//         --wdir ${seqID}_virsorter \
+//         --ncpu ${task.cpus} \
+//         --data-dir $workflow.projectDir/${path_file_virsorter_db}
+//         """
+//     else 
+//         """
+//         echo $workflow.projectDir/${path_file_virsorter_db}
+//         """
+// }
+
+// process virfinder {
+//     conda "bioconda::r-virfinder==1.1"
+
+//     tag "$assembler-$seqID"
+//     publishDir "${params.outdir}/mining/virfinder/${assembler}", mode: 'copy'
+
+//     when:
+//     !params.skip_virfinder
+
+//     input:
+//     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
+
+//     output:
+//     file("*")
+
+//     script:
+//     """
+//     Rscript $workflow.projectDir/bin/virfinder_execute.R ${scaffold}
+//     mv results.txt ${seqID}_results.txt
+//     """
+// }
+
+// /* STEP 5: dereplication and reads mapping */
+// process cdhit {
+//     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
+    
+//     tag "$assembler"
+//     publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
+
+//     input:
+//     tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
+
+//     output:
+//     file("*")
+//     file("splitted83/*.fasta") into (ch_cdhit_bowtie2)
+
+//     script:
+//     """
+//     cat ${scaffolds} > concat.fasta
+//     cd-hit-est \
+//     -T ${task.cpus} \
+//     -M ${task.memory.toMega()} \
+//     -i concat.fasta \
+//     -o derep83.fasta \
+//     -c 0.83 \
+//     -n 5 
+//     seqkit split derep83.fasta \
+//     --by-id \
+//     --force \
+//     --out-dir splitted83
+//     """
+// }
+
+// process bowtie2 {
+//     conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
+
+//     tag "${seqID}"
+//     publishDir "${params.outdir}/bowtie2", mode: 'copy'
+
+//     input:
+//     file consensus from ch_cdhit_bowtie2.collect()
+//     tuple val(seqID), file(reads) from ch_trimm_mapping
+
+//     output:
+//     file("*")
+//     file("count___*") into (ch_bowtie2_collector)
+
+//     script:
+//     """
+//     for scaffold in ${consensus}
+//     do
+//         bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
+//         bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
+//         samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
+//         samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
+//         samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
+//         samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
+//         qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
+    
+//         samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
+//     done
+//     """
+// }
+
+// process collector {
+//     conda "anaconda::pandas==1.1.3"
+
+//     tag "all"
+//     publishDir "${params.outdir}/report/", mode: 'copy'
+
+//     input:
+//     file values from ch_bowtie2_collector.collect()
+
+//     output:
+//     tuple file("custom_plot_mqc.yaml"), file("custom_table_mqc.txt") into (ch_collector_multiqc)
+
+//     script:
+//     """
+//     python $workflow.projectDir/bin/collector.py \
+//     --alignments ${values}
+//     """
+// }
+
+// /* STEP 6 - viral taxonomy */
+// process vcontact2 {
+//     conda "bioconda::vcontact2==0.9.19"
+
+//     tag "$assembler-$seqID"
+//     publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}/${seqID}", mode: 'copy'
+
+//     when:
+//     !params.skip_vcontact2
+
+//     input:
+//     tuple val(assembler), val(seqID), file(phages_combined) from ch_vibrant_vcontact2
+
+//     output:
+//     file("*")
+
+//     script:
+//     """
+//     $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
+//     $workflow.projectDir/bin/vcontact2_gene2genome.py \
+//     -p ${phages_combined}.simple.faa \
+//     -o viral_genomes_g2g.csv \
+//     -s 'Prodigal-FAA'
+//     vcontact2 \
+//     -t ${task.cpus} \
+//     --raw-proteins ${phages_combined}.simple.faa \
+//     --proteins-fp viral_genomes_g2g.csv \
+//     --db 'ProkaryoticViralRefSeq94-Merged' \
+//     --pcs-mode MCL \
+//     --vcs-mode ClusterONE \
+//     --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
+//     --output-dir ./
+//     """
+// }
+
+// /* STEP 7 - report generation */
+// process multiqc {
+//     conda "bioconda::multiqc==1.9=py_1 conda-forge::python==3.9.0"
+
+//     tag "all"
+//     publishDir "${params.outdir}/report/", mode: 'copy'
+
+//     input:
+//     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
+//     tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+
+//     output:
+//     file("*")
+
+//     script:
+//     """
+//     multiqc \
+//     --config $workflow.projectDir/bin/multiqc_config.yaml \
+//     --filename "MultiPhate_report.html" \
+//     . ${custom_plot} ${custom_table}
+//     """
+// }
