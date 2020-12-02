@@ -26,6 +26,15 @@ params.skip_metaspades = false
 params.skip_megahit = false
 params.skip_quast = false
 
+// Mapping
+params.skip_mapping = false
+
+// Binning
+params.skip_binning = false
+params.skip_metabat2 = false
+params.skip_maxbin2 = false
+params.min_contig_size = 2000
+
 // Phage-hunting 
 params.skip_vibrant = false 
 params.mod_vibrant = "legacy"    
@@ -53,7 +62,7 @@ if (params.readPaths) {         // declared in profile config
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
             .set { ch_reads_fastp } 
     } else {
-        Channel.fromFilePairs("${params.readPaths}/*_{R1,R2}.fastq.gz", checkIfExists: true)
+        Channel.fromFilePairs("${params.readPaths}/*{R1,R2}*.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
             .set { ch_reads_fastp }
     }
@@ -153,18 +162,18 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("dephixed_*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping)
+        tuple val(seqID), file("*.fastq.gz") into ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
-        def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        def in = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = params.singleEnd ? "" : "--check-read-2"
         """
         hts_SeqScreener \
-        $inp \
+        $in \
         --seq $workflow.projectDir/${path_file_phix_alone} \
         $check \
-        --fastq-output dephixed_${seqID} \
+        --fastq-output ${seqID}_dephixed \
         --force
         """
     }
@@ -194,7 +203,7 @@ process kraken2 {
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/bin/groovy_vars/${file_kraken2_db}").text
-    def input = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
+    def in = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     """
     kraken2 \
     --report-zero-counts \
@@ -202,7 +211,7 @@ process kraken2 {
     --db $workflow.projectDir/${path_file_kraken2_db} \
     --output ${seqID}_output.txt \
     --report ${seqID}_report.txt \
-    $input
+    $in
     """
 }
 
@@ -258,7 +267,6 @@ process krona {
     python $workflow.projectDir/bin/kreport2krona.py \
     --report-file ${report_bracken} \
     --output to_krona.txt 
-
     ktImportText \
     to_krona.txt \
     -o ${seqID}_krona_abundancies.html
@@ -296,7 +304,6 @@ process metaSPAdes {
     --memory ${task.memory.toGiga()} \
     $input \
     -o ./
-
     mv scaffolds.fasta ${seqID}_scaffolds.fasta
     mv contigs.fasta ${seqID}_contigs.fasta
     """
@@ -326,7 +333,6 @@ process megahit {
     $input \
     --out-dir result \
     --out-prefix ${seqID}
-
     mv result/${seqID}.contigs.fa ${seqID}_contigs.fasta
     """
 }
@@ -433,7 +439,6 @@ process phigaro {
     path_file_phigaro_config = file("$workflow.projectDir/bin/groovy_vars/${file_phigaro_config}").text
     """
     python $workflow.projectDir/bin/phigaro_config_creator.py
-
     printf 'Y\n' | phigaro \
     --threads ${task.cpus} \
     --fasta-file ${scaffold} \
@@ -525,7 +530,6 @@ process cdhit {
     script:
     """
     cat ${scaffolds} > concat.fasta
-
     cd-hit-est \
     -T ${task.cpus} \
     -M ${task.memory.toMega()} \
@@ -533,7 +537,6 @@ process cdhit {
     -o derep83.fasta \
     -c 0.83 \
     -n 5 
-
     seqkit split derep83.fasta \
     --by-id \
     --force \
@@ -560,17 +563,11 @@ process bowtie2 {
     for scaffold in ${consensus}
     do
         bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
-
         bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
-
         samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
-
         samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
-
         samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
-
         samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
-
         qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
     
         samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
@@ -616,12 +613,10 @@ process vcontact2 {
     script:
     """
     $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
-
     $workflow.projectDir/bin/vcontact2_gene2genome.py \
     -p ${phages_combined}.simple.faa \
     -o viral_genomes_g2g.csv \
     -s 'Prodigal-FAA'
-
     vcontact2 \
     -t ${task.cpus} \
     --raw-proteins ${phages_combined}.simple.faa \
