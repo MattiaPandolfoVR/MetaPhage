@@ -439,58 +439,58 @@ process metabat2 {
     """
 }
 
-// /* STEP 6 - phage mining */
-// process vibrant {
-//     if (params.mod_vibrant == "legacy") {
-//         conda "bioconda::vibrant==1.0.1"
-//     }
-//     else {
-//        conda "bioconda::vibrant==1.2.1"
-//     }
+/* STEP 6 - phage mining */
+process vibrant {
+    if (params.mod_vibrant == "legacy") {
+        conda "bioconda::vibrant==1.0.1"
+    }
+    else {
+       conda "bioconda::vibrant==1.2.1"
+    }
 
-//     tag "$assembler-$seqID"
-//     publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
-//     when:
-//     !params.skip_vibrant
+    when:
+    !params.skip_vibrant
 
-//     input:
-//     file file_vibrant_db from ch_file_vibrant_db
-//     tuple val(assembler), val(seqID), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
+    input:
+    file file_vibrant_db from ch_file_vibrant_db
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
 
-//     output:
-//     file("*")
-//     tuple val(assembler), val(seqID), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
-//     tuple val(assembler), val("vibrant"), val(seqID), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
+    output:
+    file("*")
+    tuple val(seqID), val(assembler), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
+    tuple val(seqID), val(assembler), val("vibrant"), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
-//     script:
-//     path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
-//     if (params.mod_vibrant == "legacy")
-//         """
-//         VIBRANT_run.py \
-//         -t ${task.cpus} \
-//         -i ${scaffold} \
-//         -k $workflow.projectDir/${path_file_vibrant_db}KEGG_profiles_prokaryotes.HMM \
-//         -p $workflow.projectDir/${path_file_vibrant_db}Pfam-A_v32.HMM \
-//         -v $workflow.projectDir/${path_file_vibrant_db}VOGDB94_phage.HMM \
-//         -e $workflow.projectDir/${path_file_vibrant_db}Pfam-A_plasmid_v32.HMM \
-//         -a $workflow.projectDir/${path_file_vibrant_db}Pfam-A_phage_v32.HMM \
-//         -c $workflow.projectDir/${path_file_vibrant_db}VIBRANT_categories.tsv \
-//         -n $workflow.projectDir/${path_file_vibrant_db}VIBRANT_names.tsv \
-//         -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
-//         -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
-//         -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
-//         """
-//     else 
-//         """
-//         VIBRANT_run.py \
-//         -t ${task.cpus} \
-//         -i ${scaffold} \
-//         -folder ./ \
-//         -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
-//         -m $workflow.projectDir/${path_file_vibrant_db}files/ 
-//         """
-// }
+    script:
+    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
+    if (params.mod_vibrant == "legacy")
+        """
+        VIBRANT_run.py \
+        -t ${task.cpus} \
+        -i ${scaffold} \
+        -k $workflow.projectDir/${path_file_vibrant_db}KEGG_profiles_prokaryotes.HMM \
+        -p $workflow.projectDir/${path_file_vibrant_db}Pfam-A_v32.HMM \
+        -v $workflow.projectDir/${path_file_vibrant_db}VOGDB94_phage.HMM \
+        -e $workflow.projectDir/${path_file_vibrant_db}Pfam-A_plasmid_v32.HMM \
+        -a $workflow.projectDir/${path_file_vibrant_db}Pfam-A_phage_v32.HMM \
+        -c $workflow.projectDir/${path_file_vibrant_db}VIBRANT_categories.tsv \
+        -n $workflow.projectDir/${path_file_vibrant_db}VIBRANT_names.tsv \
+        -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
+        -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
+        -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
+        """
+    else 
+        """
+        VIBRANT_run.py \
+        -t ${task.cpus} \
+        -i ${scaffold} \
+        -folder ./ \
+        -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
+        -m $workflow.projectDir/${path_file_vibrant_db}files/ 
+        """
+}
 
 // process phigaro {
 //     conda "bioconda::phigaro==2.3.0"
@@ -594,7 +594,7 @@ process metabat2 {
 //     publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
 
 //     input:
-//     tuple val(assembler), val(miner), val(seqID), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
+//     tuple val(seqID), val(assembler), val(miner), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
 
 //     output:
 //     file("*")
@@ -678,7 +678,7 @@ process metabat2 {
 //     !params.skip_vcontact2
 
 //     input:
-//     tuple val(assembler), val(seqID), file(phages_combined) from ch_vibrant_vcontact2
+//     tuple val(seqID), val(assembler), file(phages_combined) from ch_vibrant_vcontact2
 
 //     output:
 //     file("*")
