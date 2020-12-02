@@ -182,7 +182,7 @@ else {
     ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep}
 }
 
-/* STEP 2 - short reads alignment */
+/* STEP 2 - taxonomy classification */
 process kraken2 {
     conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
     
@@ -368,7 +368,7 @@ process quast {
     """
 }
 
-/* STEP 4 - Mapping */ 
+/* STEP 4 - mapping */ 
 
 process bowtie2_mapping {
     conda "bioconda::samtools==1.11 bioconda::bowtie2==2.4.2"
@@ -409,7 +409,7 @@ process bowtie2_mapping {
     """
 }
 
-/* Step 5 - Binning */ 
+/* Step 5 - binning */ 
 
 process metabat2 {
     conda "bioconda::metabat2==2.15"
@@ -444,6 +444,8 @@ process metabat2 {
     -v --unbinned
     """
 }
+
+// miss maxbin2 & das_tool
 
 /* STEP 6 - phage mining */
 process vibrant {
@@ -593,7 +595,7 @@ process virfinder {
     """
 }
 
-/* STEP 5: dereplication and reads mapping */
+/* STEP 7 - dereplication and reads mapping */
 process cdhit {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     
@@ -682,7 +684,7 @@ process collector {
     """
 }
 
-/* STEP 6 - viral taxonomy */
+/* STEP 8 - viral taxonomy */
 process vcontact2 {
     conda "bioconda::vcontact2==0.9.19"
 
@@ -718,7 +720,7 @@ process vcontact2 {
     """
 }
 
-/* STEP 7 - report generation */
+/* STEP 9 - report generation */
 process multiqc {
     conda "bioconda::multiqc==1.9=py_1 conda-forge::python==3.9.0"
 
