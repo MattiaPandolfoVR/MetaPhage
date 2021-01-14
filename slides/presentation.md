@@ -30,7 +30,7 @@ Gira solo al Quadram:
 
 ### Update **18 novembre**
 
-![bg left:40% 95%](pipeline_2020_11_18.drawio.svg)
+![bg left:40% 80%](pipeline_2020_11_18.drawio.svg)
 
 
 :white_check_mark: esclusivamente path relativi
@@ -41,3 +41,48 @@ Gira solo al Quadram:
 
 :exclamation: rimozione delle strutture nf-core
 <!-- spiegarne tutti i benefici -->
+
+---
+
+### Update **dicembre**
+
+![bg left:40% 95%](null)
+
+:cry: perso!
+
+---
+
+### Update **15 gennaio**
+
+![bg left:60% 100%](pipeline_2020_12_01.drawio.svg)
+
+:white_check_mark: implementata la parte di binning
+:white_check_mark: implementati tutti i miner disponibili in conda
+:white_check_mark: iniziata la bozza del paper?!
+:x: ancora nessun supporto Docker/Singularity
+
+---
+
+### Update **15 gennaio**
+
+![bg left:60% 100%](dereplic_2020_12_01.drawio.svg)
+
+:white_check_mark: dereplicazione embrionale con CD-HIT (solo Vibrant)
+:construction: vConTACT2 deve girare una volta sola, prendendo il risultato della dereplicazione
+
+---
+
+### Update **15 gennaio**
+
+![bg left:70% 100%](images_2020_12_01/screen2.png)
+
+:white_check_mark: conteggio con bowtie2
+:white_check_mark: creazione tabella di conte in MultiQC
+
+---
+
+### Update **15 gennaio**
+
+![bg left:70% 100%](images_2020_12_01/screen1.png)
+
+:white_check_mark: creazione barplot di conte in MultiQC
