@@ -44,6 +44,18 @@ Gira solo al Quadram:
 
 ---
 
+### **TO-DO**
+
+:x: finire implementazione (virFinder & virSorter)
+:x: clusterizzazione -> discutere con Evelyin
+:x: matrici conte (seq e prot)
+:x: ragionamento output
+:x: iniziare scrittura manoscritto
+:x: finire implementazione manuale
+:x: MultiQC!
+
+---
+
 ### Update **dicembre**
 
 ![bg left:40% 95%](null)
@@ -58,7 +70,7 @@ Gira solo al Quadram:
 
 :white_check_mark: implementata la parte di binning
 :white_check_mark: implementati tutti i miner disponibili in conda
-:white_check_mark: iniziata la bozza del paper?!
+:x: iniziata la bozza del paper
 :x: ancora nessun supporto Docker/Singularity
 
 ---
