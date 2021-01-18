@@ -13,7 +13,8 @@ params.keep_phix = false
 params.mod_phix = "phiX174" 
 params.file_phix_alone = "-" 
 
-// microbial taxonomy 
+// microbial taxonomy
+params.skip_bacterial_taxo = false
 params.skip_kraken2 = false 
 params.mod_kraken2 = "miniBAV"
 params.file_kraken2_db = "-"
@@ -35,7 +36,8 @@ params.skip_metabat2 = false
 params.skip_maxbin2 = false
 params.min_contig_size = 2000
 
-// Phage-hunting 
+// Phage-mining
+params.skip_mining = false
 params.skip_vibrant = false 
 params.mod_vibrant = "legacy"    
 params.file_vibrant_db = "-" 
@@ -48,9 +50,15 @@ params.file_virsorter_db = "-"
 params.virsorter_viromes = false  
 params.skip_virfinder = false                                                 
 
-// Viral Taxonomy - vContact2 
+// Dereplication
+params.skip_derep = false
+
+// Viral Taxonomy - vContact2
+params.skip_viral_taxo = true
 params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
 
+// Report
+params.skip_report = false
 
   
 /* FILE INPUT */
@@ -162,7 +170,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("*.fastq.gz") into ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep
+        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -190,7 +198,7 @@ process kraken2 {
     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
 
     when:
-    !params.skip_kraken2
+    !params.skip_bacterial_taxo || !params.skip_kraken2
 
     input:
     file file_kraken2_db from ch_file_kraken2_db
@@ -198,8 +206,7 @@ process kraken2 {
 
     output:
     file("${seqID}_output.txt") 
-    file("${seqID}_report.txt") into (ch_kraken2_bracken)
-    val(seqID) into (ch_seqID_bracken)
+    tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_bracken)
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/bin/groovy_vars/${file_kraken2_db}").text
@@ -222,17 +229,15 @@ process bracken {
     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
     when:
-    !params.skip_kraken2 && !params.skip_bracken
+    !params.skip_bacterial_taxo || (!params.skip_kraken2 && !params.skip_bracken)
 
     input:
     file file_bracken_db from ch_file_bracken_db
-    file report from ch_kraken2_bracken
-    val seqID from ch_seqID_bracken
+    tuple val(seqID), file(report) from ch_kraken2_bracken
 
     output:
     file("${seqID}_abundancies.txt")
-    file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
-    val(seqID) into (ch_seqID_krona)
+    tuple val(seqID), file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
 
     script:
     path_file_bracken_db = file("$workflow.projectDir/bin/groovy_vars/${file_bracken_db}").text
@@ -253,11 +258,10 @@ process krona {
     publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
 
     when:
-    !params.skip_kraken2 && !params.skip_bracken
+    !params.skip_bacterial_taxo || (!params.skip_kraken2 && !params.skip_bracken)
 
     input:
-    file report_bracken from ch_bracken_krona
-    val seqID from ch_seqID_krona
+    tuple val(seqID), file(report_bracken) from ch_bracken_krona
 
     output:
     file("${seqID}_krona_abundancies.html")
@@ -267,6 +271,7 @@ process krona {
     python $workflow.projectDir/bin/kreport2krona.py \
     --report-file ${report_bracken} \
     --output to_krona.txt 
+
     ktImportText \
     to_krona.txt \
     -o ${seqID}_krona_abundancies.html
@@ -346,7 +351,7 @@ process quast {
     publishDir "${params.outdir}/assembly/${assembler}/quast/${seqID}", mode: 'copy'
 
     when:
-    !params.skip_metaspades && !params.skip_megahit && !params.skip_quast 
+    (!params.skip_metaspades && !params.skip_megahit) || !params.skip_quast 
 
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
@@ -376,24 +381,24 @@ process bowtie2_mapping {
     tag "$seqID-$assembler"
     publishDir "${params.outdir}/mapping/${assembler}", mode: 'copy',
         saveAs: {filename ->
-                if(filename.endsWith(".fasta")) null
-                else if(filename.endsWith(".fastq.gz")) null
-                else filename
+                    if(filename.endsWith(".fasta")) null
+                    else if(filename.endsWith(".fastq.gz")) null
+                    else filename
                 }
 
     input:
     tuple val(seqID), val(assembler), file(assembly), val(mapID), file(mapReads) from Channel.empty().mix(ch_metaspades_mapping, ch_megahit_mapping).combine(ch_trimm_mapping).flatMap{ tup -> if(tup[0] == tup[3]){ [tup] } }
 
     output:
-    tuple val(assembler), val(seqID), file(assembly), file("*.bam") into ch_bowtie2_metabat2
-    tuple val(assembler), val(seqID), file(assembly), file(mapReads) into ch_bowtie2_maxbin2
+    tuple val(seqID), val(assembler), file(assembly), file("*.bam") into ch_bowtie2_metabat2
+    tuple val(seqID), val(assembler), file(assembly), file(mapReads) into ch_bowtie2_maxbin2
     tuple val(seqID), file("*.bam"), file("*.bam.bai")
 
     when:
     !params.skip_mapping
 
     script:
-    def name = "${assembler}-${seqID}-${mapID}"
+    def name = "${assembler}_${seqID}_${mapID}"
     def input = params.singleEnd ? "-U ${mapReads}" : "-1 ${mapReads[0]} -2 ${mapReads[1]}"
     """
     bowtie2-build \
@@ -418,11 +423,10 @@ process metabat2 {
     publishDir "${params.outdir}/binning/metabat2/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_binning && !params.skip_metabat2
+    !params.skip_binning || !params.skip_metabat2
 
     input:
-    tuple val(assembler), val(seqID), file(assembly), file(bam) from ch_bowtie2_metabat2
-    val(min_size) from params.min_contig_size
+    tuple val(seqID), val(assembler), file(assembly), file(bam) from ch_bowtie2_metabat2
 
     output:
     //tuple val(seqID), file("metabat2/*") into ch_metabat2_das_tool
@@ -440,10 +444,42 @@ process metabat2 {
     -i ${assembly} \
     -a "${name}.depth.txt" \
     -o "${name}.metabat" \
-    -m ${min_size} \
+    -m ${params.min_contig_size} \
     -v --unbinned
     """
 }
+
+process maxbin2 {
+    conda "bioconda::maxbin2==2.2.7"
+    publishDir "${params.outdir}/binning/maxbin2/${assembler}", mode: 'copy'
+    
+    tag "$seqID-$assembler"
+
+    when:
+    !params.skip_binning || !params.skip_maxbin2
+
+    input:
+    tuple val(seqID), val(assembler), file(assembly), file(reads) from ch_bowtie2_maxbin2
+
+    output:
+    //tuple val(seqID), file("maxbin/*") into ch_maxbin2_das_tool
+    file("*")
+
+    script:
+    def name = "${seqID}_${assembler}"
+    """
+    run_MaxBin.pl \
+    -contig ${assembly} \
+    -min_contig_length ${params.min_contig_size} \
+    -out ./${name}.maxbin \
+    -thread ${task.cpus} \
+    -reads ${reads[0]} \
+    -reads2 ${reads[1]}
+    """
+}
+
+// default parameter in maxbin2
+// -min_contig_length  ${min_size}
 
 // miss maxbin2 & das_tool
 
@@ -460,7 +496,7 @@ process vibrant {
     publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_vibrant
+    !params.skip_mining || !params.skip_vibrant
 
     input:
     file file_vibrant_db from ch_file_vibrant_db
@@ -506,7 +542,7 @@ process phigaro {
     publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_phigaro
+    !params.skip_mining | !params.skip_phigaro
 
     input:
     file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
@@ -545,7 +581,7 @@ process virsorter {
     publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_virsorter
+    !params.skip_mining || !params.skip_virsorter
 
     input:
     file file_virsorter_db from ch_file_virsorter_db 
@@ -579,7 +615,7 @@ process virfinder {
     publishDir "${params.outdir}/mining/virfinder/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_virfinder
+    !params.skip_mining || !params.skip_virfinder
 
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
@@ -601,6 +637,9 @@ process cdhit {
     
     tag "$assembler"
     publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
+
+    when:
+    !params.skip_derep
 
     input:
     tuple val(seqID), val(assembler), val(miner), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
@@ -692,7 +731,7 @@ process vcontact2 {
     publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}/${seqID}", mode: 'copy'
 
     when:
-    !params.skip_vcontact2
+    !params.skip_viral_taxo || !params.skip_vcontact2
 
     input:
     tuple val(seqID), val(assembler), file(phages_combined) from ch_vibrant_vcontact2
@@ -726,6 +765,9 @@ process multiqc {
 
     tag "all"
     publishDir "${params.outdir}/report/", mode: 'copy'
+
+    when:
+    !params.skip_report
 
     input:
     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
