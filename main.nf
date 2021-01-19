@@ -1,6 +1,3 @@
-#!/usr/bin/env nextflow
-
-
 /* CONFIGURATION VARIABLES */
 params.db_manager_reports = false
 
@@ -51,7 +48,7 @@ params.virsorter_viromes = false
 params.skip_virfinder = false                                                 
 
 // Dereplication
-params.skip_derep = false
+params.skip_dereplication = false
 
 // Viral Taxonomy - vContact2
 params.skip_viral_taxo = true
@@ -198,7 +195,7 @@ process kraken2 {
     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
 
     when:
-    !params.skip_bacterial_taxo || !params.skip_kraken2
+    !params.skip_bacterial_taxo && !params.skip_kraken2
 
     input:
     file file_kraken2_db from ch_file_kraken2_db
@@ -229,7 +226,7 @@ process bracken {
     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
     when:
-    !params.skip_bacterial_taxo || (!params.skip_kraken2 && !params.skip_bracken)
+    !params.skip_bacterial_taxo && (!params.skip_kraken2 && !params.skip_bracken)
 
     input:
     file file_bracken_db from ch_file_bracken_db
@@ -258,7 +255,7 @@ process krona {
     publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
 
     when:
-    !params.skip_bacterial_taxo || (!params.skip_kraken2 && !params.skip_bracken)
+    !params.skip_bacterial_taxo && (!params.skip_kraken2 && !params.skip_bracken)
 
     input:
     tuple val(seqID), file(report_bracken) from ch_bracken_krona
@@ -351,7 +348,7 @@ process quast {
     publishDir "${params.outdir}/assembly/${assembler}/quast/${seqID}", mode: 'copy'
 
     when:
-    (!params.skip_metaspades && !params.skip_megahit) || !params.skip_quast 
+    (!params.skip_metaspades && !params.skip_megahit) && !params.skip_quast 
 
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
@@ -423,7 +420,7 @@ process metabat2 {
     publishDir "${params.outdir}/binning/metabat2/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_binning || !params.skip_metabat2
+    !params.skip_binning && !params.skip_metabat2
 
     input:
     tuple val(seqID), val(assembler), file(assembly), file(bam) from ch_bowtie2_metabat2
@@ -457,7 +454,7 @@ process maxbin2 {
     publishDir "${params.outdir}/binning/maxbin2/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_binning || !params.skip_maxbin2
+    !params.skip_binning && !params.skip_maxbin2
 
     input:
     tuple val(assembler), val(seqID), file(assembly), file(mapReads) from ch_bowtie2_maxbin2
@@ -498,13 +495,14 @@ process vibrant {
     publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_mining || !params.skip_vibrant
+    !params.skip_mining && !params.skip_vibrant
 
     input:
     file file_vibrant_db from ch_file_vibrant_db
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
 
     output:
+    file("*")
     tuple val(seqID), val(assembler), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
     tuple val(seqID), val(assembler), val("vibrant"), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
@@ -544,7 +542,7 @@ process phigaro {
     publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_mining | !params.skip_phigaro
+    !params.skip_mining && !params.skip_phigaro
 
     input:
     file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
@@ -552,6 +550,7 @@ process phigaro {
 
     output:
     file("*")
+    tuple val(seqID), val(assembler), val("phigaro"), file("**/*.phigaro.fasta") into (ch_phigaro_cdhit)
 
     script:
     path_file_phigaro_config = file("$workflow.projectDir/bin/groovy_vars/${file_phigaro_config}").text
@@ -568,6 +567,11 @@ process phigaro {
     --not-open \
     --save-fasta \
     --mode basic
+
+    if [ ! -e phigaro_${seqID}/*.phigaro.fasta ]; then
+        mkdir -p phigaro_${seqID}
+        touch phigaro_${seqID}/empty.phigaro.fasta
+    fi
     """
 }
 
@@ -583,7 +587,7 @@ process virsorter {
     publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_mining || !params.skip_virsorter
+    !params.skip_mining && !params.skip_virsorter
 
     input:
     file file_virsorter_db from ch_file_virsorter_db 
@@ -617,7 +621,7 @@ process virfinder {
     publishDir "${params.outdir}/mining/virfinder/${assembler}", mode: 'copy'
 
     when:
-    !params.skip_mining || !params.skip_virfinder
+    !params.skip_mining && !params.skip_virfinder
 
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
@@ -641,32 +645,35 @@ process cdhit {
     publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
 
     when:
-    !params.skip_derep
+    !params.skip_dereplication
 
     input:
-    tuple val(seqID), val(assembler), val(miner), file(scaffolds) from ch_vibrant_cdhit.groupTuple(by: 0)
+    tuple val(seqID), val(assembler), val(miner), file(scaffolds) from Channel.empty().mix(ch_vibrant_cdhit, ch_phigaro_cdhit).groupTuple(by: 1)
 
     output:
     file("*")
     file("splitted83/*.fasta") into (ch_cdhit_bowtie2)
 
     script:
-    """
-    cat ${scaffolds} > concat.fasta
+    if (params.skip_metaspades == false && params.skip_megahit == false)
+        error "Dereplication works with one assembler at a time!"
+    else
+        """
+        cat ${scaffolds} > concat.fasta
 
-    cd-hit-est \
-    -T ${task.cpus} \
-    -M ${task.memory.toMega()} \
-    -i concat.fasta \
-    -o derep83.fasta \
-    -c 0.83 \
-    -n 5 
+        cd-hit-est \
+        -T ${task.cpus} \
+        -M ${task.memory.toMega()} \
+        -i concat.fasta \
+        -o derep83.fasta \
+        -c 0.83 \
+        -n 5 
 
-    seqkit split derep83.fasta \
-    --by-id \
-    --force \
-    --out-dir splitted83
-    """
+        seqkit split derep83.fasta \
+        --by-id \
+        --force \
+        --out-dir splitted83
+        """
 }
 
 process bowtie2_derep {
@@ -739,7 +746,7 @@ process vcontact2 {
     publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}/${seqID}", mode: 'copy'
 
     when:
-    !params.skip_viral_taxo || !params.skip_vcontact2
+    !!params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
     tuple val(seqID), val(assembler), file(phages_combined) from ch_vibrant_vcontact2
