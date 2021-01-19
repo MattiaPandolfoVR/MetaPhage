@@ -1,6 +1,3 @@
-#!/usr/bin/env nextflow
-
-
 /* CONFIGURATION VARIABLES */
 params.db_manager_reports = false
 
