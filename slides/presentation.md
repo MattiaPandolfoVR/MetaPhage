@@ -98,3 +98,19 @@ Gira solo al Quadram:
 ![bg left:70% 100%](images_2020_12_01/screen1.png)
 
 :white_check_mark: creazione barplot di conte in MultiQC
+
+---
+
+### Update **21 January**
+
+![bg left:60% 100%](pipeline_2020_12_21.drawio.svg)
+
+:white_check_mark: dereplication includes Vibrant and Phigaro
+
+---
+
+### Update **21 January**
+
+![bg left:60% 100%](dereplic_2020_12_21.drawio.svg)
+
+:white_check_mark: rough dereplication with CD-HIT

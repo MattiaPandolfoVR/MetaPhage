@@ -595,6 +595,8 @@ process virsorter {
 
     output:
     file("*")
+    tuple val(seqID), val(assembler), val("1virsorter"), file("**/${seqID}_VIRSorter_cat-1.fasta") into (ch_1virsorter_cdhit)
+    tuple val(seqID), val(assembler), val("4virsorter"), file("**/${seqID}_VIRSorter_prophages_cat-4.fasta") into (ch_4virsorter_cdhit)
 
     script:
     path_file_virsorter_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter_db}").text
@@ -607,6 +609,10 @@ process virsorter {
         --wdir ${seqID}_virsorter \
         --ncpu ${task.cpus} \
         --data-dir $workflow.projectDir/${path_file_virsorter_db}
+
+        cd ${seqID}_virsorter/Predicted_viral_sequences/
+        for FILENAME in *; do mv \$FILENAME ${seqID}_\$FILENAME; done
+        cd ../../
         """
     else 
         """
@@ -648,7 +654,7 @@ process cdhit {
     !params.skip_dereplication
 
     input:
-    tuple val(seqID), val(assembler), val(miner), file(scaffolds) from Channel.empty().mix(ch_vibrant_cdhit, ch_phigaro_cdhit).groupTuple(by: 1)
+    tuple val(seqID), val(assembler), val(miner), file(scaffolds) from Channel.empty().mix(ch_vibrant_cdhit, ch_phigaro_cdhit, ch_1virsorter_cdhit, ch_4virsorter_cdhit).groupTuple(by: 1)
 
     output:
     file("*")
