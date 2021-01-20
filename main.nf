@@ -138,7 +138,7 @@ process fastp {
 
     script: 
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
-    def in = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
+    def inp = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
     def out = params.singleEnd ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
     """
     fastp \
@@ -149,7 +149,7 @@ process fastp {
     --cut_mean_quality ${params.trimming_quality} \
     --adapter_sequence=${params.adapter_forward} \
     --adapter_sequence_r2=${params.adapter_reverse} \
-    $in \
+    $inp \
     $out \
     -h ${seqID}_qc_report.html \
     -j ${seqID}_fastp.json
@@ -171,11 +171,11 @@ if(!params.keep_phix) {
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
-        def in = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+        def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = params.singleEnd ? "" : "--check-read-2"
         """
         hts_SeqScreener \
-        $in \
+        $inp \
         --seq $workflow.projectDir/${path_file_phix_alone} \
         $check \
         --fastq-output ${seqID}_dephixed \
@@ -207,7 +207,7 @@ process kraken2 {
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/bin/groovy_vars/${file_kraken2_db}").text
-    def in = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
+    def inp = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     """
     kraken2 \
     --report-zero-counts \
@@ -215,7 +215,7 @@ process kraken2 {
     --db $workflow.projectDir/${path_file_kraken2_db} \
     --output ${seqID}_output.txt \
     --report ${seqID}_report.txt \
-    $in
+    $inp
     """
 }
 
@@ -298,13 +298,13 @@ process metaSPAdes {
     tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_contigs.fasta")
 
     script:
-    def in = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"
+    def inp = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"
     """    
     spades.py \
     --meta \
     --threads ${task.cpus} \
     --memory ${task.memory.toGiga()} \
-    $in \
+    $inp \
     -o ./
 
     mv scaffolds.fasta ${seqID}_metaspades_scaffolds.fasta
@@ -328,12 +328,12 @@ process megahit {
     tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_mapping, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
     
     script:
-    def in = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
+    def inp = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
     """
     megahit \
     --num-cpu-threads ${task.cpus} \
     --memory ${task.memory.toBytes()} \
-    $in \
+    $inp \
     --out-dir result \
     --out-prefix ${seqID}
 
@@ -396,14 +396,14 @@ process bowtie2_mapping {
 
     script:
     def name = "${assembler}_${seqID}_${mapID}"
-    def input = params.singleEnd ? "-U ${mapReads}" : "-1 ${mapReads[0]} -2 ${mapReads[1]}"
+    def inp = params.singleEnd ? "-U ${mapReads}" : "-1 ${mapReads[0]} -2 ${mapReads[1]}"
     """
     bowtie2-build \
         --threads ${task.cpus} ${assembly} ref
 
     bowtie2 \
         -p ${task.cpus} \
-        -x ref $input | \
+        -x ref $inp | \
     samtools view -@ ${task.cpus} -bS | \
     samtools sort -@ ${task.cpus} -o "${name}.bam"
 
