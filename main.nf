@@ -448,7 +448,6 @@ process metabat2 {
 
 process maxbin2 {
     conda "bioconda::maxbin2==2.2.7"
-    
 
     tag "$seqID-$assembler"
     publishDir "${params.outdir}/binning/maxbin2/${assembler}", mode: 'copy'
@@ -457,18 +456,18 @@ process maxbin2 {
     !params.skip_binning && !params.skip_maxbin2
 
     input:
-    tuple val(assembler), val(seqID), file(assembly), file(mapReads) from ch_bowtie2_maxbin2
+    tuple val(seqID), val(assembler), file(assembly), file(mapReads) from ch_bowtie2_maxbin2
     val(min_size) from params.min_contig_size
     
     output:
     //tuple val(seqID), file("maxbin2/*") into ch_maxbin2_das_tool
-    file("*.fasta")
+    file("*")
 
     script:
     def name = "${seqID}_${assembler}"
     """
-    gunzip -dc ${mapReads[0]} > ${seqID}_R1.fastq
-    gunzip -dc ${mapReads[1]} > ${seqID}_R2.fastq
+    gunzip -dc ${seqID}_dephixed_R1.fastq.gz > ${seqID}_R1.fastq
+    gunzip -dc ${seqID}_dephixed_R2.fastq.gz > ${seqID}_R2.fastq
 
     run_MaxBin.pl \
     -thread ${task.cpus} \
