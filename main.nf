@@ -503,7 +503,6 @@ process vibrant {
 
     output:
     file("*")
-    //tuple val(seqID), val(assembler), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
     tuple val(seqID), val(assembler), val("vibrant"), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
     script:
@@ -802,11 +801,11 @@ process vcontact2 {
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
-    //tuple val(seqID), val(assembler), file(phages_combined) from ch_vibrant_vcontact2
     tuple val(assembler), file(phages_combined) from ch_prodigal_vcontact2
 
     output:
     file("*")
+    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
 
     script:
     """
@@ -827,6 +826,30 @@ process vcontact2 {
     --vcs-mode ClusterONE \
     --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
     --output-dir ./
+    """
+}
+
+process vcontact2_extender {
+    conda "anaconda::python=3.7 conda-forge::pandas==1.1.4 anaconda::networkx==2.5 conda-forge::graphviz==2.42.3 conda-forge::pygraphviz==1.6 pyviz::hvplot==0.6.0 pyviz::panel==0.10.1 conda-forge::plotly==4.12.0"
+
+    tag "$assembler"
+    publishDir "${params.outdir}/report", mode: 'copy'
+
+    input:
+    tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
+    //file(netfile) from Channel.fromPath( 'extra/c1.ntw' )
+    //file(csvfile) from Channel.fromPath( 'extra/genome_by_genome_overview.csv' )
+
+    output:
+    file("*")
+
+    script:
+    """
+    python $workflow.projectDir/bin/graph_analyzer.py \
+    --input-graph ${netfile} \
+    --input-csv ${csvfile} \
+    --output ./ \
+    --suffix ${assembler}
     """
 }
 
