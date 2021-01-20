@@ -294,7 +294,7 @@ process metaSPAdes {
     tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_mapping, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder)
+    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_mapping, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_virfinderproc)
     tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_contigs.fasta")
 
     script:
@@ -325,7 +325,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_mapping, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder)
+    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_mapping, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder, ch_megahit_virfinderproc)
     
     script:
     def inp = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -624,7 +624,7 @@ process virfinder {
     conda "bioconda::r-virfinder==1.1"
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virfinder/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
 
     when:
     !params.skip_mining && !params.skip_virfinder
@@ -634,12 +634,36 @@ process virfinder {
 
     output:
     file("*")
+    tuple val(seqID), val(assembler), file("*_virus.csv") into (ch_virfinder_virfinderproc)
 
     script:
     """
     Rscript $workflow.projectDir/bin/virfinder_execute.R ${scaffold}
 
     mv results.txt ${seqID}_results.txt
+    mv virus.csv ${seqID}_virus.csv
+    """
+}
+
+process virfinderproc {
+    conda "bioconda::r-seqinr==3.1_3"
+
+    tag "$assembler-$seqID"
+    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
+
+    input:
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinderproc, ch_megahit_virfinderproc)
+    tuple val(seqID), val(assembler), file(csvfile) from ch_virfinder_virfinderproc
+
+    output:
+    file("*")
+    tuple val(seqID), val(assembler), val("virfinder"), file("*_viral_sequences.fasta") into (ch_virfinder_cdhit)
+
+    script:
+    """
+    Rscript $workflow.projectDir/bin/virfinder_process.R ${scaffold} ${csvfile}
+
+    mv viral_sequences.fasta ${seqID}_viral_sequences.fasta
     """
 }
 
@@ -654,7 +678,7 @@ process cdhit {
     !params.skip_dereplication
 
     input:
-    tuple val(seqID), val(assembler), val(miner), file(scaffolds) from Channel.empty().mix(ch_vibrant_cdhit, ch_phigaro_cdhit, ch_1virsorter_cdhit, ch_4virsorter_cdhit).groupTuple(by: 1)
+    tuple val(seqID), val(assembler), val(miner), file(scaffolds) from Channel.empty().mix(ch_vibrant_cdhit, ch_phigaro_cdhit, ch_1virsorter_cdhit, ch_4virsorter_cdhit, ch_virfinder_cdhit).groupTuple(by: 1)
 
     output:
     file("*")
