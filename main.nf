@@ -136,7 +136,7 @@ process fastp {
     file("${seqID}_qc_report.html")
     file("${seqID}_fastp.json") into (ch_fastp_multiqc)
 
-    script:
+    script: 
     def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
     def in = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
     def out = params.singleEnd ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
