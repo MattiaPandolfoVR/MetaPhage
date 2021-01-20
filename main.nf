@@ -682,7 +682,8 @@ process cdhit {
 
     output:
     file("*")
-    file("splitted83/*.fasta") into (ch_cdhit_bowtie2)
+    file("splitted83_${assembler}/*.fasta") into (ch_cdhit_bowtie2)
+    tuple val(assembler), file("derep83_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
     if (params.skip_metaspades == false && params.skip_megahit == false)
@@ -695,15 +696,37 @@ process cdhit {
         -T ${task.cpus} \
         -M ${task.memory.toMega()} \
         -i concat.fasta \
-        -o derep83.fasta \
+        -o derep83_${assembler}.fasta \
         -c 0.83 \
         -n 5 
 
-        seqkit split derep83.fasta \
+        seqkit split derep83_${assembler}.fasta \
         --by-id \
         --force \
-        --out-dir splitted83
+        --out-dir splitted83_${assembler}
         """
+}
+
+process prodigal {
+    conda "bioconda::prodigal==2.6.3"
+    
+    tag "$assembler"
+    publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
+
+    when:
+    !params.skip_dereplication
+
+    input:
+    tuple val(assembler), file(vcs) from ch_cdhit_prodigal
+
+    output:
+    file("*")
+    file("derep_prots_${assembler}.faa") into (ch_prodigal_vcontact2)
+
+    script:
+    """
+    prodigal -i ${vcs} -o derep_coords_${assembler}.gbk -a derep_prots_${assembler}.faa
+    """
 }
 
 process bowtie2_derep {
