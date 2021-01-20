@@ -105,7 +105,7 @@ Gira solo al Quadram:
 
 ![bg left:60% 100%](pipeline_2020_12_21.drawio.svg)
 
-:white_check_mark: dereplication includes Vibrant and Phigaro
+:white_check_mark: dereplication now includes Vibrant, Phigaro, VirSorter1 and VirFinder
 
 ---
 
