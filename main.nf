@@ -52,7 +52,7 @@ params.skip_dereplication = false
 
 // Viral Taxonomy - vContact2
 params.skip_viral_taxo = true
-params.skip_vcontact2 = true // true while debugging the pipeline                                                                               
+params.skip_vcontact2 = false // true while debugging the pipeline                                                                               
 
 // Report
 params.skip_report = false
@@ -503,7 +503,7 @@ process vibrant {
 
     output:
     file("*")
-    tuple val(seqID), val(assembler), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
+    //tuple val(seqID), val(assembler), file("**/*.phages_combined.faa") into (ch_vibrant_vcontact2)
     tuple val(seqID), val(assembler), val("vibrant"), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
     script:
@@ -690,12 +690,12 @@ process cdhit {
         error "Dereplication works with one assembler at a time!"
     else
         """
-        cat ${scaffolds} > concat.fasta
+        cat ${scaffolds} > concat_${assembler}.fasta
 
         cd-hit-est \
         -T ${task.cpus} \
         -M ${task.memory.toMega()} \
-        -i concat.fasta \
+        -i concat_${assembler}.fasta \
         -o derep83_${assembler}.fasta \
         -c 0.83 \
         -n 5 
@@ -721,7 +721,7 @@ process prodigal {
 
     output:
     file("*")
-    file("derep_prots_${assembler}.faa") into (ch_prodigal_vcontact2)
+    tuple val(assembler), file("derep_prots_${assembler}.faa") into (ch_prodigal_vcontact2)
 
     script:
     """
@@ -795,21 +795,24 @@ process collector {
 process vcontact2 {
     conda "bioconda::vcontact2==0.9.19"
 
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}/${seqID}", mode: 'copy'
+    tag "$assembler"
+    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy'
 
     when:
-    !!params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
+    !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
-    tuple val(seqID), val(assembler), file(phages_combined) from ch_vibrant_vcontact2
+    //tuple val(seqID), val(assembler), file(phages_combined) from ch_vibrant_vcontact2
+    tuple val(assembler), file(phages_combined) from ch_prodigal_vcontact2
 
     output:
     file("*")
 
     script:
     """
-    $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
+    # $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
+    $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${phages_combined}
+
     $workflow.projectDir/bin/vcontact2_gene2genome.py \
     -p ${phages_combined}.simple.faa \
     -o viral_genomes_g2g.csv \
