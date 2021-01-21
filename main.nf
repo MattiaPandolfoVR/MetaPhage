@@ -806,8 +806,8 @@ process bowtie2_derep {
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     when:
-    false
     //!params.skip_dereplication
+    false
 
     input:
     file consensus from ch_cdhit_bowtie2.collect()
@@ -877,6 +877,8 @@ process bowtie2_derepALL {
 }
 
 process covtocounts2 {
+    conda "anaconda::python=3.7"
+
     tag "ALL"
     publishDir "${params.outdir}/covtocounts2", mode: 'copy'
 
@@ -886,12 +888,23 @@ process covtocounts2 {
 
     output:
     file("*")
+    tuple file("custom_count_table_mqc.txt"), file("custom_count_plot_mqc.txt") into (ch_covtocounts2_multiqc)
 
     script:
     """
     $workflow.projectDir/bin/covtocounts2 \
     --multiqc \
     ${sortedbam} > custom_count_table_mqc.txt
+
+    python << END
+    file = open("custom_count_table_mqc.txt", "r")
+    line = file.read()
+    line = line.replace("# plot_type: 'table'", "")
+    file.close()
+    file = open("custom_count_plot_mqc.txt", "w")
+    file.write(line)
+    file.close()
+    END
     """
 }
 
@@ -993,7 +1006,8 @@ process multiqc {
 
     input:
     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
-    tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+    //tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+    tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc
 
     output:
     file("*")
@@ -1003,6 +1017,6 @@ process multiqc {
     multiqc \
     --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
-    . ${custom_plot} ${custom_table}
+    . ${custom_count_plot} ${custom_count_table}
     """
 }
