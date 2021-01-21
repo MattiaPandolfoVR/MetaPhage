@@ -170,7 +170,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep, ch_trimm_derepALL)
+        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -187,7 +187,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep; ch_trimm_derepALL}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep}
 }
 
 /* STEP 2 - taxonomy classification */
@@ -751,8 +751,7 @@ process cdhit {
 
     output:
     file("*")
-    file("splitted83_${assembler}/*.fasta") into (ch_cdhit_bowtie2)
-    file("derep83_${assembler}.fasta") into (ch_cdhit_bowtie2ALL)
+    file("derep83_${assembler}.fasta") into (ch_cdhit_bowtie2)
     tuple val(assembler), file("derep83_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
@@ -769,11 +768,6 @@ process cdhit {
         -o derep83_${assembler}.fasta \
         -c 0.83 \
         -n 5 
-
-        seqkit split derep83_${assembler}.fasta \
-        --by-id \
-        --force \
-        --out-dir splitted83_${assembler}
         """
 }
 
@@ -806,52 +800,11 @@ process bowtie2_derep {
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     when:
-    //!params.skip_dereplication
-    false
+    !params.skip_dereplication
 
     input:
     file consensus from ch_cdhit_bowtie2.collect()
     tuple val(seqID), file(reads) from ch_trimm_derep
-
-    output:
-    file("*")
-    file("count___*") into ch_bowtie2_collector
-
-    script:
-    """
-    for scaffold in ${consensus}
-    do
-        bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
-
-        bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
-
-        samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
-
-        samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
-
-        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
-
-        samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
-
-        qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
-    
-        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
-    done
-    """
-}
-
-process bowtie2_derepALL {
-    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
-
-    tag "${seqID}"
-    publishDir "${params.outdir}/bowtie2ALL", mode: 'copy'
-
-    when:
-    !params.skip_dereplication
-
-    input:
-    file consensus from ch_cdhit_bowtie2ALL.collect()
-    tuple val(seqID), file(reads) from ch_trimm_derepALL
 
     output:
     file("*")
@@ -879,7 +832,6 @@ process bowtie2_derepALL {
 process covtocounts2 {
     conda "anaconda::python=3.7"
 
-    tag "ALL"
     publishDir "${params.outdir}/covtocounts2", mode: 'copy'
 
     input:
@@ -894,39 +846,9 @@ process covtocounts2 {
     """
     $workflow.projectDir/bin/covtocounts2 \
     --multiqc \
-    ${sortedbam} > custom_count_table_mqc.txt
+    ${sortedbam} > multiqc_model.txt
 
-    python << END
-    file = open("custom_count_table_mqc.txt", "r")
-    line = file.read()
-    line = line.replace("# plot_type: 'table'", "")
-    file.close()
-    file = open("custom_count_plot_mqc.txt", "w")
-    file.write(line)
-    file.close()
-    END
-    """
-}
-
-process collector {
-    conda "anaconda::pandas==1.1.3"
-
-    tag "all"
-    publishDir "${params.outdir}/report/", mode: 'copy'
-
-    when:
-    !params.skip_dereplication
-
-    input:
-    file values from ch_bowtie2_collector.collect()
-
-    output:
-    tuple file("custom_plot_mqc.yaml"), file("custom_table_mqc.txt") into ch_collector_multiqc
-
-    script:
-    """
-    python $workflow.projectDir/bin/collector.py \
-    --alignments ${values}
+    python multiqc_model_editor.py
     """
 }
 
