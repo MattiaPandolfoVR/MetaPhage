@@ -832,7 +832,7 @@ process bowtie2_derep {
 process covtocounts2 {
     conda "anaconda::python=3.7"
 
-    publishDir "${params.outdir}/covtocounts2", mode: 'copy'
+    publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     input:
     file(sortedbam) from ch_bowtie2bam_covtocounts2.collect()
@@ -848,7 +848,7 @@ process covtocounts2 {
     --multiqc \
     ${sortedbam} > multiqc_model.txt
 
-    python multiqc_model_editor.py
+    python $workflow.projectDir/bin/multiqc_model_editor.py
     """
 }
 
