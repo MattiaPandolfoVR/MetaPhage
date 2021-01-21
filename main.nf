@@ -170,7 +170,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
+        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep, ch_trimm_derepALL)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
@@ -187,7 +187,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep; ch_trimm_derepALL}
 }
 
 /* STEP 2 - taxonomy classification */
@@ -752,6 +752,7 @@ process cdhit {
     output:
     file("*")
     file("splitted83_${assembler}/*.fasta") into (ch_cdhit_bowtie2)
+    file("derep83_${assembler}.fasta") into (ch_cdhit_bowtie2ALL)
     tuple val(assembler), file("derep83_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
@@ -805,7 +806,8 @@ process bowtie2_derep {
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     when:
-    !params.skip_dereplication
+    false
+    //!params.skip_dereplication
 
     input:
     file consensus from ch_cdhit_bowtie2.collect()
@@ -835,6 +837,61 @@ process bowtie2_derep {
     
         samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
     done
+    """
+}
+
+process bowtie2_derepALL {
+    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
+
+    tag "${seqID}"
+    publishDir "${params.outdir}/bowtie2ALL", mode: 'copy'
+
+    when:
+    !params.skip_dereplication
+
+    input:
+    file consensus from ch_cdhit_bowtie2ALL.collect()
+    tuple val(seqID), file(reads) from ch_trimm_derepALL
+
+    output:
+    file("*")
+    file("*.sorted.bam") into (ch_bowtie2bam_covtocounts2)
+    file("*.sorted.bam.bai") into (ch_bowtie2bai_covtocounts2)
+
+    script:
+    """
+    bowtie2-build --threads ${task.cpus} ${consensus} ${consensus}_index
+
+    bowtie2 -p ${task.cpus} -x ${consensus}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_${consensus}.sam 
+
+    samtools view -@ ${task.cpus} -S -b ${seqID}_${consensus}.sam > ${seqID}_${consensus}.bam
+
+    samtools sort -@ ${task.cpus} ${seqID}_${consensus}.bam -o ${seqID}_${consensus}.sorted.bam
+
+    samtools index -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam
+
+    samtools flagstat -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam > mappingstats_${seqID}_${consensus}.txt
+
+    qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_${consensus}.folder -bam ${seqID}_${consensus}.sorted.bam
+    """
+}
+
+process covtocounts2 {
+    tag "ALL"
+    publishDir "${params.outdir}/covtocounts2", mode: 'copy'
+
+    input:
+    file(sortedbam) from ch_bowtie2bam_covtocounts2.collect()
+    file(sortedbambai) from ch_bowtie2bai_covtocounts2.collect()
+
+    output:
+    file("*")
+
+    script:
+    """
+    $workflow.projectDir/bin/covtocounts2 \
+    --multiqc \
+    ${sortedbam} > custom_count_table_mqc.txt
     """
 }
 
@@ -880,7 +937,6 @@ process vcontact2 {
 
     script:
     """
-    # $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
     $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${phages_combined}
 
     $workflow.projectDir/bin/vcontact2_gene2genome.py \
@@ -907,9 +963,10 @@ process vcontact2_extender {
     publishDir "${params.outdir}/report", mode: 'copy'
 
     input:
-    tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
-    //file(netfile) from Channel.fromPath( 'extra/c1.ntw' )
-    //file(csvfile) from Channel.fromPath( 'extra/genome_by_genome_overview.csv' )
+    //tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
+    file(netfile) from Channel.fromPath( 'extra/c1.ntw' )
+    file(csvfile) from Channel.fromPath( 'extra/genome_by_genome_overview.csv' )
+    val(assembler) from Channel.of("debugging")
 
     output:
     file("*")
