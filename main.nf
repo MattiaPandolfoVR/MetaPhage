@@ -48,7 +48,6 @@ params.mod_virsorter = "legacy"
 params.file_virsorter_db = "-"
 params.virsorter_viromes = false
 params.skip_virfinder = false
-params.skip_virfinderproc = false
 params.skip_marvel = false                                            
 
 // Dereplication
@@ -693,9 +692,6 @@ process virfinderproc {
 
     tag "$assembler-$seqID"
     publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
-
-    when:
-    !params.skip_mining && !params.skip_virfinderproc
 
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinderproc, ch_megahit_virfinderproc)
