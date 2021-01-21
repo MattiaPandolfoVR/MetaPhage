@@ -15,72 +15,71 @@ for phage discovery :smile:
 
 ---
 
-### Update **12 ottobre**
+### Update **12 october**
 
 ![bg left:40% 95%](pipeline_2020_10_12.drawio.svg)
 
-:white_check_mark: pipeline minima funzionante
+:white_check_mark: minimal pipeline working
 
-Gira solo al Quadram:
-:x: database da scaricare a mano
-:x: path assoluti ovunque
-:x: pkg conda da installare a mano
+running at Quadram:
+:x: databases to be manually downloaded 
+:x: absoluth paths everywhere
+:x: conda packages to be manually installed
 
 ---
 
-### Update **18 novembre**
+### Update **18 november**
 
 ![bg left:40% 80%](pipeline_2020_11_18.drawio.svg)
 
 
-:white_check_mark: esclusivamente path relativi
-:white_check_mark: pkg conda si installano da soli
-:white_check_mark: iniziata la scrittura del manuale
-:white_check_mark: **dbs gestiti automaticamente**
-:x: ancora nessun supporto Docker
+:white_check_mark: only relative paths
+:white_check_mark: auto-installed conda packages
+:white_check_mark: wiki manual under development
+:white_check_mark: **auto-handled dbs**
+:x: no Docker/Singularity support
 
-:exclamation: rimozione delle strutture nf-core
-<!-- spiegarne tutti i benefici -->
-
----
-
-### **TO-DO**
-
-:x: finire implementazione (virFinder & virSorter)
-:x: clusterizzazione -> discutere con Evelyin
-:x: matrici conte (seq e prot)
-:x: ragionamento output
-:x: iniziare scrittura manoscritto
-:x: finire implementazione manuale
-:x: MultiQC!
+:exclamation: nf-core template removed
 
 ---
 
-### Update **dicembre**
+### **TO-DO on december-january**
+
+:x: complete miners implementation (virFinder & virSorter)
+:x: clusterizzation -> discuss with Evelyin!
+:x: count matrixes (seq e prot)
+:x: output magaement ?
+:x: start the paper draft 
+:x: complete the wiki
+:x: MultiQC implementation!
+
+---
+
+### Update **december**
 
 ![bg left:40% 95%](null)
 
-:cry: perso!
+:cry: lost!
 
 ---
 
-### Update **15 gennaio**
+### Update **15 january**
 
 ![bg left:60% 100%](pipeline_2020_12_01.drawio.svg)
 
-:white_check_mark: implementata la parte di binning
-:white_check_mark: implementati tutti i miner disponibili in conda
-:x: iniziata la bozza del paper
-:x: ancora nessun supporto Docker/Singularity
+:white_check_mark: binning implemented (maxbin2/metabat2/das_tool)
+:white_check_mark: all conded miners are implemented
+:white_check_mark: paper draft writing started
+:x: still no Docker/Singularity support
 
 ---
 
-### Update **15 gennaio**
+### Update **15 january**
 
 ![bg left:60% 100%](dereplic_2020_12_01.drawio.svg)
 
-:white_check_mark: dereplicazione embrionale con CD-HIT (solo Vibrant)
-:construction: vConTACT2 deve girare una volta sola, prendendo il risultato della dereplicazione
+:white_check_mark: "proto" dereplication with CD-HIT (only Vibrant)
+:construction: vConTACT2 has to run only once, with dereplication results!
 
 ---
 
@@ -88,8 +87,8 @@ Gira solo al Quadram:
 
 ![bg left:70% 100%](images_2020_12_01/screen2.png)
 
-:white_check_mark: conteggio con bowtie2
-:white_check_mark: creazione tabella di conte in MultiQC
+:white_check_mark: bowtie2 vcs (viral consensus scaffolding)
+:white_check_mark: MultiQC count matrix creation!
 
 ---
 
@@ -97,7 +96,7 @@ Gira solo al Quadram:
 
 ![bg left:70% 100%](images_2020_12_01/screen1.png)
 
-:white_check_mark: creazione barplot di conte in MultiQC
+:white_check_mark: MultiQC counts barplot creation!
 
 ---
 
@@ -105,7 +104,7 @@ Gira solo al Quadram:
 
 ![bg left:60% 100%](pipeline_2020_12_21.drawio.svg)
 
-:white_check_mark: dereplication now includes Vibrant, Phigaro, VirSorter1 and VirFinder
+:white_check_mark: dereplication now includes Vibrant, Phigaro, VirSorter1, VirFinder and Marvel
 
 ---
 

@@ -19,7 +19,8 @@ params.skip_bracken = false
 params.bracken_read_length = 100
 params.bracken_abundance_level = "S"                                                                                                                                    
 
-// Assembly 
+// Assembly (default is metaspades)
+params.multiple_alliners = false
 params.skip_metaspades = false
 params.skip_megahit = false
 params.skip_quast = false
@@ -36,17 +37,19 @@ params.skip_das_tool = false
 
 // Phage-mining
 params.skip_mining = false
-params.skip_vibrant = false 
-params.mod_vibrant = "legacy"    
-params.file_vibrant_db = "-" 
-params.skip_phigaro = false 
-params.mod_phigaro = "standard"    
-params.file_phigaro_config = "-" 
-params.skip_virsorter = false 
-params.mod_virsorter = "legacy"    
-params.file_virsorter_db = "-"  
-params.virsorter_viromes = false  
-params.skip_virfinder = false                                                 
+params.skip_vibrant = false
+params.mod_vibrant = "legacy"
+params.file_vibrant_db = "-"
+params.skip_phigaro = false
+params.mod_phigaro = "standard"
+params.file_phigaro_config = "-"
+params.skip_virsorter = false
+params.mod_virsorter = "legacy"
+params.file_virsorter_db = "-"
+params.virsorter_viromes = false
+params.skip_virfinder = false
+params.skip_virfinderproc = false
+params.skip_marvel = false                                            
 
 // Dereplication
 params.skip_dereplication = false
@@ -320,7 +323,7 @@ process megahit {
     publishDir "${params.outdir}/assembly/megahit/${seqID}", mode: 'copy'
 
     when:
-    !params.skip_megahit
+    params.multiple_alliners && !params.skip_megahit
 
     input:
     tuple val(seqID), file(reads) from ch_trimm_megahit
@@ -426,6 +429,7 @@ process metabat2 {
 
     input:
     tuple val(seqID), val(assembler), file(assembly), file(bam) from ch_bowtie2_metabat2
+    val(min_size) from params.min_contig_size
 
     output:
     tuple val("metabat2"), file("${seqID}_${assembler}_metabat2_scaffolds2bin.tsv") into ch_metabat2_das_tool
@@ -442,7 +446,7 @@ process metabat2 {
     -t ${task.cpus} \
     -i ${assembly} \
     -o "${name}.metabat" \
-    -m ${params.min_contig_size} \
+    -m ${min_size} \
     -v --unbinned
     
     $workflow.projectDir/bin/Fasta_to_Scaffolds2Bin.sh -e fasta > ${name}_metabat2_scaffolds2bin.tsv
@@ -505,6 +509,7 @@ process das_tool {
     file(assembly) from ch_bowtie2_das_tool
 
     output:
+    tuple val(binner), file("*,contigs.fa") into ch_das_tool_marvel
     file("*")
 
     script:
@@ -513,9 +518,9 @@ process das_tool {
     -i ${maxbin2_bins},${metabat2_bins} \
     -l MAXBIN2,METABAT2 \
     -c ${assembly} \
-    -o das_tool \
+    -o ./ \
     -t ${task.cpus} \
-    --search_engine diamond \
+    --search_engine blast \
     --write_bins 1
     """
 }
@@ -689,6 +694,9 @@ process virfinderproc {
     tag "$assembler-$seqID"
     publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
 
+    when:
+    !params.skip_mining && !params.skip_virfinderproc
+
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinderproc, ch_megahit_virfinderproc)
     tuple val(seqID), val(assembler), file(csvfile) from ch_virfinder_virfinderproc
@@ -705,7 +713,34 @@ process virfinderproc {
     """
 }
 
+process marvel {
+    conda "bioconda::marvel==0.2"
+
+    tag "$binner"
+    publishDir "${params.outdir}/mining/marvel/${binner}", mode: 'copy'
+
+    when:
+    !params.skip_mining && !params.skip_mapping && !params.skip_marvel
+
+    input:
+    tuple val(binner), file(bins) from ch_das_tool_marvel
+    val(min_size) from params.min_contig_size
+
+    output:
+    file("*")
+    
+    script:
+    """
+    marvel_prokka  \
+    -i $bins \
+    -t ${task.cpus} \
+    -o ./ \
+    -m ${min_size} \
+    """
+}
+
 /* STEP 7 - dereplication and reads mapping */
+
 process cdhit {
     conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
     
@@ -745,7 +780,7 @@ process cdhit {
         """
 }
 
-process prodigal {
+process prodigal { // prokka is better! or even balrog
     conda "bioconda::prodigal==2.6.3"
     
     tag "$assembler"
@@ -830,6 +865,7 @@ process collector {
 }
 
 /* STEP 8 - viral taxonomy */
+
 process vcontact2 {
     conda "bioconda::vcontact2==0.9.19"
 
