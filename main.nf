@@ -905,6 +905,7 @@ process vcontact2_extender {
 
     output:
     file("*")
+    file("custom_taxonomy_table_mqc.txt") into (ch_vacontact2_multiqc)
 
     script:
     """
@@ -928,8 +929,9 @@ process multiqc {
 
     input:
     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
-    //tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
     tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc
+    file (custom_taxonomy_table) from ch_vacontact2_multiqc
+
 
     output:
     file("*")
@@ -939,6 +941,6 @@ process multiqc {
     multiqc \
     --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
-    . ${custom_count_plot} ${custom_count_table}
+    . ${custom_count_plot} ${custom_count_table} ${custom_taxonomy_table}
     """
 }

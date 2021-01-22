@@ -2,7 +2,7 @@
 software = "graph_analyzer.py"
 version = "0.8.3"
 
-import sys, os
+import sys, os, io
 import argparse
 import logging
 from operator import itemgetter
@@ -90,9 +90,6 @@ def clusterExtractor(g, df, output_path, string_suffix):
 
     def insertReference(df, results, scaffold, best_reference, weight_heavier_reference, level_reference, status):
 
-        # extract scaffold's coverage and length
-        contig_len = int(scaffold.split("_")[3])
-        contig_cov = float(scaffold.split("_")[5])
         # extract taxonomy
         order = "-"
         family = "-"
@@ -109,9 +106,6 @@ def clusterExtractor(g, df, output_path, string_suffix):
             'best_reference': best_reference.replace("~", " "),
             'level_reference': level_reference,
             'weight_reference': weight_heavier_reference,
-            'Cov/Len': str(round(contig_cov/contig_len*1000000)),
-            'Cov': str(contig_cov),
-            'Len': str(contig_len),
             'Order': order,
             'Family': family,
             'Genus': genus,
@@ -152,9 +146,6 @@ def clusterExtractor(g, df, output_path, string_suffix):
         'best_reference': [],
         'level_reference': [],
         'weight_reference': [],
-        'Cov/Len': [],
-        'Cov': [],
-        'Len': [],
         'Order': [],
         'Family': [],
         'Genus': []})
@@ -390,6 +381,18 @@ def clusterExtractor(g, df, output_path, string_suffix):
     image_table = results.hvplot.table(width = 800, height = 200)
     # save results as a csv table
     results.to_csv(output_path + "results_vcontact2_" + string_suffix + ".csv")
+    # save results as a MultiQC custom table
+    content = """# plot_type: 'table'
+# section_name: 'vConTACT2 taxonomy table'
+# description: 'Taxonomy table: automatic processing of vConTACT2 outputs `c1.ntw` and `genome_by_genome_overview.csv`.'
+<-- REPLACE -->
+"""
+    string_eater = io.StringIO()
+    datas = results.to_csv( path_or_buf = string_eater, sep='\t', index=False)
+    content = content.replace("<-- REPLACE -->", string_eater.getvalue())
+    file_report = open("custom_taxonomy_table_mqc.txt", "w")
+    file_report.write(content)
+    file_report.close()
 
     return image_table, results
 
