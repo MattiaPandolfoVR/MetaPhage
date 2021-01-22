@@ -1,0 +1,16 @@
+file = open("multiqc_model.txt", "r")
+line = file.read()
+file.close()
+line = line.replace("_derep83_metaspades", "")
+
+file = open("custom_count_table_mqc.txt", "w")
+line = line.replace("CovTools count", "CovTools count table")
+file.write(line)
+file.close()
+
+file = open("custom_count_plot_mqc.txt", "w")
+line = line.replace("# plot_type: 'table'", "")
+line = line.replace("CovTools count table", "CovTools count plot")
+line = line.replace("Feature table: counts of", "Feature plot: counts of")
+file.write(line)
+file.close()

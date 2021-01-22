@@ -48,7 +48,6 @@ params.mod_virsorter = "legacy"
 params.file_virsorter_db = "-"
 params.virsorter_viromes = false
 params.skip_virfinder = false
-params.skip_virfinderproc = false
 params.skip_marvel = false                                            
 
 // Dereplication
@@ -694,9 +693,6 @@ process virfinderproc {
     tag "$assembler-$seqID"
     publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
 
-    when:
-    !params.skip_mining && !params.skip_virfinderproc
-
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinderproc, ch_megahit_virfinderproc)
     tuple val(seqID), val(assembler), file(csvfile) from ch_virfinder_virfinderproc
@@ -755,7 +751,7 @@ process cdhit {
 
     output:
     file("*")
-    file("splitted83_${assembler}/*.fasta") into (ch_cdhit_bowtie2)
+    file("derep83_${assembler}.fasta") into (ch_cdhit_bowtie2)
     tuple val(assembler), file("derep83_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
@@ -772,11 +768,6 @@ process cdhit {
         -o derep83_${assembler}.fasta \
         -c 0.83 \
         -n 5 
-
-        seqkit split derep83_${assembler}.fasta \
-        --by-id \
-        --force \
-        --out-dir splitted83_${assembler}
         """
 }
 
@@ -817,50 +808,47 @@ process bowtie2_derep {
 
     output:
     file("*")
-    file("count___*") into ch_bowtie2_collector
+    file("*.sorted.bam") into (ch_bowtie2bam_covtocounts2)
+    file("*.sorted.bam.bai") into (ch_bowtie2bai_covtocounts2)
 
     script:
     """
-    for scaffold in ${consensus}
-    do
-        bowtie2-build --threads ${task.cpus} \$scaffold \${scaffold}_index
+    bowtie2-build --threads ${task.cpus} ${consensus} ${consensus}_index
 
-        bowtie2 -p ${task.cpus} -x \${scaffold}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_\$scaffold.sam 
+    bowtie2 -p ${task.cpus} -x ${consensus}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_${consensus}.sam 
 
-        samtools view -@ ${task.cpus} -S -b ${seqID}_\$scaffold.sam > ${seqID}_\$scaffold.bam
+    samtools view -@ ${task.cpus} -S -b ${seqID}_${consensus}.sam > ${seqID}_${consensus}.bam
 
-        samtools sort -@ ${task.cpus} ${seqID}_\$scaffold.bam -o ${seqID}_\$scaffold.sorted.bam
+    samtools sort -@ ${task.cpus} ${seqID}_${consensus}.bam -o ${seqID}_${consensus}.sorted.bam
 
-        samtools index -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam
+    samtools index -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam
 
-        samtools flagstat -@ ${task.cpus} ${seqID}_\$scaffold.sorted.bam > mappingstats_${seqID}_\$scaffold.txt
+    samtools flagstat -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam > mappingstats_${seqID}_${consensus}.txt
 
-        qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_\$scaffold.folder -bam ${seqID}_\$scaffold.sorted.bam
-    
-        samtools view -c -F 260 ${seqID}_\$scaffold.sorted.bam > count___${seqID}___\$scaffold.txt
-    done
+    qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_${consensus}.folder -bam ${seqID}_${consensus}.sorted.bam
     """
 }
 
-process collector {
-    conda "anaconda::pandas==1.1.3"
+process covtocounts2 {
+    conda "anaconda::python=3.7"
 
-    tag "all"
-    publishDir "${params.outdir}/report/", mode: 'copy'
-
-    when:
-    !params.skip_dereplication
+    publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
     input:
-    file values from ch_bowtie2_collector.collect()
+    file(sortedbam) from ch_bowtie2bam_covtocounts2.collect()
+    file(sortedbambai) from ch_bowtie2bai_covtocounts2.collect()
 
     output:
-    tuple file("custom_plot_mqc.yaml"), file("custom_table_mqc.txt") into ch_collector_multiqc
+    file("*")
+    tuple file("custom_count_table_mqc.txt"), file("custom_count_plot_mqc.txt") into (ch_covtocounts2_multiqc)
 
     script:
     """
-    python $workflow.projectDir/bin/collector.py \
-    --alignments ${values}
+    $workflow.projectDir/bin/covtocounts2 \
+    --multiqc \
+    ${sortedbam} > multiqc_model.txt
+
+    python $workflow.projectDir/bin/multiqc_model_editor.py
     """
 }
 
@@ -884,7 +872,6 @@ process vcontact2 {
 
     script:
     """
-    # $workflow.projectDir/bin/simplify_faa-ffn.py ${phages_combined}
     $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${phages_combined}
 
     $workflow.projectDir/bin/vcontact2_gene2genome.py \
@@ -911,9 +898,10 @@ process vcontact2_extender {
     publishDir "${params.outdir}/report", mode: 'copy'
 
     input:
-    tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
-    //file(netfile) from Channel.fromPath( 'extra/c1.ntw' )
-    //file(csvfile) from Channel.fromPath( 'extra/genome_by_genome_overview.csv' )
+    //tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
+    file(netfile) from Channel.fromPath( 'extra/c1.ntw' )
+    file(csvfile) from Channel.fromPath( 'extra/genome_by_genome_overview.csv' )
+    val(assembler) from Channel.of("debugging")
 
     output:
     file("*")
@@ -940,7 +928,8 @@ process multiqc {
 
     input:
     file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
-    tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+    //tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+    tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc
 
     output:
     file("*")
@@ -950,6 +939,6 @@ process multiqc {
     multiqc \
     --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
-    . ${custom_plot} ${custom_table}
+    . ${custom_count_plot} ${custom_count_table}
     """
 }
