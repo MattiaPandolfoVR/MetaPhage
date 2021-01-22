@@ -383,6 +383,7 @@ def clusterExtractor(g, df, output_path, string_suffix):
     results.to_csv(output_path + "results_vcontact2_" + string_suffix + ".csv")
     # save results as a MultiQC custom table
     content = """# plot_type: 'table'
+# id: 'zzz001'
 # section_name: 'vConTACT2 taxonomy table'
 # description: 'Taxonomy table: automatic processing of vConTACT2 outputs `c1.ntw` and `genome_by_genome_overview.csv`.'
 <-- REPLACE -->
@@ -465,6 +466,20 @@ def plotCreatorGraphvizHoloviews(g, df, output_path, string_suffix, results):
     # draw assigned scaffolds with labels
     image = image * hvnx.draw_networkx_nodes(g.subgraph(assigned_nodes), pos=pos, node_color="red", node_size=200, alpha = 0.5,  linewidths =0.0, labels= labdict, font_size = "8pt")
     
+    # save graph to html before returning it
+    hvnx.save(image, "graph_layout.html")
+    file = open("graph_layout.html", "r")
+    line = file.read()
+    file.close()
+    line = """<!--
+id: 'zzz002'
+section_name: 'vConTACT2 graph explorer'
+description: 'Interactive graph. Use buttons to interact. Hover nodes to see references.'
+-->
+""" + line
+    file = open("custom_graph_plot_mqc.html", "w")
+    file.write(line)
+    file.close()
     return image
 
 
