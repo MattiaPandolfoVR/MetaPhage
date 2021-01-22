@@ -73,7 +73,7 @@ def manage(projectDir,
 
 
     
-    varDir = projectDir + "bin/groovy_vars/"
+    varDir = projectDir + "bin/.groovy_vars/"
     checkCreate(varDir)
     echo("\n")
 
