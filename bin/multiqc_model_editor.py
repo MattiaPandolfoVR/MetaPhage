@@ -2,6 +2,7 @@ file = open("multiqc_model.txt", "r")
 line = file.read()
 file.close()
 line = line.replace("_derep83_metaspades", "")
+line = line.replace("predicted viral sequences", "predicted viral consensus sequences")
 
 file = open("custom_count_table_mqc.txt", "w")
 line = line.replace("CovTools count", "CovTools count table")

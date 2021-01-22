@@ -173,7 +173,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
 
         script:
-        path_file_phix_alone = file("$workflow.projectDir/bin/groovy_vars/${file_phix_alone}").text
+        path_file_phix_alone = file("$workflow.projectDir/bin/.groovy_vars/${file_phix_alone}").text
         def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = params.singleEnd ? "" : "--check-read-2"
         """
@@ -209,7 +209,7 @@ process kraken2 {
     tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_bracken)
 
     script:
-    path_file_kraken2_db = file("$workflow.projectDir/bin/groovy_vars/${file_kraken2_db}").text
+    path_file_kraken2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_kraken2_db}").text
     def inp = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     """
     kraken2 \
@@ -240,7 +240,7 @@ process bracken {
     tuple val(seqID), file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
 
     script:
-    path_file_bracken_db = file("$workflow.projectDir/bin/groovy_vars/${file_bracken_db}").text
+    path_file_bracken_db = file("$workflow.projectDir/bin/.groovy_vars/${file_bracken_db}").text
     """
     bracken \
     -d $workflow.projectDir/${path_file_bracken_db} \
@@ -549,7 +549,7 @@ process vibrant {
     tuple val(seqID), val(assembler), val("vibrant"), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
 
     script:
-    path_file_vibrant_db = file("$workflow.projectDir/bin/groovy_vars/${file_vibrant_db}").text
+    path_file_vibrant_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vibrant_db}").text
     if (params.mod_vibrant == "legacy")
         """
         VIBRANT_run.py \
@@ -595,7 +595,7 @@ process phigaro {
     tuple val(seqID), val(assembler), val("phigaro"), file("**/*.phigaro.fasta") into (ch_phigaro_cdhit)
 
     script:
-    path_file_phigaro_config = file("$workflow.projectDir/bin/groovy_vars/${file_phigaro_config}").text
+    path_file_phigaro_config = file("$workflow.projectDir/bin/.groovy_vars/${file_phigaro_config}").text
     """
     python $workflow.projectDir/bin/phigaro_config_creator.py
 
@@ -641,7 +641,7 @@ process virsorter {
     tuple val(seqID), val(assembler), val("4virsorter"), file("**/${seqID}_VIRSorter_prophages_cat-4.fasta") into (ch_4virsorter_cdhit)
 
     script:
-    path_file_virsorter_db = file("$workflow.projectDir/bin/groovy_vars/${file_virsorter_db}").text
+    path_file_virsorter_db = file("$workflow.projectDir/bin/.groovy_vars/${file_virsorter_db}").text
     def viromes = params.virsorter_viromes ? "2" : "1"
     if (params.mod_virsorter == "legacy")
         """
@@ -905,6 +905,7 @@ process vcontact2_extender {
 
     output:
     file("*")
+    tuple file("custom_taxonomy_table_mqc.txt"), file("custom_graph_plot_mqc.html") into (ch_vacontact2_multiqc)
 
     script:
     """
@@ -927,9 +928,10 @@ process multiqc {
     !params.skip_report
 
     input:
-    file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
-    //tuple file(custom_plot), file(custom_table) from ch_collector_multiqc
+    //file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
     tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc
+    tuple file(custom_taxonomy_table), file(custom_graph_plot) from ch_vacontact2_multiqc
+
 
     output:
     file("*")
@@ -939,6 +941,6 @@ process multiqc {
     multiqc \
     --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
-    . ${custom_count_plot} ${custom_count_table}
+    . ${custom_count_plot} ${custom_count_table} ${custom_taxonomy_table} ${custom_graph_plot}
     """
 }

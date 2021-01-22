@@ -1,5 +1,5 @@
-title: "MetaPhage"
-subtitle: "A nextflow pipeline for phage discovery."
-intro_text: "This is the main report for MetapHage."
-report_comment: "This is a comment about this report."
+title: "MetaPhage report"
+subtitle: "MetaPhage: a nextflow pipeline for phage discovery."
+intro_text: ""
+report_comment: "Please note: this is work in prorgess!"
 custom_logo: './logo_tmp.png'
