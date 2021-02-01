@@ -23,7 +23,7 @@ params.bracken_abundance_level = "S"
 // Assembly (default is metaspades)
 params.multiple_alliners = false
 params.skip_metaspades = false
-params.skip_megahit = false
+params.skip_megahit = true // add a control to chose which assembler and deactivate the other (two_flag = params.one && params.two ? false : params.two)
 params.skip_quast = false
 
 // Mapping
@@ -796,7 +796,11 @@ process prodigal { // prokka is better! or even balrog
 
     script:
     """
-    prodigal -i ${vcs} -o derep_coords_${assembler}.gbk -a derep_prots_${assembler}.faa
+    prodigal \
+    -i ${vcs} \
+    -o derep_coords_${assembler}.gff \
+    -a derep_prots_${assembler}.faa \
+    -f gff
     """
 }
 
@@ -820,19 +824,34 @@ process bowtie2_derep {
 
     script:
     """
-    bowtie2-build --threads ${task.cpus} ${consensus} ${consensus}_index
+    bowtie2-build \
+    --threads ${task.cpus} ${consensus} ${consensus}_index
 
-    bowtie2 -p ${task.cpus} -x ${consensus}_index -1 ${reads[0]} -2 ${reads[1]} -S ${seqID}_${consensus}.sam 
+    bowtie2 \
+    -p ${task.cpus} \
+    -x ${consensus}_index \
+    -1 ${reads[0]} \
+    -2 ${reads[1]} \
+    -S ${seqID}_${consensus}.sam 
 
-    samtools view -@ ${task.cpus} -S -b ${seqID}_${consensus}.sam > ${seqID}_${consensus}.bam
+    samtools view \
+    -@ ${task.cpus} \
+    -S -b ${seqID}_${consensus}.sam > ${seqID}_${consensus}.bam
 
-    samtools sort -@ ${task.cpus} ${seqID}_${consensus}.bam -o ${seqID}_${consensus}.sorted.bam
+    samtools sort \
+    -@ ${task.cpus} ${seqID}_${consensus}.bam \
+    -o ${seqID}_${consensus}.sorted.bam
 
-    samtools index -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam
+    samtools index \
+    -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam
 
-    samtools flagstat -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam > mappingstats_${seqID}_${consensus}.txt
+    samtools flagstat \
+    -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam > mappingstats_${seqID}_${consensus}.txt
 
-    qualimap bamqc -nt ${task.cpus} -outdir qualimap_bamqc_${seqID}_${consensus}.folder -bam ${seqID}_${consensus}.sorted.bam
+    qualimap bamqc \
+    -nt ${task.cpus} \
+    -outdir qualimap_bamqc_${seqID}_${consensus}.folder \
+    -bam ${seqID}_${consensus}.sorted.bam
     """
 }
 
@@ -930,6 +949,9 @@ process vcontact2_extender {
 
     tag "$assembler"
     publishDir "${params.outdir}/report", mode: 'copy'
+
+    when:
+    !params.skip_vcontact2
 
     input:
     //tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
