@@ -2,6 +2,7 @@
 params.db_manager_reports = false
 
 // Trimming 
+params.skip_qtrimming = false
 params.adapter_forward = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
 params.adapter_reverse = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
 params.mean_quality = 15
@@ -131,6 +132,9 @@ process fastp {
     publishDir "${params.outdir}/fastp_qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
 
+    when:
+    !params.skip_qtrimming
+
     input:
     tuple val(seqID), file(reads) from ch_reads_fastp
 
@@ -164,6 +168,9 @@ if(!params.keep_phix) {
         conda "bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
 
         tag "$seqID"
+
+        when:
+        !params.skip_qtrimming
 
         input:
         file file_phix_alone from ch_file_phix_alone
@@ -868,7 +875,7 @@ process vcontact2 {
 
     output:
     file("*")
-    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
+    //tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
 
     script:
     """
@@ -879,11 +886,38 @@ process vcontact2 {
     -o viral_genomes_g2g.csv \
     -s 'Prodigal-FAA'
 
+    python << END
+    fileEXP = open("${phages_combined}.simple.faa", "r")
+    lineEXP = fileEXP.read()
+    fileREF = open("$workflow.projectDir/db/inphared/26Jan2021_vConTACT2_proteins.faa")
+    lineREF = fileREF.read()
+    lineGLUE = lineEXP + lineREF
+    fileGLUE = open("proteins_GLUE.faa", "w")
+    fileGLUE.write(lineGLUE)
+    fileEXP.close()
+    fileREF.close()
+    fileGLUE.close()
+    END
+
+    python << END
+    fileEXP = open("viral_genomes_g2g.csv", "r")
+    lineEXP = fileEXP.read()
+    lineEXP = lineEXP.replace(",None_provided", ",none")
+    fileREF = open("$workflow.projectDir/db/inphared/26Jan2021_vConTACT2_gene_to_genome.csv")
+    lineREF = fileREF.read()
+    lineGLUE = lineREF.replace("protein_id,contig_id,keywords\\n", lineEXP)
+    fileGLUE = open("g2g_GLUE.csv", "w")
+    fileGLUE.write(lineGLUE)
+    fileEXP.close()
+    fileREF.close()
+    fileGLUE.close()
+    END
+
     vcontact2 \
     -t ${task.cpus} \
-    --raw-proteins ${phages_combined}.simple.faa \
-    --proteins-fp viral_genomes_g2g.csv \
-    --db 'ProkaryoticViralRefSeq94-Merged' \
+    --raw-proteins proteins_GLUE.faa \
+    --proteins-fp g2g_GLUE.csv \
+    --db None \
     --pcs-mode MCL \
     --vcs-mode ClusterONE \
     --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
@@ -899,8 +933,8 @@ process vcontact2_extender {
 
     input:
     //tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
-    file(netfile) from Channel.fromPath( 'extra/c1.ntw' )
-    file(csvfile) from Channel.fromPath( 'extra/genome_by_genome_overview.csv' )
+    file(netfile) from Channel.fromPath('extra/new_vcontact2/c1.ntw')
+    file(csvfile) from Channel.fromPath('extra/new_vcontact2/genome_by_genome_overview.csv')
     val(assembler) from Channel.of("debugging")
 
     output:
@@ -912,6 +946,7 @@ process vcontact2_extender {
     python $workflow.projectDir/bin/graph_analyzer.py \
     --input-graph ${netfile} \
     --input-csv ${csvfile} \
+    --input-metas $workflow.projectDir/db/inphared/26Jan2021_data_excluding_refseq.tsv \
     --output ./ \
     --suffix ${assembler}
     """
