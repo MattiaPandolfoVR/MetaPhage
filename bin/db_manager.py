@@ -1,6 +1,6 @@
 # Coded by Gioele Lazzari (gioele.lazza@studenti.univr.it)
 software = "db_manager.py"
-version = "0.1.1"
+version = "0.1.2"
 
 import sys, os, argparse, logging, subprocess
 
@@ -31,6 +31,9 @@ options.add_argument('-g1', '--file_phigaro_config', required=True)
 options.add_argument('-s', '--mod_virsorter', required=True)
 options.add_argument('-s0', '--skip_virsorter', required=True)
 options.add_argument('-s1', '--file_virsorter_db', required=True)
+options.add_argument('-c', '--mod_vcontact2', required=True)
+options.add_argument('-c0', '--skip_vcontact2', required=True)
+options.add_argument('-c1', '--file_vcontact2_db', required=True)
 
 
 
@@ -46,7 +49,8 @@ def manage(projectDir,
            mod_kraken2, skip_kraken2, file_kraken2_db,
            mod_vibrant, skip_vibrant, file_vibrant_db,
            mod_phigaro, skip_phigaro, file_phigaro_config,
-           mod_virsorter, skip_virsorter, file_virsorter_db):
+           mod_virsorter, skip_virsorter, file_virsorter_db,
+           mod_vcontact2, skip_vcontact2, file_vcontact2_db):
 
     
     def checkCreate(path):
@@ -356,6 +360,34 @@ def manage(projectDir,
             makeChannel("file_virsorter_db", rel_path)
     else:
         makeChannel("file_virsorter_db", "UNUSED: skip_virsorter is True!")
+
+    
+    #################################
+    # vcontact2 #####################
+    #################################
+    if skip_vcontact2 == "false":
+        if mod_vcontact2 == "custom":
+            if file_vcontact2_db == "-":
+                error('With --mod_vcontact2 custom you have to specify also --file_vcontact2_db')
+            else:
+                makeChannel("file_vcontact2_db", file_vcontact2_db)
+        
+        elif mod_vcontact2 == "Jan2021":
+            rel_path = "db/inphared/Jan2021/"
+            mod_folder = projectDir + rel_path
+            checkCreate(mod_folder)
+            if not os.path.exists(mod_folder + "26Jan2021_genomes.fa") or not os.path.exists(mod_folder + "26Jan2021_vConTACT2_proteins.faa") or not os.path.exists(mod_folder + "26Jan2021_data_excluding_refseq.tsv") or not os.path.exists(mod_folder + "26Jan2021_vConTACT2_gene_to_genome.csv"):
+                echo("Downloading " + mod_folder + "*" + " ...")
+                os.popen('wget -O %sinphared_Jan2021.tar.gz https://zenodo.org/record/4493766/files/inphared_Jan2021.tar.gz' % (mod_folder)).read()
+                os.popen('tar xzvf %s --directory %s' % (mod_folder + "inphared_Jan2021.tar.gz", mod_folder)).read()
+                os.popen('rm %s' % (mod_folder + "inphared_Jan2021.tar.gz")).read()
+
+                echo("OK") 
+            else:
+                echo(mod_folder + "*" + ' already present!')
+            makeChannel("file_vcontact2_db", rel_path + "26Jan2021_") # IMPORTANT PREFIX
+    else:
+        makeChannel("file_vcontact2_db", "UNUSED: skip_vcontact2 is True!")
     
 
 
@@ -373,6 +405,7 @@ if __name__ == "__main__":
            parameters.mod_kraken2, parameters.skip_kraken2, parameters.file_kraken2_db,
            parameters.mod_vibrant, parameters.skip_vibrant, parameters.file_vibrant_db,
            parameters.mod_phigaro, parameters.skip_phigaro, parameters.file_phigaro_config,
-           parameters.mod_virsorter, parameters.skip_virsorter, parameters.file_virsorter_db)
+           parameters.mod_virsorter, parameters.skip_virsorter, parameters.file_virsorter_db,
+           parameters.mod_vcontact2, parameters.skip_vcontact2, parameters.file_vcontact2_db)
 
     
