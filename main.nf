@@ -56,7 +56,9 @@ params.skip_dereplication = false
 
 // Viral Taxonomy - vContact2
 params.skip_viral_taxo = true
-params.skip_vcontact2 = false // true while debugging the pipeline                                                                               
+params.skip_vcontact2 = false // true while debugging the pipeline
+params.mod_vcontact2 = "Jan2021"      
+params.file_vcontact2_db = "-"                                                                         
 
 // Report
 params.skip_report = false
@@ -112,6 +114,7 @@ process db_manager {
     file("file_vibrant_db") into (ch_file_vibrant_db)
     file("file_phigaro_config") into (ch_file_phigaro_config)
     file("file_virsorter_db") into (ch_file_virsorter_db)
+    file("file_vcontact2_db") into (ch_file_vcontact2_db, ch_file_extender_db)
 
     script:
     """
@@ -120,7 +123,8 @@ process db_manager {
     --mod_kraken2 ${params.mod_kraken2} --skip_kraken2 ${params.skip_kraken2} --file_kraken2_db ${params.file_kraken2_db} \
     --mod_vibrant ${params.mod_vibrant} --skip_vibrant ${params.skip_vibrant} --file_vibrant_db ${params.file_vibrant_db} \
     --mod_phigaro ${params.mod_phigaro} --skip_phigaro ${params.skip_phigaro} --file_phigaro_config ${params.file_phigaro_config} \
-    --mod_virsorter ${params.mod_virsorter} --skip_virsorter ${params.skip_virsorter} --file_virsorter_db ${params.file_virsorter_db}
+    --mod_virsorter ${params.mod_virsorter} --skip_virsorter ${params.skip_virsorter} --file_virsorter_db ${params.file_virsorter_db} \
+    --mod_vcontact2 ${params.mod_vcontact2} --skip_vcontact2 ${params.skip_vcontact2} --file_vcontact2_db ${params.file_vcontact2_db}
     """
 }
 
@@ -890,6 +894,7 @@ process vcontact2 {
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
+    file file_vcontact2_db from ch_file_vcontact2_db 
     tuple val(assembler), file(phages_combined) from ch_prodigal_vcontact2
 
     output:
@@ -897,6 +902,7 @@ process vcontact2 {
     //tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
 
     script:
+    path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
     """
     $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${phages_combined}
 
@@ -907,8 +913,8 @@ process vcontact2 {
 
     python << END
     fileEXP = open("${phages_combined}.simple.faa", "r")
-    lineEXP = fileEXP.read()
-    fileREF = open("$workflow.projectDir/db/inphared/26Jan2021_vConTACT2_proteins.faa")
+    lineEXP = fileEXP.read() 
+    fileREF = open("$workflow.projectDir/${path_file_vcontact2_db}vConTACT2_proteins.faa")
     lineREF = fileREF.read()
     lineGLUE = lineEXP + lineREF
     fileGLUE = open("proteins_GLUE.faa", "w")
@@ -922,7 +928,7 @@ process vcontact2 {
     fileEXP = open("viral_genomes_g2g.csv", "r")
     lineEXP = fileEXP.read()
     lineEXP = lineEXP.replace(",None_provided", ",none")
-    fileREF = open("$workflow.projectDir/db/inphared/26Jan2021_vConTACT2_gene_to_genome.csv")
+    fileREF = open("$workflow.projectDir/${path_file_vcontact2_db}vConTACT2_gene_to_genome.csv")
     lineREF = fileREF.read()
     lineGLUE = lineREF.replace("protein_id,contig_id,keywords\\n", lineEXP)
     fileGLUE = open("g2g_GLUE.csv", "w")
@@ -954,6 +960,7 @@ process vcontact2_extender {
     !params.skip_vcontact2
 
     input:
+    file file_vcontact2_db from ch_file_extender_db 
     //tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
     file(netfile) from Channel.fromPath('extra/new_vcontact2/c1.ntw')
     file(csvfile) from Channel.fromPath('extra/new_vcontact2/genome_by_genome_overview.csv')
@@ -964,11 +971,12 @@ process vcontact2_extender {
     tuple file("custom_taxonomy_table_mqc.txt"), file("custom_graph_plot_mqc.html") into (ch_vacontact2_multiqc)
 
     script:
+    path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
     """
     python $workflow.projectDir/bin/graph_analyzer.py \
     --input-graph ${netfile} \
     --input-csv ${csvfile} \
-    --input-metas $workflow.projectDir/db/inphared/26Jan2021_data_excluding_refseq.tsv \
+    --input-metas $workflow.projectDir/${path_file_vcontact2_db}data_excluding_refseq.tsv \
     --output ./ \
     --suffix ${assembler}
     """
