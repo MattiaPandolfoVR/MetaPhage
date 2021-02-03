@@ -777,8 +777,12 @@ process cdhit {
         -M ${task.memory.toMega()} \
         -i concat_${assembler}.fasta \
         -o derep83_${assembler}.fasta \
-        -c 0.83 \
-        -n 5 
+        -c 0.95 \
+        -aS 0.85 \
+        -n 9 \
+        -d 0 \
+        -p 1 \
+        -g 1
         """
 }
 
