@@ -870,7 +870,12 @@ process bowtie2_derep {
 }
 
 process covtocounts2 {
-    conda "anaconda::python=3.7 bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
+    if (cursystem.contains('Mac')) {
+        conda "anaconda::python=3.7 bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
+    }
+    else { // spades on Linux has slightly different dependencies
+        conda "anaconda::python=3.7"
+    }
 
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
