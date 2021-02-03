@@ -53,6 +53,7 @@ params.skip_marvel = false
 
 // Dereplication
 params.skip_dereplication = false
+params.minlen = 1000
 
 // Viral Taxonomy - vContact2
 params.skip_viral_taxo = true
@@ -762,8 +763,8 @@ process cdhit {
 
     output:
     file("*")
-    file("derep83_${assembler}.fasta") into (ch_cdhit_bowtie2)
-    tuple val(assembler), file("derep83_${assembler}.fasta") into (ch_cdhit_prodigal)
+    file("filtered_derep95_${assembler}.fasta") into (ch_cdhit_bowtie2)
+    tuple val(assembler), file("filtered_derep95_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
     if (params.skip_metaspades == false && params.skip_megahit == false)
@@ -776,13 +777,18 @@ process cdhit {
         -T ${task.cpus} \
         -M ${task.memory.toMega()} \
         -i concat_${assembler}.fasta \
-        -o derep83_${assembler}.fasta \
+        -o derep95_${assembler}.fasta \
         -c 0.95 \
         -aS 0.85 \
         -n 9 \
         -d 0 \
         -p 1 \
         -g 1
+
+        seqkit seq \
+        --min-len ${params.minlen} \
+        --out-file filtered_derep95_${assembler}.fasta \
+        derep95_${assembler}.fasta
         """
 }
 
