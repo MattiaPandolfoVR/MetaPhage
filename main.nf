@@ -870,7 +870,7 @@ process bowtie2_derep {
 }
 
 process covtocounts2 {
-    conda "anaconda::python=3.7"
+    conda "anaconda::python=3.7 bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
 
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
@@ -883,8 +883,9 @@ process covtocounts2 {
     tuple file("custom_count_table_mqc.txt"), file("custom_count_plot_mqc.txt") into (ch_covtocounts2_multiqc)
 
     script:
+    def platform = cursystem.contains('Mac') ? "mac" : "linux"
     """
-    $workflow.projectDir/bin/covtocounts2 \
+    $workflow.projectDir/bin/covtocounts2_$platform \
     --multiqc \
     ${sortedbam} > multiqc_model.txt
 
