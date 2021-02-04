@@ -692,12 +692,7 @@ process bowtie2_derep {
 }
 
 process covtocounts2 {
-    if (cursystem.contains('Mac')) { // may have slightly different dependencies
-        conda "anaconda::python=3.7 bioconda::htstream==1.3.3"
-    }
-    else { 
-        conda "anaconda::python=3.7"
-    }
+    conda "anaconda::python=3.7 bioconda::bamtocov==2.0.001"
 
     publishDir "${params.outdir}/bowtie2", mode: 'copy'
 
@@ -710,9 +705,9 @@ process covtocounts2 {
     tuple file("custom_count_table_mqc.txt"), file("custom_count_plot_mqc.txt") into (ch_covtocounts2_multiqc)
 
     script:
-    def platform = cursystem.contains('Mac') ? "mac" : "linux"
     """
-    $workflow.projectDir/bin/covtocounts2_$platform \
+    bamcountrefs \
+    --threads ${task.cpus} \
     --multiqc \
     ${sortedbam} > multiqc_model.txt
 
