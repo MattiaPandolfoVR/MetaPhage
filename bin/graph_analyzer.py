@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 # Coded by Gioele Lazzari (gioele.lazza@studenti.univr.it)
 software = "graph_analyzer.py"
-version = "0.9.2"
+version = "0.9.3"
 
 import sys, os, io, argparse, logging, textwrap
 from operator import itemgetter

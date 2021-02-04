@@ -383,6 +383,156 @@ process metaquast {
     """
 }
 
+/* STEP 4 - mapping */ 
+
+process bowtie2_mapping {
+    conda "bioconda::samtools==1.11 bioconda::bowtie2==2.4.2"
+    
+    tag "$seqID-$assembler"
+    publishDir "${params.outdir}/mapping/${assembler}", mode: 'copy',
+        saveAs: {filename ->
+                    if(filename.endsWith(".fasta")) null
+                    else if(filename.endsWith(".fastq.gz")) null
+                    else filename
+                }
+
+    input:
+    tuple val(seqID), val(assembler), file(assembly), val(mapID), file(mapReads) from Channel.empty().mix(ch_metaspades_mapping, ch_megahit_mapping).combine(ch_trimm_mapping).flatMap{ tup -> if(tup[0] == tup[3]){ [tup] } }
+
+    output:
+    tuple val(seqID), val(assembler), file(assembly), file("*.bam") into ch_bowtie2_metabat2
+    tuple val(seqID), val(assembler), file(assembly), file(mapReads) into ch_bowtie2_maxbin2
+    file(assembly) into ch_bowtie2_das_tool
+    tuple val(seqID), file("*.bam"), file("*.bam.bai")
+
+    when:
+    !params.skip_mapping
+
+    script:
+    def name = "${assembler}_${seqID}_${mapID}"
+    def inp = params.singleEnd ? "-U ${mapReads}" : "-1 ${mapReads[0]} -2 ${mapReads[1]}"
+    """
+    bowtie2-build \
+        --threads ${task.cpus} ${assembly} ref
+
+    bowtie2 \
+        -p ${task.cpus} \
+        -x ref $inp | \
+    samtools view -@ ${task.cpus} -bS | \
+    samtools sort -@ ${task.cpus} -o "${name}.bam"
+
+    samtools index "${name}.bam"
+    """
+}
+
+/* Step 5 - binning */ 
+
+process metabat2 {
+    conda "bioconda::metabat2==2.15"
+
+    tag "$seqID-$assembler"
+    publishDir "${params.outdir}/binning/metabat2/${assembler}", mode: 'copy'
+
+    when:
+    !params.skip_binning && !params.skip_metabat2
+
+    input:
+    tuple val(seqID), val(assembler), file(assembly), file(bam) from ch_bowtie2_metabat2
+    val(min_size) from params.min_contig_size
+
+    output:
+    tuple val("metabat2"), file("${seqID}_${assembler}_metabat2_scaffolds2bin.tsv") into ch_metabat2_das_tool
+    file("*.fa")
+    file("*.txt")
+
+    script:
+    def name = "${seqID}_${assembler}"
+    """
+    jgi_summarize_bam_contig_depths \
+    --outputDepth ${name}.depth.txt ${bam}
+
+    metabat2 \
+    -t ${task.cpus} \
+    -i ${assembly} \
+    -o "${name}.metabat" \
+    -m ${min_size} \
+    -v --unbinned
+    
+    $workflow.projectDir/bin/Fasta_to_Scaffolds2Bin.sh -e fasta > ${name}_metabat2_scaffolds2bin.tsv
+    """
+}
+
+process maxbin2 {
+    conda "bioconda::maxbin2==2.2.7"
+
+    tag "$seqID-$assembler"
+    publishDir "${params.outdir}/binning/maxbin2/${assembler}", mode: 'copy'
+
+    when:
+    !params.skip_binning && !params.skip_maxbin2
+
+    input:
+    tuple val(seqID), val(assembler), file(assembly), file(mapReads) from ch_bowtie2_maxbin2
+    val(min_size) from params.min_contig_size
+    
+    output:
+    tuple val("maxbin2"), file("${seqID}_${assembler}_maxbin2_scaffolds2bin.tsv") into ch_maxbin2_das_tool
+    file("*")
+
+    script:
+    def name = "${seqID}_${assembler}"
+    """
+    gunzip -dc ${seqID}_dephixed_R1.fastq.gz > ${seqID}_R1.fastq
+    gunzip -dc ${seqID}_dephixed_R2.fastq.gz > ${seqID}_R2.fastq
+
+    run_MaxBin.pl \
+    -thread ${task.cpus} \
+    -min_contig_length ${min_size} \
+    -contig ${assembly} \
+    -reads ${seqID}_R1.fastq \
+    -reads2 ${seqID}_R2.fastq \
+    -out ${name}.fasta
+
+    $workflow.projectDir/bin/Fasta_to_Scaffolds2Bin.sh -e fasta > ${name}_maxbin2_scaffolds2bin.tsv
+    """    
+}
+
+process dastool {
+    conda "bioconda::diamond==2.0.6"
+    if (cursystem.contains('Mac')) {
+        conda "bioconda::das_tool==1.1.2"
+    }
+    else { // das_tool on Linux has slightly different dependencies
+        conda "bioconda::das_tool==1.1.1"
+    }
+
+    tag "$binner"
+    publishDir "${params.outdir}/binning/das_tool/", mode: 'copy'
+
+    when:
+    !params.skip_binning && !params.skip_das_tool
+
+    input:
+    tuple val(binner), file(metabat2_bins) from ch_metabat2_das_tool
+    tuple val(binner), file(maxbin2_bins) from ch_maxbin2_das_tool
+    file(assembly) from ch_bowtie2_das_tool
+
+    output:
+    tuple val(binner), file("*,contigs.fa") into ch_das_tool_marvel
+    file("*")
+
+    script:
+    """
+    DAS_Tool \
+    -i ${maxbin2_bins},${metabat2_bins} \
+    -l MAXBIN2,METABAT2 \
+    -c ${assembly} \
+    -o ./ \
+    -t ${task.cpus} \
+    --search_engine blast \
+    --write_bins 1
+    """
+}
 
 /* STEP 6 - phage mining */
 
@@ -566,6 +716,32 @@ process virfinder_proc {
     Rscript $workflow.projectDir/bin/virfinder_process.R ${scaffold} ${csvfile}
 
     mv viral_sequences.fasta ${seqID}_viral_sequences.fasta
+    """
+}
+
+process marvel {
+    conda "bioconda::marvel==0.2"
+
+    tag "$binner"
+    publishDir "${params.outdir}/mining/marvel/${binner}", mode: 'copy'
+
+    when:
+    !params.skip_mining && !params.skip_mapping && !params.skip_marvel
+
+    input:
+    tuple val(binner), file(bins) from ch_das_tool_marvel
+    val(min_size) from params.min_contig_size
+
+    output:
+    file("*")
+    
+    script:
+    """
+    marvel_prokka  \
+    -i $bins \
+    -t ${task.cpus} \
+    -o ./ \
+    -m ${min_size} \
     """
 }
 

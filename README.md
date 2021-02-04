@@ -204,6 +204,10 @@ Specify whether to perform the phage mining with VirSorter with the option "viro
 
 Specify whether to perform the phage mining with VirFinder or not. Default is `false`.
 
+### `--minlen`
+
+Specify the minimal length in bp for a viral _consensus_ scaffold. Default is `1000`.
+
 ### `--skip_vcontact2`
 
 Specify whether to perform the automatic phage taxonomy assignment with vConTACT2 exdended with custom scritps. Default is `false`.
