@@ -24,7 +24,7 @@ params.bracken_abundance_level = "S"
 params.multiple_alliners = false
 params.skip_metaspades = false
 params.skip_megahit = true // add a control to chose which assembler and deactivate the other (two_flag = params.one && params.two ? false : params.two)
-params.skip_quast = false
+params.skip_metaquast = false
 
 // Mapping
 params.skip_mapping = false
@@ -291,7 +291,7 @@ process krona {
 }
 
 /* STEP 3 - assembly */
-process metaSPAdes {
+process metaspades {
     if (cursystem.contains('Mac')) {
         conda "bioconda::spades==3.14.1 conda-forge::llvm-openmp==10.0.1"
     }
@@ -356,22 +356,20 @@ process megahit {
     """
 }
 
-process quast {
+process metaquast {
     conda "bioconda::quast==5.0.2"
 
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/assembly/${assembler}/quast/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/assembly/${assembler}/metaquast", mode: 'copy'
 
     when:
-    (!params.skip_metaspades && !params.skip_megahit) && !params.skip_quast 
+    (!params.skip_metaspades && !params.skip_megahit) || !params.skip_metaquast 
 
     input:
     tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
 
     output:
-    file("report.html")
-    file("report.pdf")
-    file("report.tsv")
+    file("${seqID}") into (ch_metaquast_multiqc) // here ${seqID} is a folder 
 
     script:
     """
@@ -380,7 +378,7 @@ process quast {
     --rna-finding \
     --max-ref-number 0 \
     --labels ${seqID} \
-    -o ./ \
+    -o ${seqID} \
     ${scaffold}
     """
 }
@@ -499,7 +497,7 @@ process maxbin2 {
     """    
 }
 
-process das_tool {
+process dastool {
     conda "bioconda::diamond==2.0.6"
     if (cursystem.contains('Mac')) {
         conda "bioconda::das_tool==1.1.2"
@@ -699,7 +697,7 @@ process virfinder {
     """
 }
 
-process virfinderproc {
+process virfinder_proc {
     conda "bioconda::r-seqinr==3.1_3"
 
     tag "$assembler-$seqID"
@@ -1009,10 +1007,10 @@ process multiqc {
     !params.skip_report
 
     input:
-    //file("*_fastp.json") from ch_fastp_multiqc.collect().ifEmpty([])
+    file(fastp) from ch_fastp_multiqc.collect().ifEmpty([])
+    file(metaquast) from ch_metaquast_multiqc.collect().ifEmpty([])
     tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc
     tuple file(custom_taxonomy_table), file(custom_graph_plot) from ch_vacontact2_multiqc
-
 
     output:
     file("*")
@@ -1022,6 +1020,7 @@ process multiqc {
     multiqc \
     --config $workflow.projectDir/bin/multiqc_config.yaml \
     --filename "MultiPhate_report.html" \
+    --exclude general_stats \
     . ${custom_count_plot} ${custom_count_table} ${custom_taxonomy_table} ${custom_graph_plot}
     """
 }
