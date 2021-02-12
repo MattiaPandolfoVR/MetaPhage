@@ -26,16 +26,6 @@ params.skip_metaspades = false
 params.skip_megahit = true // add a control to chose which assembler and deactivate the other (two_flag = params.one && params.two ? false : params.two)
 params.skip_metaquast = false
 
-// Mapping
-params.skip_mapping = false
-
-// Binning
-params.skip_binning = false
-params.skip_metabat2 = false
-params.skip_maxbin2 = false
-params.min_contig_size = 2000
-params.skip_das_tool = false
-
 // Phage-mining
 params.skip_mining = false
 params.skip_vibrant = false
@@ -48,15 +38,14 @@ params.skip_virsorter = false
 params.mod_virsorter = "legacy"
 params.file_virsorter_db = "-"
 params.virsorter_viromes = false
-params.skip_virfinder = false
-params.skip_marvel = false                                            
+params.skip_virfinder = false                                          
 
 // Dereplication
 params.skip_dereplication = false
 params.minlen = 1000
 
 // Viral Taxonomy - vContact2
-params.skip_viral_taxo = true
+params.skip_viral_taxo = false
 params.skip_vcontact2 = false // true while debugging the pipeline
 params.mod_vcontact2 = "Jan2021"      
 params.file_vcontact2_db = "-"                                                                         
