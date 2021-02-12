@@ -224,5 +224,5 @@ Specify the modality of the phage taxonomy analysis with vConTACT2. Currently th
 This pipeline consists of several modules. The image below summarizes them all.
 
 <p align="center">
-  <img src="./slides/pipeline_2020_12_01.drawio.svg">
+  <img src="./slides/pipeline_2020_02_11.drawio.svg">
 </p>
