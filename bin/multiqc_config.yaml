@@ -1,0 +1,11 @@
+title: "MetaPhage report"
+subtitle: "MetaPhage: a nextflow pipeline for phage discovery."
+intro_text: ""
+report_comment: "Please note: this is work in prorgess!"
+custom_logo: './logo_tmp.png'
+
+report_section_order:
+  taxotab:
+    order: 2
+  graphpane:
+    order: 1

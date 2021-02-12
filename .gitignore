@@ -1,6 +1,10 @@
 .DS_Store
 .nextflow/*
 work/*
+db/*
+bin/.groovy_vars/*
 output*/*
 .nextflow*
 ._*
+mainQuadram.nf
+extra
