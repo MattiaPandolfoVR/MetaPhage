@@ -1,4 +1,4 @@
-This is MetaPhage, a nextflow pipeline for phage discovery. MetaPhage can be run on Linux or MacOS.
+This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage can be run on Linux or MacOS.
 
 # Installation
 
@@ -12,22 +12,22 @@ conda create --name nf
 conda activate nf
 ```
 
-3. Install nextflow:
+3a. Install nextflow:
 ```
-conda install nextflow==20.10.0 -c bioconda
-```
-
-4. Install **wget** and **unzip**:
-```
-conda install wget==1.20.1 unzip==6.0 -c anaconda
+conda install nextflow==20.10.0 -c bioconda -y
 ```
 
-5. Using `cd` command, set your working directory where you want to download the pipeline:
+3b. (Optional) Install **wget** and **unzip** if you are not shure they are already installed:
+```
+conda install wget==1.20.1 unzip==6.0 -c anaconda -y
+```
+
+4. Using `cd` command, set your working directory where you want to download the pipeline:
 ```
 cd your/path
 ```
 
-6. Download and extract the repo into the previously specified folder:
+5. Download and extract the repo into the previously specified folder:
 ```
 wget -O MetaPhage.zip https://github.com/MattiaPandolfoVR/MetaPhage/archive/main.zip && unzip MetaPhage.zip
 ```
