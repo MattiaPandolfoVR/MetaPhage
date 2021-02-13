@@ -1,0 +1,46 @@
+N E X T F L O W  ~  version 20.10.0
+Launching `main.nf` [prickly_goldwasser] - revision: 60897d922b
+
+====================================================
+ __  __      _        _____  _                      
+|  \/  |    | |      |  __ \| |                     
+| \  / | ___| |_ __ _| |__) | |__   __ _  __ _  ___ 
+| |\/| |/ _ \ __/ _` |  ___/| '_ \ / _` |/ _` |/ _ \
+| |  | |  __/ || (_| | |    | | | | (_| | (_| |  __/
+|_|  |_|\___|\__\__,_|_|    |_| |_|\__,_|\__, |\___|
+                                          __/ |     
+                                         |___/      
+====================================================
+
+[-        ] process > db_manager  -
+[-        ] process > fastp       -
+[-        ] process > remove_phix -
+[-        ] process > kraken2     -
+[-        ] process > bracken     -
+[-        ] process > krona       -
+[-        ] process > metaspades  -
+[-        ] process > megahit     -
+[-        ] process > metaquast   -
+
+executor >  local (2)
+[-        ] process > db_manager         [  0%] 0 of 1
+[49/99dc44] process > fastp (SRR8299384) [  0%] 0 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -

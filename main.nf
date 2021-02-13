@@ -721,7 +721,7 @@ process vcontact2 {
 
     output:
     file("*")
-    //tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
+    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
 
     script:
     path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
@@ -783,10 +783,10 @@ process vcontact2_extender {
 
     input:
     file file_vcontact2_db from ch_file_extender_db 
-    //tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
-    file(netfile) from Channel.fromPath('extra/new_vcontact2/c1.ntw')
-    file(csvfile) from Channel.fromPath('extra/new_vcontact2/genome_by_genome_overview.csv')
-    val(assembler) from Channel.of("debugging")
+    tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
+    //file(netfile) from Channel.fromPath('extra/new_vcontact2/c1.ntw')
+    //file(csvfile) from Channel.fromPath('extra/new_vcontact2/genome_by_genome_overview.csv')
+    //val(assembler) from Channel.of("debugging")
 
     output:
     file("*")
