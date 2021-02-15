@@ -1,5 +1,5 @@
 N E X T F L O W  ~  version 20.10.0
-Launching `main.nf` [prickly_goldwasser] - revision: 60897d922b
+Launching `main.nf` [ridiculous_sax] - revision: 60897d922b
 
 ====================================================
  __  __      _        _____  _                      
@@ -22,9 +22,8 @@ Launching `main.nf` [prickly_goldwasser] - revision: 60897d922b
 [-        ] process > megahit     -
 [-        ] process > metaquast   -
 
-executor >  local (2)
-[-        ] process > db_manager         [  0%] 0 of 1
-[49/99dc44] process > fastp (SRR8299384) [  0%] 0 of 3
+[-        ] process > db_manager         -
+[-        ] process > fastp              -
 [-        ] process > remove_phix        -
 [-        ] process > kraken2            -
 [-        ] process > bracken            -
@@ -44,3 +43,734 @@ executor >  local (2)
 [-        ] process > vcontact2          -
 [-        ] process > vcontact2_extender -
 [-        ] process > multiqc            -
+Creating Conda env: bioconda::fastp==0.20.1 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-a1591d9a6ae119533c8fd99119fd7a1c]
+Creating Conda env: bioconda::vibrant==1.2.1 conda-forge::tar==1.29 bioconda::phigaro==2.3.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-eb8f79230cdb56cbf885aa8a33c4964c]
+
+executor >  local (1)
+[-        ] process > db_manager         -
+[71/ab3ab7] process > fastp (SRR8299384) [  0%] 0 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+Creating Conda env: bioconda::fastp==0.20.1 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-a1591d9a6ae119533c8fd99119fd7a1c]
+Creating Conda env: bioconda::vibrant==1.2.1 conda-forge::tar==1.29 bioconda::phigaro==2.3.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-eb8f79230cdb56cbf885aa8a33c4964c]
+
+executor >  local (2)
+[-        ] process > db_manager         -
+[71/ab3ab7] process > fastp (SRR8299384) [ 33%] 1 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+
+
+executor >  local (2)
+[-        ] process > db_manager         [  0%] 0 of 1
+[71/ab3ab7] process > fastp (SRR8299384) [ 33%] 1 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+
+
+executor >  local (2)
+[-        ] process > db_manager         [  0%] 0 of 1
+[cb/da74cc] process > fastp (SRR8299386) [ 67%] 2 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (3)
+[-        ] process > db_manager         [  0%] 0 of 1
+[a4/887dba] process > fastp (SRR8299383) [ 67%] 2 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (4)
+[bf/d2aa98] process > db_manager (Downloading mis... [  0%] 0 of 1
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[-        ] process > remove_phix                    -
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (4)
+[bf/d2aa98] process > db_manager (Downloading mis... [  0%] 0 of 1
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[-        ] process > remove_phix                    -
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (4)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[-        ] process > remove_phix                    -
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (4)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[-        ] process > remove_phix                    -
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::htstream==1.3.3 conda-forge::boost==1.70.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-5a63df257ea58b8537ebb6010e66126c]
+
+executor >  local (5)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[ec/382200] process > remove_phix (SRR8299383)       [  0%] 0 of 3
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+executor >  local (6)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[ec/382200] process > remove_phix (SRR8299383)       [ 33%] 1 of 3
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+executor >  local (6)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[ec/382200] process > remove_phix (SRR8299383)       [ 33%] 1 of 3
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::spades==3.14.1 conda-forge::llvm-openmp==8.0.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-219a91dd02f2f43f63d22763eaa75c80]
+Creating Conda env: bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-2a10a6cc97fff932eb58fbfceeeef90a]
+
+executor >  local (6)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[ec/382200] process > remove_phix (SRR8299383)       [ 33%] 1 of 3
+[-        ] process > kraken2                        [  0%] 0 of 1
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+
+executor >  local (6)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[ec/382200] process > remove_phix (SRR8299383)       [ 33%] 1 of 3
+[-        ] process > kraken2                        [  0%] 0 of 1
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 1
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+
+executor >  local (6)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[f2/1ff0af] process > remove_phix (SRR8299386)       [ 67%] 2 of 3
+[-        ] process > kraken2                        [  0%] 0 of 1
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 1
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (7)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [ 67%] 2 of 3
+[-        ] process > kraken2                        [  0%] 0 of 2
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 2
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (8)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [  0%] 0 of 3
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 2
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (8)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [  0%] 0 of 3
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (9)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [  0%] 0 of 3
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[d7/fc6da4] process > metaspades (SRR8299383)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (9)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[d7/fc6da4] process > metaspades (SRR8299383)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-2b2c4b408fee5a6bc7430c72a3cc5b98]
+
+executor >  local (9)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[d7/fc6da4] process > metaspades (SRR8299383)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+executor >  local (9)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[d7/fc6da4] process > metaspades (SRR8299383)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::quast==5.0.2 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-f6aacf5bf42f404aff767d35c9c488a3]
+
+executor >  local (9)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[d7/fc6da4] process > metaspades (SRR8299383)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::quast==5.0.2 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-f6aacf5bf42f404aff767d35c9c488a3]
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::quast==5.0.2 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-f6aacf5bf42f404aff767d35c9c488a3]
+Creating Conda env: bioconda::r-virfinder==1.1 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-94c052db1378b73648dd888fd6cf0583]
+Creating Conda env: bioconda::vibrant==1.0.1 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-bfabbb0a0000bd8f540957bbdec8e3b8]
+Creating Conda env: bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-3e64faf1b721874fa5cc7731eaa67fb7]
+Creating Conda env: bioconda::phigaro==2.3.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-2f29eee723e8f12be709a7ff12d1339a]
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Creating Conda env: bioconda::quast==5.0.2 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-f6aacf5bf42f404aff767d35c9c488a3]
+Creating Conda env: bioconda::r-virfinder==1.1 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-94c052db1378b73648dd888fd6cf0583]
+Creating Conda env: bioconda::vibrant==1.0.1 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-bfabbb0a0000bd8f540957bbdec8e3b8]
+Creating Conda env: bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-3e64faf1b721874fa5cc7731eaa67fb7]
+Creating Conda env: bioconda::phigaro==2.3.0 [cache /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/./condaenvs/env-2f29eee723e8f12be709a7ff12d1339a]
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      [  0%] 0 of 1
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+
+
+
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      [  0%] 0 of 1
+[-        ] process > virfinder                      [  0%] 0 of 1
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+
+
+
+
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        [  0%] 0 of 1
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      [  0%] 0 of 1
+[-        ] process > virfinder                      [  0%] 0 of 1
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      [  0%] 0 of 1
+[-        ] process > vibrant                        [  0%] 0 of 1
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      [  0%] 0 of 1
+[-        ] process > virfinder                      [  0%] 0 of 1
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (10)
+[bf/d2aa98] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a4/887dba] process > fastp (SRR8299383)             [100%] 3 of 3 ✔
+[de/17cc62] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[56/26f83e] process > kraken2 (SRR8299383)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[8d/6258e7] process > metaspades (SRR8299386)        [ 33%] 1 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      [  0%] 0 of 1
+[-        ] process > vibrant                        [  0%] 0 of 1
+[-        ] process > phigaro                        [  0%] 0 of 1
+[-        ] process > virsorter                      [  0%] 0 of 1
+[-        ] process > virfinder                      [  0%] 0 of 1
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -

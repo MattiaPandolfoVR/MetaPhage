@@ -5,7 +5,7 @@
 #SBATCH --error=jquadram.stderr
 #SBATCH --job-name=jquadram
 #SBATCH --cpus-per-task=8
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=50G
 #SBATCH --exclude=gpunode001,gpunode002
 
 
@@ -16,7 +16,7 @@ now=$(date +"%T")
 #conda activate nf
 cd /home/nicola.vitulo/GIOELE/MetaPhage
  
-nextflow run main.nf -profile base,quadramvm
+nextflow run main.nf -profile base,cpmsuff
 
 now=$(date +"%T")
 /home/nicola.vitulo/GIOELE/ovariancancer/slurm/tg_message.sh "END $SLURM_JOB_NAME @ $now"

@@ -1,0 +1,801 @@
+N E X T F L O W  ~  version 20.10.0
+Launching `main.nf` [nauseous_kimura] - revision: 60897d922b
+
+====================================================
+ __  __      _        _____  _                      
+|  \/  |    | |      |  __ \| |                     
+| \  / | ___| |_ __ _| |__) | |__   __ _  __ _  ___ 
+| |\/| |/ _ \ __/ _` |  ___/| '_ \ / _` |/ _` |/ _ \
+| |  | |  __/ || (_| | |    | | | | (_| | (_| |  __/
+|_|  |_|\___|\__\__,_|_|    |_| |_|\__,_|\__, |\___|
+                                          __/ |     
+                                         |___/      
+====================================================
+
+[-        ] process > db_manager  -
+[-        ] process > fastp       -
+[-        ] process > remove_phix -
+[-        ] process > kraken2     -
+[-        ] process > bracken     -
+[-        ] process > krona       -
+[-        ] process > metaspades  -
+[-        ] process > megahit     -
+[-        ] process > metaquast   -
+
+executor >  local (2)
+[-        ] process > db_manager         [  0%] 0 of 1
+[a8/99ce56] process > fastp (SRR8299383) [  0%] 0 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (2)
+[-        ] process > db_manager         [  0%] 0 of 1
+[dd/099960] process > fastp (SRR8299386) [ 33%] 1 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (3)
+[-        ] process > db_manager         [  0%] 0 of 1
+[66/a574ad] process > fastp (SRR8299384) [ 33%] 1 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (3)
+[-        ] process > db_manager         [  0%] 0 of 1
+[66/a574ad] process > fastp (SRR8299384) [ 33%] 1 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (3)
+[-        ] process > db_manager         [  0%] 0 of 1
+[a8/99ce56] process > fastp (SRR8299383) [ 67%] 2 of 3
+[-        ] process > remove_phix        -
+[-        ] process > kraken2            -
+[-        ] process > bracken            -
+[-        ] process > krona              -
+[-        ] process > metaspades         -
+[-        ] process > megahit            -
+[-        ] process > metaquast          -
+[-        ] process > vibrant            -
+[-        ] process > phigaro            -
+[-        ] process > virsorter          -
+[-        ] process > virfinder          -
+[-        ] process > virfinder_proc     -
+[-        ] process > cdhit              -
+[-        ] process > prodigal           -
+[-        ] process > bowtie2_derep      -
+[-        ] process > covtocounts2       -
+[-        ] process > vcontact2          -
+[-        ] process > vcontact2_extender -
+[-        ] process > multiqc            -
+
+executor >  local (4)
+[64/55f96c] process > db_manager (Downloading mis... [  0%] 0 of 1
+[a8/99ce56] process > fastp (SRR8299383)             [ 67%] 2 of 3
+[-        ] process > remove_phix                    -
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (4)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a8/99ce56] process > fastp (SRR8299383)             [ 67%] 2 of 3
+[-        ] process > remove_phix                    -
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (4)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a8/99ce56] process > fastp (SRR8299383)             [ 67%] 2 of 3
+[-        ] process > remove_phix                    [  0%] 0 of 2
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (5)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a8/99ce56] process > fastp (SRR8299383)             [ 67%] 2 of 3
+[fe/aa6836] process > remove_phix (SRR8299383)       [  0%] 0 of 2
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (5)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[a8/99ce56] process > fastp (SRR8299383)             [ 67%] 2 of 3
+[fe/aa6836] process > remove_phix (SRR8299383)       [  0%] 0 of 2
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (5)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[fe/aa6836] process > remove_phix (SRR8299383)       [  0%] 0 of 3
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (6)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[3a/f89f3c] process > remove_phix (SRR8299386)       [  0%] 0 of 3
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (7)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[d5/bed4ca] process > remove_phix (SRR8299384)       [  0%] 0 of 3
+[-        ] process > kraken2                        -
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     -
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (7)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[fe/aa6836] process > remove_phix (SRR8299383)       [ 33%] 1 of 3
+[-        ] process > kraken2                        [  0%] 0 of 1
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 1
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (8)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[3a/f89f3c] process > remove_phix (SRR8299386)       [ 67%] 2 of 3
+[1b/ea6608] process > kraken2 (SRR8299383)           [  0%] 0 of 2
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 2
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (8)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[3a/f89f3c] process > remove_phix (SRR8299386)       [ 67%] 2 of 3
+[1b/ea6608] process > kraken2 (SRR8299383)           [  0%] 0 of 2
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[-        ] process > metaspades                     [  0%] 0 of 2
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (9)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[3a/f89f3c] process > remove_phix (SRR8299386)       [ 67%] 2 of 3
+[1b/ea6608] process > kraken2 (SRR8299383)           [  0%] 0 of 2
+[-        ] process > bracken                        -
+[-        ] process > krona                          -
+[20/5a1733] process > metaspades (SRR8299383)        [  0%] 0 of 2
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (9)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[3a/f89f3c] process > remove_phix (SRR8299386)       [ 67%] 2 of 3
+[1b/ea6608] process > kraken2 (SRR8299383)           [ 50%] 1 of 2
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[20/5a1733] process > metaspades (SRR8299383)        [  0%] 0 of 2
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (10)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[d5/bed4ca] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[48/26ad3e] process > kraken2 (SRR8299386)           [ 33%] 1 of 3
+[-        ] process > bracken                        [  0%] 0 of 1
+[-        ] process > krona                          -
+[20/5a1733] process > metaspades (SRR8299383)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (11)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[d5/bed4ca] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[48/26ad3e] process > kraken2 (SRR8299386)           [ 67%] 2 of 3
+[-        ] process > bracken                        [  0%] 0 of 2
+[-        ] process > krona                          -
+[b4/d24131] process > metaspades (SRR8299386)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+executor >  local (11)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[d5/bed4ca] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[48/26ad3e] process > kraken2 (SRR8299386)           [ 67%] 2 of 3
+[-        ] process > bracken                        [  0%] 0 of 2
+[-        ] process > krona                          -
+[b4/d24131] process > metaspades (SRR8299386)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+
+WARN: Killing pending tasks (1)
+executor >  local (11)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[d5/bed4ca] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[48/26ad3e] process > kraken2 (SRR8299386)           [ 67%] 2 of 3
+[-        ] process > bracken                        [  0%] 0 of 2
+[-        ] process > krona                          -
+[b4/d24131] process > metaspades (SRR8299386)        [  0%] 0 of 3
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Error executing process > 'metaspades (SRR8299386)'
+
+Caused by:
+  Process `metaspades (SRR8299386)` terminated with an error exit status (1)
+
+Command executed:
+
+  spades.py     --meta     --threads 8     --memory 192     --pe1-1 SRR8299386_dephixed_R1.fastq.gz --pe1-2 SRR8299386_dephixed_R2.fastq.gz     -o ./
+  
+  mv scaffolds.fasta SRR8299386_metaspades_scaffolds.fasta
+  mv contigs.fasta SRR8299386_metaspades_contigs.fasta
+
+Command exit status:
+  1
+
+Command output:
+  42 8 0
+  nslots: 17179869184
+  bits per slot: 8 range: 0000040000000000
+    0:04:55.772    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:33:28.122    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 37490801 reads
+    0:33:28.123    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R2.fastq.gz
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 74981602 reads
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 326)   Total 74981602 reads processed
+    0:56:02.085    25G / 25G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 301)   Building kmer index
+    0:56:02.085    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 117)   Splitting kmer instances into 128 files using 8 threads. This might take a while.
+    0:56:02.088    25G / 25G   INFO    General                 (file_limit.hpp            :  32)   Open file limit set to 51200
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  89)   Memory available for splitting buffers: 6.99913 Gb
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  97)   Using cell size of 524288
+    0:56:02.091    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:56:35.106    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 2277724 reads
+    0:57:07.221    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 4542708 reads
+    0:57:40.737    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 6791499 reads
+    0:58:15.334    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 9070263 reads
+    0:58:50.053    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 11346525 reads
+    0:59:23.592    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 13609892 reads
+    0:59:57.344    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 15878405 reads
+    1:00:31.671    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 18148955 reads
+    1:01:05.593    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 20429867 reads
+    1:01:39.267    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 22732820 reads
+    1:04:32.449    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 34154433 reads
+    1:05:24.418    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R2.fastq.gz
+    1:12:56.294    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 67540611 reads
+    1:14:48.304    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 112)   Total 74981602 reads processed
+    1:14:48.712    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 120)   Starting k-mer counting.
+    1:18:15.499    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 127)   K-mer counting done. There are 3219789384 kmers in total.
+    1:18:15.500    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 133)   Merging temporary buckets.
+    1:22:39.806    25G / 26G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 314)   Building perfect hash indices
+    1:26:09.737    26G / 35G   INFO    General                 (kmer_index_builder.hpp    : 150)   Merging final buckets.
+    1:29:24.007    26G / 35G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 336)   Index built. Total 1493034318 bytes occupied (3.70964 bits per kmer).
+    1:29:26.504     2G / 35G   INFO   K-mer Counting           (kmer_data.cpp             : 351)   Arranging kmers in hash map order
+    1:33:28.548    50G / 50G   INFO    General                 (main.cpp                  : 148)   Clustering Hamming graph.
+    3:41:17.305    50G / 50G   INFO    General                 (main.cpp                  : 155)   Extracting clusters
+  <jemalloc>: Error in malloc(): out of memory
+   Requested: 25758315072
+  
+  
+  == Error ==  system call for: "['/storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/condaenvs/env-219a91dd02f2f43f63d22763eaa75c80/bin/spades-hammer', 'corrected/configs/config.info']" finished abnormally, OS return value: -6
+  
+  In case you have troubles running SPAdes, you can write to spades.support@cab.spbu.ru
+  or report an issue on our GitHub repository github.com/ablab/spades
+  Please provide us with params.txt and spades.log files from the output directory.
+  
+  SPAdes log can be found here: spades.log
+  
+  Thank you for using SPAdes!
+
+Command wrapper:
+  42 8 0
+  nslots: 17179869184
+  bits per slot: 8 range: 0000040000000000
+    0:04:55.772    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:33:28.122    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 37490801 reads
+    0:33:28.123    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R2.fastq.gz
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 74981602 reads
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 326)   Total 74981602 reads processed
+    0:56:02.085    25G / 25G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 301)   Building kmer index
+    0:56:02.085    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 117)   Splitting kmer instances into 128 files using 8 threads. This might take a while.
+    0:56:02.088    25G / 25G   INFO    General                 (file_limit.hpp            :  32)   Open file limit set to 51200
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  89)   Memory available for splitting buffers: 6.99913 Gb
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  97)   Using cell size of 524288
+    0:56:02.091    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:56:35.106    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 2277724 reads
+    0:57:07.221    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 4542708 reads
+    0:57:40.737    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 6791499 reads
+    0:58:15.334    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 9070263 reads
+    0:58:50.053    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 11346525 reads
+    0:59:23.592    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 13609892 reads
+    0:59:57.344    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 15878405 reads
+    1:00:31.671    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 18148955 reads
+    1:01:05.593    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 20429867 reads
+    1:01:39.267    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 22732820 reads
+    1:04:32.449    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 34154433 reads
+    1:05:24.418    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R2.fastq.gz
+    1:12:56.294    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 67540611 reads
+    1:14:48.304    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 112)   Total 74981602 reads processed
+    1:14:48.712    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 120)   Starting k-mer counting.
+    1:18:15.499    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 127)   K-mer counting done. There are 3219789384 kmers in total.
+    1:18:15.500    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 133)   Merging temporary buckets.
+    1:22:39.806    25G / 26G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 314)   Building perfect hash indices
+    1:26:09.737    26G / 35G   INFO    General                 (kmer_index_builder.hpp    : 150)   Merging final buckets.
+    1:29:24.007    26G / 35G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 336)   Index built. Total 1493034318 bytes occupied (3.70964 bits per kmer).
+    1:29:26.504     2G / 35G   INFO   K-mer Counting           (kmer_data.cpp             : 351)   Arranging kmers in hash map order
+    1:33:28.548    50G / 50G   INFO    General                 (main.cpp                  : 148)   Clustering Hamming graph.
+    3:41:17.305    50G / 50G   INFO    General                 (main.cpp                  : 155)   Extracting clusters
+  <jemalloc>: Error in malloc(): out of memory
+   Requested: 25758315072
+  
+  
+  == Error ==  system call for: "['/storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/condaenvs/env-219a91dd02f2f43f63d22763eaa75c80/bin/spades-hammer', 'corrected/configs/config.info']" finished abnormally, OS return value: -6
+  
+  In case you have troubles running SPAdes, you can write to spades.support@cab.spbu.ru
+  or report an issue on our GitHub repository github.com/ablab/spades
+  Please provide us with params.txt and spades.log files from the output directory.
+  
+  SPAdes log can be found here: spades.log
+  
+  Thank you for using SPAdes!
+
+Work dir:
+  /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/work/b4/d24131c2851e4c8e5d719f58414fe6
+
+Tip: view the complete command output by changing to the process work dir and entering the command `cat .command.out`
+[f8/bbf2dd] Submitted process > bracken (SRR8299383)
+
+executor >  local (12)
+[64/55f96c] process > db_manager (Downloading mis... [100%] 1 of 1 ✔
+[66/a574ad] process > fastp (SRR8299384)             [100%] 3 of 3 ✔
+[d5/bed4ca] process > remove_phix (SRR8299384)       [100%] 3 of 3 ✔
+[48/26ad3e] process > kraken2 (SRR8299386)           [ 67%] 2 of 3
+[f8/bbf2dd] process > bracken (SRR8299383)           [  0%] 0 of 1
+[-        ] process > krona                          -
+[20/5a1733] process > metaspades (SRR8299383)        [ 50%] 1 of 2, failed: 1
+[-        ] process > megahit                        -
+[-        ] process > metaquast                      -
+[-        ] process > vibrant                        -
+[-        ] process > phigaro                        -
+[-        ] process > virsorter                      -
+[-        ] process > virfinder                      -
+[-        ] process > virfinder_proc                 -
+[-        ] process > cdhit                          -
+[-        ] process > prodigal                       -
+[-        ] process > bowtie2_derep                  -
+[-        ] process > covtocounts2                   -
+[-        ] process > vcontact2                      -
+[-        ] process > vcontact2_extender             -
+[-        ] process > multiqc                        -
+Error executing process > 'metaspades (SRR8299386)'
+
+Caused by:
+  Process `metaspades (SRR8299386)` terminated with an error exit status (1)
+
+Command executed:
+
+  spades.py     --meta     --threads 8     --memory 192     --pe1-1 SRR8299386_dephixed_R1.fastq.gz --pe1-2 SRR8299386_dephixed_R2.fastq.gz     -o ./
+  
+  mv scaffolds.fasta SRR8299386_metaspades_scaffolds.fasta
+  mv contigs.fasta SRR8299386_metaspades_contigs.fasta
+
+Command exit status:
+  1
+
+Command output:
+  42 8 0
+  nslots: 17179869184
+  bits per slot: 8 range: 0000040000000000
+    0:04:55.772    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:33:28.122    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 37490801 reads
+    0:33:28.123    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R2.fastq.gz
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 74981602 reads
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 326)   Total 74981602 reads processed
+    0:56:02.085    25G / 25G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 301)   Building kmer index
+    0:56:02.085    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 117)   Splitting kmer instances into 128 files using 8 threads. This might take a while.
+    0:56:02.088    25G / 25G   INFO    General                 (file_limit.hpp            :  32)   Open file limit set to 51200
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  89)   Memory available for splitting buffers: 6.99913 Gb
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  97)   Using cell size of 524288
+    0:56:02.091    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:56:35.106    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 2277724 reads
+    0:57:07.221    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 4542708 reads
+    0:57:40.737    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 6791499 reads
+    0:58:15.334    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 9070263 reads
+    0:58:50.053    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 11346525 reads
+    0:59:23.592    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 13609892 reads
+    0:59:57.344    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 15878405 reads
+    1:00:31.671    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 18148955 reads
+    1:01:05.593    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 20429867 reads
+    1:01:39.267    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 22732820 reads
+    1:04:32.449    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 34154433 reads
+    1:05:24.418    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R2.fastq.gz
+    1:12:56.294    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 67540611 reads
+    1:14:48.304    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 112)   Total 74981602 reads processed
+    1:14:48.712    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 120)   Starting k-mer counting.
+    1:18:15.499    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 127)   K-mer counting done. There are 3219789384 kmers in total.
+    1:18:15.500    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 133)   Merging temporary buckets.
+    1:22:39.806    25G / 26G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 314)   Building perfect hash indices
+    1:26:09.737    26G / 35G   INFO    General                 (kmer_index_builder.hpp    : 150)   Merging final buckets.
+    1:29:24.007    26G / 35G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 336)   Index built. Total 1493034318 bytes occupied (3.70964 bits per kmer).
+    1:29:26.504     2G / 35G   INFO   K-mer Counting           (kmer_data.cpp             : 351)   Arranging kmers in hash map order
+    1:33:28.548    50G / 50G   INFO    General                 (main.cpp                  : 148)   Clustering Hamming graph.
+    3:41:17.305    50G / 50G   INFO    General                 (main.cpp                  : 155)   Extracting clusters
+  <jemalloc>: Error in malloc(): out of memory
+   Requested: 25758315072
+  
+  
+  == Error ==  system call for: "['/storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/condaenvs/env-219a91dd02f2f43f63d22763eaa75c80/bin/spades-hammer', 'corrected/configs/config.info']" finished abnormally, OS return value: -6
+  
+  In case you have troubles running SPAdes, you can write to spades.support@cab.spbu.ru
+  or report an issue on our GitHub repository github.com/ablab/spades
+  Please provide us with params.txt and spades.log files from the output directory.
+  
+  SPAdes log can be found here: spades.log
+  
+  Thank you for using SPAdes!
+
+Command wrapper:
+  42 8 0
+  nslots: 17179869184
+  bits per slot: 8 range: 0000040000000000
+    0:04:55.772    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:33:28.122    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 37490801 reads
+    0:33:28.123    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 312)   Processing SRR8299386_dephixed_R2.fastq.gz
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 321)   Processed 74981602 reads
+    0:56:02.006    25G / 25G   INFO   K-mer Counting           (kmer_data.cpp             : 326)   Total 74981602 reads processed
+    0:56:02.085    25G / 25G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 301)   Building kmer index
+    0:56:02.085    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 117)   Splitting kmer instances into 128 files using 8 threads. This might take a while.
+    0:56:02.088    25G / 25G   INFO    General                 (file_limit.hpp            :  32)   Open file limit set to 51200
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  89)   Memory available for splitting buffers: 6.99913 Gb
+    0:56:02.088    25G / 25G   INFO    General                 (kmer_splitters.hpp        :  97)   Using cell size of 524288
+    0:56:02.091    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R1.fastq.gz
+    0:56:35.106    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 2277724 reads
+    0:57:07.221    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 4542708 reads
+    0:57:40.737    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 6791499 reads
+    0:58:15.334    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 9070263 reads
+    0:58:50.053    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 11346525 reads
+    0:59:23.592    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 13609892 reads
+    0:59:57.344    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 15878405 reads
+    1:00:31.671    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 18148955 reads
+    1:01:05.593    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 20429867 reads
+    1:01:39.267    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 22732820 reads
+    1:04:32.449    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 34154433 reads
+    1:05:24.418    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             :  97)   Processing SRR8299386_dephixed_R2.fastq.gz
+    1:12:56.294    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 107)   Processed 67540611 reads
+    1:14:48.304    30G / 30G   INFO   K-mer Splitting          (kmer_data.cpp             : 112)   Total 74981602 reads processed
+    1:14:48.712    25G / 25G   INFO    General                 (kmer_index_builder.hpp    : 120)   Starting k-mer counting.
+    1:18:15.499    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 127)   K-mer counting done. There are 3219789384 kmers in total.
+    1:18:15.500    25G / 26G   INFO    General                 (kmer_index_builder.hpp    : 133)   Merging temporary buckets.
+    1:22:39.806    25G / 26G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 314)   Building perfect hash indices
+    1:26:09.737    26G / 35G   INFO    General                 (kmer_index_builder.hpp    : 150)   Merging final buckets.
+    1:29:24.007    26G / 35G   INFO   K-mer Index Building     (kmer_index_builder.hpp    : 336)   Index built. Total 1493034318 bytes occupied (3.70964 bits per kmer).
+    1:29:26.504     2G / 35G   INFO   K-mer Counting           (kmer_data.cpp             : 351)   Arranging kmers in hash map order
+    1:33:28.548    50G / 50G   INFO    General                 (main.cpp                  : 148)   Clustering Hamming graph.
+    3:41:17.305    50G / 50G   INFO    General                 (main.cpp                  : 155)   Extracting clusters
+  <jemalloc>: Error in malloc(): out of memory
+   Requested: 25758315072
+  
+  
+  == Error ==  system call for: "['/storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/condaenvs/env-219a91dd02f2f43f63d22763eaa75c80/bin/spades-hammer', 'corrected/configs/config.info']" finished abnormally, OS return value: -6
+  
+  In case you have troubles running SPAdes, you can write to spades.support@cab.spbu.ru
+  or report an issue on our GitHub repository github.com/ablab/spades
+  Please provide us with params.txt and spades.log files from the output directory.
+  
+  SPAdes log can be found here: spades.log
+  
+  Thank you for using SPAdes!
+
+Work dir:
+  /storage-large/homedirs/nicola.vitulo/GIOELE/MetaPhage/work/b4/d24131c2851e4c8e5d719f58414fe6
+
+Tip: view the complete command output by changing to the process work dir and entering the command `cat .command.out`
+
