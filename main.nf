@@ -323,7 +323,7 @@ process megahit {
     publishDir "${params.outdir}/assembly/megahit/${seqID}", mode: 'copy'
 
     when:
-    params.multiple_alliners && !params.skip_megahit
+    !params.skip_megahit
 
     input:
     tuple val(seqID), file(reads) from ch_trimm_megahit
@@ -561,7 +561,7 @@ process virfinder_proc {
 /* STEP 7 - dereplication and reads mapping */
 
 process cdhit {
-    conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0"
+    conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0 bioconda::biopython==1.70"
     
     tag "$assembler"
     publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
@@ -575,7 +575,7 @@ process cdhit {
     output:
     file("*")
     file("filtered_derep95_${assembler}.fasta") into (ch_cdhit_bowtie2)
-    tuple val(assembler), file("filtered_derep95_${assembler}.fasta") into (ch_cdhit_prodigal)
+    tuple val(assembler), file("renamed_filtered_derep95_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
     if (params.skip_metaspades == false && params.skip_megahit == false)
@@ -600,6 +600,21 @@ process cdhit {
         --min-len ${params.minlen} \
         --out-file filtered_derep95_${assembler}.fasta \
         derep95_${assembler}.fasta
+
+        python << END
+        from Bio import SeqIO
+        from Bio.SeqRecord import SeqRecord
+        corresp = open('corresp.txt', 'w')
+        renamed = []
+        counter = 1
+        for seqrec in SeqIO.parse('filtered_derep95_${assembler}.fasta', 'fasta'):
+            newid = 'VCS_' + str(counter) + '_length_' + str(len(seqrec))
+            corresp.write(seqrec.id + ' '+seqrec.description +'\\n' + newid + '\\n\\n')
+            renamed.append(SeqRecord(seqrec.seq, id=newid, description=''))
+            counter += 1
+        SeqIO.write(renamed, 'renamed_filtered_derep95_${assembler}.fasta', 'fasta')
+        corresp.close()
+        END
         """
 }
 

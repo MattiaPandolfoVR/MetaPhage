@@ -198,7 +198,7 @@ def clusterExtractor(g, df, output_path, string_suffix):
     ###################
 
     # extract scaffolds from reference genomes
-    scaffolds_total = df_copy[df_copy['Genome_editable'].str.contains('NODE_')]
+    scaffolds_total = df_copy[df_copy['Genome_editable'].str.contains('VCS_')]
 
     # extract scaffolds contained in the graph 
     scaffolds_ingraph = scaffolds_total.copy(deep = True)
@@ -233,9 +233,9 @@ def clusterExtractor(g, df, output_path, string_suffix):
         for row in scaffolds_ingraph.itertuples():
             
             # skip already assigned scaffolds:
-            # assigned scaffold:     {NODE_...}{Staphylococcus...}
-            # NOT assigned scaffold: {NODE_...}{NODE_...}
-            if not "NODE_" in row.Genome_editable:
+            # assigned scaffold:     {VCS_...}{Staphylococcus...}
+            # NOT assigned scaffold: {VCS_...}{VCS_...}
+            if not "VCS_" in row.Genome_editable:
                 continue
             
             # extract scaffold name and VCStatus
@@ -333,17 +333,17 @@ def clusterExtractor(g, df, output_path, string_suffix):
                 # iterate the list until the first reference genome is reached
                 for i in range(len(connected_list)):
                     # if it's connected a true reference genome or a scaffold assigned in the last iteration:
-                    if  connected_list[i]["scaffold"].find("NODE_") == -1 or connected_list[i]["assignment"].find("NODE_") == -1:
+                    if  connected_list[i]["scaffold"].find("VCS_") == -1 or connected_list[i]["assignment"].find("VCS_") == -1:
                         
-                        if connected_list[i]["scaffold"].find("NODE_") == -1:
+                        if connected_list[i]["scaffold"].find("VCS_") == -1:
                             closer_ref = connected_list[i]["scaffold"]
                             closer_ref_w = connected_list[i]["weight"]
                             level = str(counter_iterations) + "C" + str(i + 1) # first level is 1, not 0
 
-                        elif connected_list[i]["assignment"].find("NODE_") == -1 and counter_iterations == 1:
+                        elif connected_list[i]["assignment"].find("VCS_") == -1 and counter_iterations == 1:
                             continue # scaffold assigned are not considerated in the first iteration. This will skip the "break"
 
-                        elif connected_list[i]["assignment"].find("NODE_") == -1:
+                        elif connected_list[i]["assignment"].find("VCS_") == -1:
                             closer_ref = connected_list[i]["assignment"]
                             closer_ref_w = connected_list[i]["weight"]
                             level = str(counter_iterations) + "C" + str(i + 1) # first level is 1, not 0
@@ -385,17 +385,17 @@ def clusterExtractor(g, df, output_path, string_suffix):
                     # 'CLOSER_REF' SEARCH
                     # iterate the list until the first reference genome is reached
                     for i in range(len(connected_list)):
-                        if  connected_list[i]["scaffold"].find("NODE_") == -1 or connected_list[i]["assignment"].find("NODE_") == -1:
+                        if  connected_list[i]["scaffold"].find("VCS_") == -1 or connected_list[i]["assignment"].find("NODE_") == -1:
 
-                            if connected_list[i]["scaffold"].find("NODE_") == -1:
+                            if connected_list[i]["scaffold"].find("VCS_") == -1:
                                 closer_ref = connected_list[i]["scaffold"]
                                 closer_ref_w = connected_list[i]["weight"]
                                 level = str(counter_iterations) + "N" + str(i + 1) # first level is 1, not 0
 
-                            elif connected_list[i]["assignment"].find("NODE_") == -1 and counter_iterations == 1:
+                            elif connected_list[i]["assignment"].find("VCS_") == -1 and counter_iterations == 1:
                                 continue # scaffold assigned are not considerated in the first iteration. This will skip the "break"
                             
-                            elif connected_list[i]["assignment"].find("NODE_") == -1:
+                            elif connected_list[i]["assignment"].find("VCS_") == -1:
                                 closer_ref = connected_list[i]["assignment"]
                                 closer_ref_w = connected_list[i]["weight"]
                                 level = str(counter_iterations) + "N" + str(i + 1) # first level is 1, not 0
@@ -481,7 +481,7 @@ def plotCreatorGraphvizHoloviews(g, df, results, output_path, string_suffix):
             continue
 
         # don't want to rename scaffold at this point
-        if "NODE_" in row.Genome:
+        if "VCS_" in row.Genome:
             # find the corresponding GenBank accession in the metadata table
             matches = results[results['Scaffold'] == row.Genome]
             if len(matches) != 1:
