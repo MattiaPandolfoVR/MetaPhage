@@ -30,6 +30,11 @@ cd your/path
 5. Download and extract the repo into the previously specified folder:
 ```
 wget -O MetaPhage.zip https://github.com/MattiaPandolfoVR/MetaPhage/archive/main.zip && unzip MetaPhage.zip
+
+git clone https://github.com/MattiaPandolfoVR/MetaPhage.git
+
+user: MattiaPandolfoVR
+pwd: 011811037f4123b6929d11d0ea1d5363cdb1c394
 ```
 
 ## With Docker
@@ -39,39 +44,6 @@ Not implemented yet.
 ## With Singularity (recommended)
 
 Not implemented yet.
-
-## Dependencies
-
-The execution of the pipeline depends on some dependencies that are automatically resolved by Conda. However, if you prefer, can resolve them manually with these commands:
-```
-conda install python==3.7.8 -c conda-forge
-conda install pandas==1.1.4 -c conda-forge
-conda install wget==1.20.1 -c anaconda
-conda install graphviz==2.42.3 -c conda-forge
-conda install fastp==0.20.1 -c bioconda
-conda install htstream==1.0.0 -c bioconda
-conda install boost==1.70.0 -c conda-forge
-conda install tar==1.29 -c conda-forge
-conda install kraken2==2.1.0 -c conda-forge
-conda install llvm-openmp==11.0.0 -c conda-forge
-conda install bracken==2.5.3 -c bioconda
-conda install libcxx==9.0.1 -c conda-forge
-conda install llvm-openmp==10.0.1 -c conda-forge
-conda install python=3.7 -c conda-forge
-conda install python_abi==3.7=1_cp37m -c conda-forge
-conda install krona==2.7.1 -c bioconda
-conda install spades==3.14.1 -c bioconda
-conda install llvm-openmp==8.0.0 -c conda-forge
-conda install megahit==1.2.9 -c bioconda
-conda install quast==5.0.2 -c bioconda
-conda install vibrant==1.0.1 -c bioconda
-conda install vibrant==1.2.1 -c bioconda
-conda install phigaro==2.3.0 -c bioconda
-conda install virsorter==1.0.6 -c bioconda
-conda install virsorter==2.0.beta -c bioconda
-conda install r-virfinder==1.1 -c bioconda
-conda install vcontact2==0.9.19 -c bioconda
-```
 
 # Usage
 
@@ -89,9 +61,9 @@ conda activate nf
 cd /your/path/MetaPhage
 ```
 
-4. Start the pipeline with the following command:
+4. Start the pipeline with the following command, selecting the right combination of configs (one for datasets and one for system resources):
 ```
-nextflow run main.nf -profile base
+nextflow run main.nf -profile dataset,load
 ```
 At this level you can specify all your **custom options** (read the dedicated section), for example the `--readPaths` option previously mentioned:
 ```
@@ -106,7 +78,11 @@ Specify the folder where your datasets are stored. Default is `./datasets/base/`
 
 ### `--singleEnd`
 
-Specify if your datasets are in single-end mode. Default is `false`. Please note that single-end mode is not supported yet.
+(Boolean) Specify if your datasets are in single-end mode. Default is `false`. Please note that single-end mode is not supported yet.
+
+### `--skip_qtrimming`
+
+(Boolean) Specify whether to perform the quality trimming of your reads or not. Default is `false`
 
 ### `--adapter_forward` and `--adapter_reverse`
 
@@ -122,7 +98,7 @@ Sliding window trimming is enabled in 5'→3' and in 3'→5' with a window 4bp l
 
 ### `--keep_phix`
 
-Specify whether to remove the phix or not. Default is `false`. 
+(Boolean) Specify whether to remove the phix or not. Default is `false`. 
 
 ### `--mod_phix`
 
@@ -134,7 +110,7 @@ Specify the modality of phix removal. There are 3 possibilities:
 
 ### `--skip_kraken2`
 
-Specify whether to perform the short read alignment with Kraken2 or not. Default is `false`.
+(Boolean) Specify whether to perform the short read alignment with Kraken2 or not. Default is `false`.
 
 ### `--mod_kraken2`
 
@@ -146,7 +122,7 @@ Specify the modality of the short read alignment with Kraken2. There are 3 possi
 
 ### `--skip_bracken`
 
-Specify whether to perform the quantification with Bracken or not. Default is `false`.
+(Boolean) Specify whether to perform the quantification with Bracken or not. Default is `false`.
 
 ### `--bracken_read_length`
 
@@ -156,21 +132,25 @@ Specify the read length to be used in Bracken (default is `100`). The databases 
 
 Specifies the taxonomic rank to analyze (default is `S`). Options are `D`, `P`, `C`, `O`, `F`, `G`, and `S`. Each classification at this specified rank will receive an estimated number of reads belonging to that rank after abundance estimation.
 
-### `--skip_metaspades`
+### `--skip_metaviralspades`
 
-Specify whether to perform the assembly with metaSPAdes or not. Default is `false`.
+(Boolean) Specify whether to perform the assembly with metaViralSPAdes or not. Default is `false`.
 
 ### `--skip_megahit`
 
-Specify whether to perform the assembly with MEGAHIT or not. Default is `false`.
+(Boolean) Specify whether to perform the assembly with MEGAHIT or not. Default is `true`.
 
-### `--skip_quast`
+### `--skip_metaquast`
 
-Specify whether to perform the assembly evaluation with QUAST or not. Default is `false`.
+(Boolean) Specify whether to perform the assembly evaluation with metaQUAST or not. Default is `false`.
+
+### `--skip_mining`
+
+(Boolean) Specify whether to perform the phage mining steps or not, using all of the implemented tools (VIBRANT, phigaro, VirSorter, VirFinder). Default is `false`. If you want to exclude a single or multiple tools from this step, use the specific skip parameter instead.
 
 ### `--skip_vibrant`
 
-Specify whether to perform the phage mining with VIBRANT or not. Default is `false`.
+(Boolean) Specify whether to perform the phage mining with VIBRANT or not. Default is `false`.
 
 ### `--mod_vibrant`
 
@@ -182,11 +162,19 @@ Specify the modality of the phage mining with VIBRANT. There are 2 possibilities
 
 ### `--skip_phigaro`
 
-Specify whether to perform the phage mining with Phigaro or not. Default is `false`.
+(Boolean) Specify whether to perform the phage mining with Phigaro or not. Default is `false`.
+
+### `--mod_phigaro`
+
+Specify the modality of the phage mining with phigaro. There are X possibilities:
+
+- `standard` (default) use phigaro 2.3.0.
+
+- `custom` use vConTACT2 using your custom config file. With this modality you have to specify also `--file_figaro_config`, which is the path to the .yml config file containing yout custom parameters to run the miner.
 
 ### `--skip_virsorter`
 
-Specify whether to perform the phage mining with VirSorter or not. Default is `false`.
+(Boolean) Specify whether to perform the phage mining with VirSorter or not. Default is `false`.
 
 ### `--mod_virsorter`
 
@@ -194,23 +182,33 @@ Specify the modality of the phage mining with VirSorter. There are 2 possibiliti
 
 - `legacy` (default) use VirSorter 1.0.6.
 
-- `standard` use VirSorter 2.0.beta. **Not working yet** (does not produce output).   
+- `standard` use VirSorter 2.0.beta. **Not working yet** (does not produce output).
+
+-  `custom` use VirSorter with your custom database. With this modality you have to specify also `--file_virsorter_db`, wich is the path to the folder containing the database file. Please verify that your database files match the required files requested by the VirSorter version (1.0.6).
 
 ### `--virsorter_viromes`
 
-Specify whether to perform the phage mining with VirSorter with the option "virome" enabled. Default is `false`.
+(Boolean) Specify whether to perform the phage mining with VirSorter with the option "virome" enabled. Default is `false`.
 
 ### `--skip_virfinder`
 
-Specify whether to perform the phage mining with VirFinder or not. Default is `false`.
+(Boolean) Specify whether to perform the phage mining with VirFinder or not. Default is `false`.
+
+### `--skip_dereplication`
+
+(Boolean) Specify whether to perform the dereplication of viral scaffolds or not. Default is `false`.
 
 ### `--minlen`
 
 Specify the minimal length in bp for a viral _consensus_ scaffold. Default is `1000`.
 
+### `--skip_viral_taxo`
+
+(Boolean) Specify whether to perform the viral taxonomical annotation or not. Default is `false`.
+
 ### `--skip_vcontact2`
 
-Specify whether to perform the automatic phage taxonomy assignment with vConTACT2 exdended with custom scritps. Default is `false`.
+(Boolean) Specify whether to perform the automatic phage taxonomy assignment with vConTACT2 exdended with custom scritps. Default is `false`.
 
 ### `--mod_vcontact2`
 
