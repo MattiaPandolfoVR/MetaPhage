@@ -574,7 +574,7 @@ process cdhit {
 
     output:
     file("*")
-    file("filtered_derep95_${assembler}.fasta") into (ch_cdhit_bowtie2)
+    file("renamed_filtered_derep95_${assembler}.fasta") into (ch_cdhit_bowtie2)
     tuple val(assembler), file("renamed_filtered_derep95_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
