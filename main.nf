@@ -20,9 +20,9 @@ params.skip_bracken = false
 params.bracken_read_length = 100
 params.bracken_abundance_level = "S"                                                                                                                                    
 
-// Assembly (default is metaviralspades)
+// Assembly (default is metaspades)
 params.multiple_alliners = false
-params.skip_metaviralspades = false
+params.skip_metaspades = false
 params.skip_megahit = true // add a control to chose which assembler and deactivate the other (two_flag = params.one && params.two ? false : params.two)
 params.skip_metaquast = false
 
@@ -171,7 +171,7 @@ if(!params.keep_phix) {
         tuple val(seqID), file(reads) from ch_fastp_phix
 
         output:
-        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaviralspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
+        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
 
         script:
         path_file_phix_alone = file("$workflow.projectDir/bin/.groovy_vars/${file_phix_alone}").text
@@ -188,7 +188,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaviralspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep}
+    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep}
 }
 
 /* STEP 2 - taxonomy classification */
@@ -280,7 +280,7 @@ process krona {
 }
 
 /* STEP 3 - assembly */
-process metaviralspades {
+process metaspades {
     if (cursystem.contains('Mac')) {
         conda "bioconda::spades==3.15 conda-forge::llvm-openmp==10.0.1"
     }
@@ -289,17 +289,17 @@ process metaviralspades {
     }
 
     tag "$seqID"
-    publishDir "${params.outdir}/assembly/metaviralspades/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/assembly/metaspades/${seqID}", mode: 'copy'
     
     when:
-    !params.singleEnd && !params.skip_metaviralspades
+    !params.singleEnd && !params.skip_metaspades
 
     input:
-    tuple val(seqID), file(reads) from ch_trimm_metaviralspades
+    tuple val(seqID), file(reads) from ch_trimm_metaspades
 
     output:
-    tuple val(seqID), val("metaviralspades"), file("${seqID}_metaviralspades_scaffolds.fasta") into (ch_metaviralspades_quast, ch_metaviralspades_mapping, ch_metaviralspades_vibrant, ch_metaviralspades_phigaro, ch_metaviralspades_virsorter, ch_metaviralspades_virfinder, ch_metaviralspades_virfinderproc)
-    tuple val(seqID), val("metaviralspades"), file("${seqID}_metaviralspades_contigs.fasta")
+    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_mapping, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_virfinderproc)
+    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_contigs.fasta")
 
     script:
     def inp = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"
@@ -311,8 +311,8 @@ process metaviralspades {
     $inp \
     -o ./
 
-    mv scaffolds.fasta ${seqID}_metaviralspades_scaffolds.fasta
-    mv contigs.fasta ${seqID}_metaviralspades_contigs.fasta
+    mv scaffolds.fasta ${seqID}_metaspades_scaffolds.fasta
+    mv contigs.fasta ${seqID}_metaspades_contigs.fasta
     """
 }
 
@@ -352,10 +352,10 @@ process metaquast {
     publishDir "${params.outdir}/assembly/${assembler}/metaquast", mode: 'copy'
 
     when:
-    (!params.skip_metaviralspades && !params.skip_megahit) || !params.skip_metaquast 
+    (!params.skip_metaspades && !params.skip_megahit) || !params.skip_metaquast 
 
     input:
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaviralspades_quast, ch_megahit_quast)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
 
     output:
     file("${seqID}") into (ch_metaquast_multiqc) // here ${seqID} is a folder 
@@ -391,7 +391,7 @@ process vibrant {
 
     input:
     file file_vibrant_db from ch_file_vibrant_db
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaviralspades_vibrant, ch_megahit_vibrant)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
 
     output:
     file("*")
@@ -437,7 +437,7 @@ process phigaro {
 
     input:
     file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaviralspades_phigaro, ch_megahit_phigaro)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_phigaro, ch_megahit_phigaro)
 
     output:
     file("*")
@@ -482,7 +482,7 @@ process virsorter {
 
     input:
     file file_virsorter_db from ch_file_virsorter_db 
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaviralspades_virsorter, ch_megahit_virsorter)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter, ch_megahit_virsorter)
 
     output:
     file("*")
@@ -521,7 +521,7 @@ process virfinder {
     !params.skip_mining && !params.skip_virfinder
 
     input:
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaviralspades_virfinder, ch_megahit_virfinder)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
 
     output:
     file("*")
@@ -543,7 +543,7 @@ process virfinder_proc {
     publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
 
     input:
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaviralspades_virfinderproc, ch_megahit_virfinderproc)
+    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinderproc, ch_megahit_virfinderproc)
     tuple val(seqID), val(assembler), file(csvfile) from ch_virfinder_virfinderproc
 
     output:
@@ -578,7 +578,7 @@ process cdhit {
     tuple val(assembler), file("renamed_filtered_derep95_${assembler}.fasta") into (ch_cdhit_prodigal)
 
     script:
-    if (params.skip_metaviralspades == false && params.skip_megahit == false)
+    if (params.skip_metaspades == false && params.skip_megahit == false)
         error "Dereplication works with one assembler at a time!"
     else
         """
