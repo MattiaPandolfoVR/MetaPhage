@@ -47,10 +47,15 @@ params.minlen = 1000
 // Viral Taxonomy - vContact2
 params.skip_viral_taxo = false
 params.skip_vcontact2 = false // true while debugging the pipeline
-params.mod_vcontact2 = "Jan2021"      
-params.file_vcontact2_db = "-"                                                                         
+params.mod_vcontact2 = "Jan2021"
+params.file_vcontact2_db = "-"
 
 // Report
+params.skip_error_barplots = false
+//params.beta_diversity = true
+//params.miner_comparison = true
+params.skip_taxonomy_table = false
+//params.heatmap = true
 params.skip_report = false
 
   
@@ -70,7 +75,19 @@ if (params.readPaths) {         // declared in profile config
 } else
     error "No input files supplied! Please check params.readPaths in your config file!"
 
+/* METADATA */
 
+if (params.metadata) {
+        Channel.fromPath("${params.metadata}/*_metadata.csv", checkIfExists: true)
+            println "found metadata!"
+            //.set { ch_metadata_betadiverity, ch_metadata_heatmap }
+    } else {
+        println "No metadata supplied! Metadata are mandatory for beta diversity and heatmaps plots!"
+        println "If you are interested in these plots, simply provide a metadata .csv file using params.metadata in your config file!"
+        println "For more informations, check the metadata paragraph on the wiki at _______________"     //provide wiki url
+        params.betadiversity = false
+        params.heatmap = false
+}
 
 /* PROCESSES */
 
@@ -94,7 +111,6 @@ welcomeScreen()
 /* STEP 0 - check presence and download required files */
 process db_manager {
     if (params.db_manager_reports) { echo true }
-    conda "bioconda::vibrant==1.2.1 conda-forge::tar==1.29 bioconda::phigaro==2.3.0"
 
     tag "Downloading missing databases..."
 
@@ -120,8 +136,6 @@ process db_manager {
 
 /* STEP 1 - quality check and trimming */
 process fastp {
-    conda "bioconda::fastp==0.20.1"
-
     tag "$seqID"
     publishDir "${params.outdir}/fastp_qc/", mode: 'copy',
         saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
@@ -159,8 +173,6 @@ process fastp {
 
 if(!params.keep_phix) {
     process remove_phix {
-        conda "bioconda::htstream==1.3.3 conda-forge::boost==1.70.0"
-
         tag "$seqID"
 
         when:
@@ -193,8 +205,6 @@ else {
 
 /* STEP 2 - taxonomy classification */
 process kraken2 {
-    conda "bioconda::kraken2==2.1.0 conda-forge::llvm-openmp==11.0.0"
-    
     tag "$seqID"
     publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
 
@@ -206,12 +216,14 @@ process kraken2 {
     tuple val(seqID), file(reads) from ch_trimm_kraken2
 
     output:
-    file("${seqID}_output.txt") 
+    file("${seqID}_output.txt")
     tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_bracken)
+    tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_krona)
 
     script:
     path_file_kraken2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_kraken2_db}").text
     def inp = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
+    println "running"
     """
     kraken2 \
     --report-zero-counts \
@@ -224,8 +236,6 @@ process kraken2 {
 }
 
 process bracken {
-    conda "bioconda::bracken==2.5.3 conda-forge::libcxx==9.0.1 conda-forge::llvm-openmp==10.0.1 conda-forge::python=3.7 conda-forge::python_abi==3.7=1_cp37m"
-
     tag "$seqID"
     publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
 
@@ -234,7 +244,7 @@ process bracken {
 
     input:
     file file_bracken_db from ch_file_bracken_db
-    tuple val(seqID), file(report) from ch_kraken2_bracken
+    tuple val(seqID), file(report_kraken2) from ch_kraken2_bracken
 
     output:
     file("${seqID}_abundancies.txt")
@@ -245,7 +255,7 @@ process bracken {
     """
     bracken \
     -d $workflow.projectDir/${path_file_bracken_db} \
-    -i ${report} \
+    -i ${report_kraken2} \
     -o ${seqID}_abundancies.txt \
     -r ${params.bracken_read_length} \
     -l ${params.bracken_abundance_level} 
@@ -253,41 +263,42 @@ process bracken {
 }
 
 process krona {
-    conda "bioconda::krona==2.7.1 anaconda::python==3.7"
-
     tag "$seqID"
     publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
 
     when:
-    !params.skip_bacterial_taxo && (!params.skip_kraken2 && !params.skip_bracken)
+    !params.skip_bacterial_taxo && !params.skip_kraken2
 
     input:
-    tuple val(seqID), file(report_bracken) from ch_bracken_krona
+    tuple val(seqID), file(report) from Channel.empty().mix(ch_kraken2_krona, ch_bracken_krona)
 
     output:
-    file("${seqID}_krona_abundancies.html")
+    file("${seqID}_*_krona_abundancies.html")
 
     script:
-    """
-    python $workflow.projectDir/bin/kreport2krona.py \
-    --report-file ${report_bracken} \
-    --output to_krona.txt 
-
-    ktImportText \
-    to_krona.txt \
-    -o ${seqID}_krona_abundancies.html
-    """
+    if (params.skip_bracken == true && params.skip_kraken2 == false)
+        """
+        echo "bracken was not run, using kracken2 output to generate krona report!"
+        python $workflow.projectDir/bin/kreport2krona.py \
+        --report-file ${report} \
+        --output to_krona.txt 
+        ktImportText \
+        to_krona.txt \
+        -o ${seqID}_krak_krona_abundancies.html
+        """
+    else
+        """
+        python $workflow.projectDir/bin/kreport2krona.py \
+        --report-file ${report} \
+        --output to_krona.txt 
+        ktImportText \
+        to_krona.txt \
+        -o ${seqID}_brack_krona_abundancies.html
+        """
 }
 
 /* STEP 3 - assembly */
 process metaspades {
-    if (cursystem.contains('Mac')) {
-        conda "bioconda::spades==3.15 conda-forge::llvm-openmp==10.0.1"
-    }
-    else { // spades on Linux has slightly different dependencies
-        conda "bioconda::spades==3.15 conda-forge::llvm-openmp==8.0.0"
-    }
-
     tag "$seqID"
     publishDir "${params.outdir}/assembly/metaspades/${seqID}", mode: 'copy'
     
@@ -305,20 +316,17 @@ process metaspades {
     def inp = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"
     """    
     spades.py \
-    --metaviral \
+    --meta \
     --threads ${task.cpus} \
     --memory ${task.memory.toGiga()} \
     $inp \
     -o ./
-
     mv scaffolds.fasta ${seqID}_metaspades_scaffolds.fasta
     mv contigs.fasta ${seqID}_metaspades_contigs.fasta
     """
 }
 
 process megahit {
-    conda "bioconda::megahit==1.2.9"
-
     tag "$seqID"
     publishDir "${params.outdir}/assembly/megahit/${seqID}", mode: 'copy'
 
@@ -329,7 +337,7 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_mapping, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder, ch_megahit_virfinderproc)
+    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder, ch_megahit_virfinderproc)
     
     script:
     def inp = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -340,14 +348,11 @@ process megahit {
     $inp \
     --out-dir result \
     --out-prefix ${seqID}
-
     mv result/${seqID}.contigs.fa ${seqID}_megahit_contigs.fasta
     """
 }
 
 process metaquast {
-    conda "bioconda::quast==5.0.2"
-
     tag "$assembler-$seqID"
     publishDir "${params.outdir}/assembly/${assembler}/metaquast", mode: 'copy'
 
@@ -372,19 +377,11 @@ process metaquast {
     """
 }
 
-
 /* STEP 6 - phage mining */
 
-process vibrant {
-    if (params.mod_vibrant == "legacy") {
-        conda "bioconda::vibrant==1.0.1"
-    }
-    else {
-       conda "bioconda::vibrant==1.2.1"
-    }
-
+process vibrant_legacy {
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy', overwrite: true
 
     when:
     !params.skip_mining && !params.skip_vibrant
@@ -414,23 +411,24 @@ process vibrant {
         -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
         -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
         -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
+        mv VIBRANT_*/ ${seqID}_vibrant/
+        rm -f temp*
         """
     else 
         """
         VIBRANT_run.py \
         -t ${task.cpus} \
         -i ${scaffold} \
-        -folder ./ \
         -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
-        -m $workflow.projectDir/${path_file_vibrant_db}files/ 
+        -m $workflow.projectDir/${path_file_vibrant_db}files/
+        mv VIBRANT_*/ ${seqID}_vibrant/
+        rm -f temp*
         """
 }
 
 process phigaro {
-    conda "bioconda::phigaro==2.3.0"
-
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy', overwrite: true
 
     when:
     !params.skip_mining && !params.skip_phigaro
@@ -447,35 +445,21 @@ process phigaro {
     path_file_phigaro_config = file("$workflow.projectDir/bin/.groovy_vars/${file_phigaro_config}").text
     """
     python $workflow.projectDir/bin/phigaro_config_creator.py
-
     printf 'Y\n' | phigaro \
     --threads ${task.cpus} \
     --fasta-file ${scaffold} \
     --config config.yml \
     --print-vogs \
-    --extension html \
-    --output phigaro_${seqID} \
+    --output ${seqID}_phigaro \
     --not-open \
     --save-fasta \
     --mode basic
-
-    if [ ! -e phigaro_${seqID}/*.phigaro.fasta ]; then
-        mkdir -p phigaro_${seqID}
-        touch phigaro_${seqID}/empty.phigaro.fasta
-    fi
     """
-}
+}    
 
-process virsorter {
-    if (params.mod_virsorter == "legacy") {
-        conda "bioconda::virsorter==1.0.6 bioconda::perl-bioperl==1.7.2"
-    }
-    else {
-       conda "bioconda::virsorter==2.0.beta"
-    }
-
+process virsorter_legacy {
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy', overwrite: true
 
     when:
     !params.skip_mining && !params.skip_virsorter
@@ -500,10 +484,11 @@ process virsorter {
         --wdir ${seqID}_virsorter \
         --ncpu ${task.cpus} \
         --data-dir $workflow.projectDir/${path_file_virsorter_db}
-
         cd ${seqID}_virsorter/Predicted_viral_sequences/
         for FILENAME in *; do mv \$FILENAME ${seqID}_\$FILENAME; done
-        cd ../../
+        mv * ../
+        cd ../
+        rmdir Predicted_viral_sequences/
         """
     else 
         """
@@ -512,10 +497,8 @@ process virsorter {
 }
 
 process virfinder {
-    conda "bioconda::r-virfinder==1.1"
-
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
+    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}_virfinder", mode: 'copy', overwrite: true
 
     when:
     !params.skip_mining && !params.skip_virfinder
@@ -525,35 +508,12 @@ process virfinder {
 
     output:
     file("*")
-    tuple val(seqID), val(assembler), file("*_virus.csv") into (ch_virfinder_virfinderproc)
-
-    script:
-    """
-    Rscript $workflow.projectDir/bin/virfinder_execute.R ${scaffold}
-
-    mv results.txt ${seqID}_results.txt
-    mv virus.csv ${seqID}_virus.csv
-    """
-}
-
-process virfinder_proc {
-    conda "bioconda::r-seqinr==3.1_3"
-
-    tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}", mode: 'copy'
-
-    input:
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinderproc, ch_megahit_virfinderproc)
-    tuple val(seqID), val(assembler), file(csvfile) from ch_virfinder_virfinderproc
-
-    output:
-    file("*")
     tuple val(seqID), val(assembler), val("virfinder"), file("*_viral_sequences.fasta") into (ch_virfinder_cdhit)
 
     script:
     """
-    Rscript $workflow.projectDir/bin/virfinder_process.R ${scaffold} ${csvfile}
-
+    Rscript $workflow.projectDir/bin/Rscript/virfinder_execute.R ${scaffold} ${task.cpus} $workflow.projectDir
+    mv results.txt ${seqID}_results.txt
     mv viral_sequences.fasta ${seqID}_viral_sequences.fasta
     """
 }
@@ -561,10 +521,8 @@ process virfinder_proc {
 /* STEP 7 - dereplication and reads mapping */
 
 process cdhit {
-    conda "bioconda::cd-hit==4.8.1 bioconda::seqkit==0.14.0 bioconda::biopython==1.70"
-    
     tag "$assembler"
-    publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
+    publishDir "${params.outdir}/CD-HIT/", mode: 'copy', overwrite: true
 
     when:
     !params.skip_dereplication
@@ -583,7 +541,6 @@ process cdhit {
     else
         """
         cat ${scaffolds} > concat_${assembler}.fasta
-
         cd-hit-est \
         -T ${task.cpus} \
         -M ${task.memory.toMega()} \
@@ -595,12 +552,10 @@ process cdhit {
         -d 0 \
         -p 1 \
         -g 1
-
         seqkit seq \
         --min-len ${params.minlen} \
         --out-file filtered_derep95_${assembler}.fasta \
         derep95_${assembler}.fasta
-
         python << END
         from Bio import SeqIO
         from Bio.SeqRecord import SeqRecord
@@ -619,10 +574,8 @@ process cdhit {
 }
 
 process prodigal { // prokka is better! or even balrog
-    conda "bioconda::prodigal==2.6.3"
-    
     tag "$assembler"
-    publishDir "${params.outdir}/CD-HIT/", mode: 'copy'
+    publishDir "${params.outdir}/CD-HIT/", mode: 'copy', overwrite: true
 
     when:
     !params.skip_dereplication
@@ -632,7 +585,7 @@ process prodigal { // prokka is better! or even balrog
 
     output:
     file("*")
-    tuple val(assembler), file("derep_prots_${assembler}.faa") into (ch_prodigal_vcontact2)
+    tuple val(assembler), file("derep_prots_${assembler}.faa") into ch_prodigal_diamond
 
     script:
     """
@@ -645,10 +598,8 @@ process prodigal { // prokka is better! or even balrog
 }
 
 process bowtie2_derep {
-    conda "bioconda::bowtie2==2.4.1 bioconda::samtools==1.9 bioconda::qualimap==2.2.2a=1"
-
     tag "${seqID}"
-    publishDir "${params.outdir}/bowtie2", mode: 'copy'
+    publishDir "${params.outdir}/bowtie2", mode: 'copy', overwrite: true
 
     when:
     !params.skip_dereplication
@@ -666,28 +617,22 @@ process bowtie2_derep {
     """
     bowtie2-build \
     --threads ${task.cpus} ${consensus} ${consensus}_index
-
     bowtie2 \
     -p ${task.cpus} \
     -x ${consensus}_index \
     -1 ${reads[0]} \
     -2 ${reads[1]} \
     -S ${seqID}_${consensus}.sam 
-
     samtools view \
     -@ ${task.cpus} \
     -S -b ${seqID}_${consensus}.sam > ${seqID}_${consensus}.bam
-
     samtools sort \
     -@ ${task.cpus} ${seqID}_${consensus}.bam \
     -o ${seqID}_${consensus}.sorted.bam
-
     samtools index \
     -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam
-
     samtools flagstat \
     -@ ${task.cpus} ${seqID}_${consensus}.sorted.bam > mappingstats_${seqID}_${consensus}.txt
-
     qualimap bamqc \
     -nt ${task.cpus} \
     -outdir qualimap_bamqc_${seqID}_${consensus}.folder \
@@ -696,9 +641,10 @@ process bowtie2_derep {
 }
 
 process covtocounts2 {
-    conda "anaconda::python=3.7 bioconda::bamtocov==2.0.001"
+    publishDir "${params.outdir}/bowtie2", mode: 'copy', overwrite: true
 
-    publishDir "${params.outdir}/bowtie2", mode: 'copy'
+    when:
+    !params.skip_report
 
     input:
     file(sortedbam) from ch_bowtie2bam_covtocounts2.collect()
@@ -707,6 +653,7 @@ process covtocounts2 {
     output:
     file("*")
     tuple file("custom_count_table_mqc.txt"), file("custom_count_plot_mqc.txt") into (ch_covtocounts2_multiqc)
+    file("variance_table.txt") into ch_covtocounts2_barplots
 
     script:
     """
@@ -714,98 +661,145 @@ process covtocounts2 {
     --threads ${task.cpus} \
     --multiqc \
     ${sortedbam} > multiqc_model.txt
-
+    cp multiqc_model.txt variance_table.txt
+    sed -i 1,3d variance_table.txt
     python $workflow.projectDir/bin/multiqc_model_editor.py
     """
 }
 
+params.allVSall = "$workflow.projectDir/db/vcontact2/allVSall.csv"
+allVSall = file(params.allVSall)
+
 /* STEP 8 - viral taxonomy */
 
-process vcontact2 {
-    conda "bioconda::vcontact2==0.9.19"
-
+process diamond_vcontact2 {
     tag "$assembler"
-    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy'
+    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy', overwrite: true
+
+    when:
+    !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
+    
+    input:
+    file file_vcontact2_db from ch_file_vcontact2_db
+    tuple val(assembler), file(viral_orfs) from ch_prodigal_diamond
+
+    output:
+    file("*")
+    tuple val(assembler), file("allVSall.csv"), file("viral_genomes_g2g.csv") into ch_diamond_vcontact2
+
+    script:
+    path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
+    reference_db_faa = file("$workflow.projectDir/${path_file_vcontact2_db}vConTACT2_proteins.faa")
+    reference_db = file("$workflow.projectDir/db/vcontact2/reference_db.dmnd")
+    if(allVSall.exists() == false){
+        """
+        # Format reference_db
+        diamond makedb \
+        -p ${task.cpus} \
+        --in ${reference_db_faa} \
+        -d ${reference_db}
+        # Align the reference_db against itself to create allVSall
+        diamond blastp \
+        -p ${task.cpus} \
+        --sensitive \
+        -d ${reference_db} \
+        -q ${reference_db_faa} \
+        -o ${allVSall}
+        # Format the viral_orf in the correct way
+        $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${viral_orfs}
+        # create gene2genome file
+        $workflow.projectDir/bin/vcontact2_gene2genome.py \
+        -p ${viral_orfs}.simple.faa \
+        -o viral_genomes_g2g.csv \
+        -s 'Prodigal-FAA'
+        # Align the viral orfs against the reference_db
+        diamond blastp \
+        -p ${task.cpus} \
+        --sensitive \
+        -d ${reference_db} \
+        -q ${viral_orfs}.simple.faa \
+        -o viral_orfs_alignment.csv
+        # Append the viral orfs alignment to the allVSall file
+        cat viral_orfs_alignment.csv >> ${allVSall}
+        cp ${allVSall} ./allVSall.csv
+        """
+    }
+    else {
+        """
+        # Format reference_db
+        diamond makedb \
+        -p ${task.cpus} \
+        --in ${reference_db_faa} \
+        -d ${reference_db}
+        # Format the viral_orf in the correct way
+        $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${viral_orfs}
+        # create gene2genome file
+        $workflow.projectDir/bin/vcontact2_gene2genome.py \
+        -p ${viral_orfs}.simple.faa \
+        -o viral_genomes_g2g.csv \
+        -s 'Prodigal-FAA'
+        # Align the viral orfs against the reference_db
+        diamond blastp \
+        -p ${task.cpus} \
+        --sensitive \
+        -d ${reference_db} \
+        -q ${viral_orfs}.simple.faa \
+        -o viral_orfs_alignment.csv
+        # Append the viral orfs alignment to the allVSall file
+        cat viral_orfs_alignment.csv >> ${allVSall}
+        cp ${allVSall} ./allVSall.csv
+        """
+    }
+}
+
+params.clusterONE = "$workflow.projectDir/bin/cluster_one-1.0.jar"
+clusterONE = file(params.clusterONE)
+
+process vcontact2 {
+    tag "$assembler"
+    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy', overwrite: true
 
     when:
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
-    file file_vcontact2_db from ch_file_vcontact2_db 
-    tuple val(assembler), file(phages_combined) from ch_prodigal_vcontact2
+    tuple val(assembler), file(total_alignment), file(gene2genome) from ch_diamond_vcontact2
 
     output:
     file("*")
-    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into (ch_vcontact2_extender)
+    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into ch_vcontact2_extender
 
     script:
-    path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
     """
-    $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${phages_combined}
-
-    $workflow.projectDir/bin/vcontact2_gene2genome.py \
-    -p ${phages_combined}.simple.faa \
-    -o viral_genomes_g2g.csv \
-    -s 'Prodigal-FAA'
-
-    python << END
-    fileEXP = open("${phages_combined}.simple.faa", "r")
-    lineEXP = fileEXP.read() 
-    fileREF = open("$workflow.projectDir/${path_file_vcontact2_db}vConTACT2_proteins.faa")
-    lineREF = fileREF.read()
-    lineGLUE = lineEXP + lineREF
-    fileGLUE = open("proteins_GLUE.faa", "w")
-    fileGLUE.write(lineGLUE)
-    fileEXP.close()
-    fileREF.close()
-    fileGLUE.close()
-    END
-
-    python << END
-    fileEXP = open("viral_genomes_g2g.csv", "r")
-    lineEXP = fileEXP.read()
-    lineEXP = lineEXP.replace(",None_provided", ",none")
-    fileREF = open("$workflow.projectDir/${path_file_vcontact2_db}vConTACT2_gene_to_genome.csv")
-    lineREF = fileREF.read()
-    lineGLUE = lineREF.replace("protein_id,contig_id,keywords\\n", lineEXP)
-    fileGLUE = open("g2g_GLUE.csv", "w")
-    fileGLUE.write(lineGLUE)
-    fileEXP.close()
-    fileREF.close()
-    fileGLUE.close()
-    END
-
-    vcontact2 \
+    # run vConTACT2
+    vcontact \
     -t ${task.cpus} \
-    --raw-proteins proteins_GLUE.faa \
-    --proteins-fp g2g_GLUE.csv \
+    --blast-fp ${total_alignment} \
+    --rel-mode 'Diamond' \
+    --proteins-fp ${gene2genome} \
     --db None \
     --pcs-mode MCL \
     --vcs-mode ClusterONE \
-    --c1-bin $workflow.projectDir/bin/cluster_one-1.0.jar \
+    --c1-bin ${clusterONE} \
     --output-dir ./
     """
 }
 
 process vcontact2_extender {
-    conda "anaconda::python=3.7 conda-forge::pandas==1.1.4 anaconda::networkx==2.5 conda-forge::graphviz==2.42.3 conda-forge::pygraphviz==1.6 pyviz::hvplot==0.6.0 pyviz::panel==0.10.1 conda-forge::plotly==4.12.0"
-
     tag "$assembler"
-    publishDir "${params.outdir}/report", mode: 'copy'
+    publishDir "${params.outdir}/report", mode: 'copy', overwrite: true
 
     when:
-    !params.skip_vcontact2
+    !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
     file file_vcontact2_db from ch_file_extender_db 
     tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
-    //file(netfile) from Channel.fromPath('extra/new_vcontact2/c1.ntw')
-    //file(csvfile) from Channel.fromPath('extra/new_vcontact2/genome_by_genome_overview.csv')
-    //val(assembler) from Channel.of("debugging")
-
+    
     output:
     file("*")
-    tuple file("custom_taxonomy_table_mqc.txt"), file("custom_graph_plot_mqc.html") into (ch_vacontact2_multiqc)
+    file("custom_taxonomy_table_mqc.txt") into ch_vcontact2_taxonomytable
+    file("custom_graph_plot_mqc.html") into ch_vcontact2_multiqc
 
     script:
     path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
@@ -819,12 +813,73 @@ process vcontact2_extender {
     """
 }
 
-/* STEP 9 - report generation */
-process multiqc {
-    conda "bioconda::multiqc==1.9=py_1 conda-forge::python==3.9.0"
+/* STEP 9 - statistics and report generation */
 
+process error_barplots {
     tag "all"
-    publishDir "${params.outdir}/report/", mode: 'copy'
+    publishDir "${params.outdir}/report/plots", mode: 'copy', overwrite: true
+
+    when:
+    !params.skip_report && !params.skip_error_barplots
+
+    input:
+    file(variance_table) from ch_covtocounts2_barplots
+
+    output: 
+    file("*")
+    file("error_barplots.html") into ch_errorbarplots_multiqc
+
+    script:
+    """
+    Rscript $workflow.projectDir/bin/Rscript/error_barplots.R ${variance_table}
+    """
+}
+
+process taxonomy_table {
+    tag "all"
+    publishDir "${params.outdir}/report/plots", mode: 'copy', overwrite: true
+
+    when:
+    !params.skip_report && !params.skip_taxonomy_table
+
+    input:
+    file(taxonomy_table_vcontact2) from ch_vcontact2_taxonomytable
+
+    output: 
+    file("*")
+    file("taxonomy_table_mqc.html") into ch_taxonomytable_multiqc
+
+    script:
+    """
+    Rscript $workflow.projectDir/bin/Rscript/taxonomy_table.R ${taxonomy_table_vcontact2}
+    """
+}
+
+// process taxonomy_table_debug {
+//     tag "all"
+//     publishDir "${params.outdir}/report/plots", mode: 'copy', overwrite: true
+
+//     when:
+//     !params.skip_report && !params.skip_taxonomy_table
+
+//     input:
+//     file(taxonomy_table_vcontact2) from Channel.fromPath("${params.taxoTable}", checkIfExists: true)
+
+//      output: 
+//      file("*")
+//      file("taxonomy_table_mqc.html") into ch_taxonomytable_multiqc
+
+//     script:
+//     """
+//     Rscript $workflow.projectDir/bin/Rscript/taxonomy_table.R ${taxonomy_table_vcontact2}
+//     """
+// }
+
+/* STEP 10 summary report */
+
+process multiqc {
+    tag "all"
+    publishDir "${params.outdir}/report/", mode: 'copy', overwrite: true 
 
     when:
     !params.skip_report
@@ -832,8 +887,10 @@ process multiqc {
     input:
     file(fastp) from ch_fastp_multiqc.collect().ifEmpty([])
     file(metaquast) from ch_metaquast_multiqc.collect().ifEmpty([])
-    tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc
-    tuple file(custom_taxonomy_table), file(custom_graph_plot) from ch_vacontact2_multiqc
+    tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc.collect().ifEmpty([])
+    file(error_barplot) from ch_errorbarplots_multiqc.collect().ifEmpty([])
+    file(taxonomy_table) from ch_taxonomytable_multiqc.collect().ifEmpty([])
+    file(graph_plot) from ch_vcontact2_multiqc.collect().ifEmpty([])
 
     output:
     file("*")
@@ -841,9 +898,11 @@ process multiqc {
     script:
     """
     multiqc \
-    --config $workflow.projectDir/bin/multiqc_config.yaml \
-    --filename "MultiPhate_report.html" \
-    --exclude general_stats \
-    . ${custom_count_plot} ${custom_count_table} ${custom_taxonomy_table} ${custom_graph_plot}
+    --config $workflow.projectDir/bin/multiqc/multiqc_config.yaml \
+    --filename "MetaPhage_report.html" \
+    --exclude general_stats $workflow.projectDir/bin/multiqc/. -f \
+    . ${error_barplot} ${custom_count_plot} ${custom_count_table} ${taxonomy_table} #${graph_plot}
+    $workflow.projectDir/bin/multiqc/remove_footer.py \
+    MetaPhage_report.html MetaPhage_report.html
     """
 }
