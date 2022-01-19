@@ -299,5 +299,5 @@ Specify the name of the variable (metadata column) to use for the violin plot cl
 This pipeline consists of several modules. The image below summarizes them all.
 
 <p align="center">
-  <img src="./figures/metaphage.svg">
+  <img src="./figures/metaphage.drawio.svg">
 </p>
