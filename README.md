@@ -1,5 +1,14 @@
 This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage can be run on Linux or MacOS.
 
+# Structure
+
+This pipeline consists of several modules. The image below summarizes them all.
+
+<p align="center">
+  <img src="./figures/metaphage.drawio.svg">
+</p>
+
+
 # Installation
 
 ## With Conda
@@ -293,11 +302,3 @@ Specify the name of the variable (metadata column) to use for the violin plot cl
 ### `--skip_report`
 
 (Boolean) Specify whether to skip the report step (Multiqc report) or not. Default is `false`.
-
-# Structure
-
-This pipeline consists of several modules. The image below summarizes them all.
-
-<p align="center">
-  <img src="./figures/metaphage.svg">
-</p>
