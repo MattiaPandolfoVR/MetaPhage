@@ -1,0 +1,16 @@
+id: 'alphadiversity_plots'
+section_name: 'Alpha Diversity Plots'
+description: 'Links to the alpha diversity plots. The link will open the relative plot directly on the browser'
+plot_type: 'table'
+pconfig:
+    id: 'interactive_links'
+    title: 'Interactive'
+    scale: false
+    col1_header: 'Metric'
+data:
+    ObsChaSCh:
+        Link: '<a href="./plots/alpha_div/alpha_div_Observed_Chao1_se.Chao1.html"> Alpha_OCS </a>'
+    AceSAcSha:
+        Link: '<a href="./plots/alpha_div/alpha_div_ACE_se.ACE_Shannon.html"> Alpha_AAS </a>'
+    SimISiFis:
+        Link: '<a href="./plots/alpha_div/alpha_div_Simpson_InvSimpson_Fisher.html"> Alpha_SIF </a>'

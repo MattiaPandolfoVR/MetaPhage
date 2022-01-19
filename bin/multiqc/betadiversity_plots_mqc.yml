@@ -1,0 +1,18 @@
+id: 'betadiversity_plots'
+section_name: 'Beta Diversity Plots'
+description: 'Links to the beta diversity plots. The link will open the relative plot directly on the browser'
+plot_type: 'table'
+pconfig:
+    id: 'interactive_links'
+    title: 'Interactive'
+    scale: false
+    col1_header: 'Metric'
+data:
+    Bray_2D:
+        Link: '<a href="./plots/beta_div/beta2D_bray.html"> Bray_2D </a>'
+    Bray_3D:
+        Link: '<a href="./plots/beta_div/beta3D_bray.html"> Bray_3D </a>'
+    Jaccard_2D:
+        Link: '<a href="./plots/beta_div/beta2D_jaccard.html"> Jaccard_2D </a>'
+    Jaccard_3D:
+        Link: '<a href="./plots/beta_div/beta3D_jaccard.html"> Jaccard_3D </a>'

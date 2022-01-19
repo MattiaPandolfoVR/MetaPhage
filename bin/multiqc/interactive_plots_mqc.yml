@@ -1,0 +1,14 @@
+id: 'interactive_plots'
+section_name: 'Interactive Plots'
+description: 'Links to the analysis plots. The link will open the relative plot directly on the browser'
+plot_type: 'table'
+pconfig:
+    id: 'interactive_links'
+    title: 'Interactive'
+    scale: false
+    col1_header: 'Graph'
+data:
+    Heatmap:
+        Link: '<a href="./plots/heatmap.html"> Heatmap </a>'
+    Violin:
+        Link: '<a href="./plots/violin_plot_richness.html"> Violin </a>'

@@ -1,0 +1,58 @@
+title: "MetaPhage report"
+subtitle: "MetaPhage: a nextflow pipeline for phage discovery."
+intro_text: False
+report_comment: False
+custom_logo: './metaphage_logo.png'
+show_analysis_paths: False
+simple_output: true
+
+report_header_info:
+  - Contact E-mail: "mattia.pandolfo@unipd.it"
+  - Application Type: "Metagenomics"
+  - Project Type: "Bacteriophage Mining"
+
+custom_data:
+  my_custom_content_image:
+    id: "miner_comparison"
+    section_name: "Miner Comparison"
+    description: "vOTUs prediction per miner, performed on consensus sequences (i.e. after dereplication)."
+  my_vOTUs_summary:
+    id: "vOTUs"
+    section_name: "Summary Table"
+    description: "vOTUs general statistics. Each violin plots shows the vOTUs abundances per sample."
+  my_taxonomy_table:
+    id: "taxonomy_table"
+    section_name: "Taxonomy Table"
+    description: "Custom vOTUs taxonomy generated over vConTACT outputs."
+  my_kraken_files:
+    id: "kraken_files"
+    section_name: "Kraken2 and Krona files"
+    description: "Links to the Kraken2 and Krona reports in your local folder."
+sp:
+  my_custom_content_image:
+    fn: "miner_comparison_mqc.png"
+ignore_images: false
+
+report_section_order:
+  miner_comparison:
+      order: 11
+  vOTUs:
+      order: 10
+  taxonomy_table:
+      order: 9
+  interactive_plots:
+      order: 8
+  alphadiversity_plots:
+      order: 7
+  betadiversity_plots:
+      order: 6
+  interesting_files:
+      order: 5
+  fastp:
+      order: 4
+  kraken:
+      order: 3
+  kraken_files:
+      order: 2
+  quast:
+      order: 1

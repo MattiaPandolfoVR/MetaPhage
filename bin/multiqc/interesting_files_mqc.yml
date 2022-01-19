@@ -1,0 +1,24 @@
+id: 'interesting_files'
+section_name: 'Interesting Files'
+description: 'List of links to the analysis interesting files. The link will open the relative file directly on the browser.'
+plot_type: 'table'
+pconfig:
+    id: 'file_links'
+    title: 'Files'
+    scale: false
+    col1_header: 'File'
+data:
+    Count_Table:
+        Link: '<a href="./tables/count_table.csv"> Count_Table </a>'
+    Taxonomy_Table:
+        Link: '<a href="./tables/taxonomy_table.csv"> Taxonomy_Table </a>'
+    Philoseq_obj:
+        Link: '<a href="./tables/phyloseq.rds"> Phyloseq </a>'
+    Philoseq_css_norm_obj:
+        Link: '<a href="./tables/phyloseq_css_norm.rds"> Phyloseq_css_norm </a>'
+    vOTUs_multifasta:
+        Link: '<a href="../cd-hit/megahit_vOTUs_consensus.fasta"> vOTUs_multifasta </a>'
+    vOTUs_proteins:
+        Link: '<a href="../prodigal/megahit_vOTUs_proteins.faa"> vOTUs_proteins </a>'
+    vOTUs_gff:
+        Link: '<a href="../prodigal/megahit_vOTUs_coords.gff"> vOTUs_gff </a>'

@@ -1,96 +1,6 @@
-/* CONFIGURATION VARIABLES */
-params.db_manager_reports = false
-
-// Trimming 
-params.skip_qtrimming = false
-params.adapter_forward = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
-params.adapter_reverse = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
-params.mean_quality = 15
-params.trimming_quality = 15
-params.keep_phix = false
-params.mod_phix = "phiX174" 
-params.file_phix_alone = "-" 
-
-// microbial taxonomy
-params.skip_bacterial_taxo = false
-params.skip_kraken2 = false 
-params.mod_kraken2 = "miniBAV"
-params.file_kraken2_db = "-"
-params.skip_bracken = false 
-params.bracken_read_length = 100
-params.bracken_abundance_level = "S"                                                                                                                                    
-
-// Assembly (default is metaspades)
-params.multiple_alliners = false
-params.skip_metaspades = false
-params.skip_megahit = true // add a control to chose which assembler and deactivate the other (two_flag = params.one && params.two ? false : params.two)
-params.skip_metaquast = false
-
-// Phage-mining
-params.skip_mining = false
-params.skip_vibrant = false
-params.mod_vibrant = "legacy"
-params.file_vibrant_db = "-"
-params.skip_phigaro = false
-params.mod_phigaro = "standard"
-params.file_phigaro_config = "-"
-params.skip_virsorter = false
-params.mod_virsorter = "legacy"
-params.file_virsorter_db = "-"
-params.virsorter_viromes = false
-params.skip_virfinder = false                                          
-
-// Dereplication
-params.skip_dereplication = false
-params.minlen = 1000
-
-// Viral Taxonomy - vContact2
-params.skip_viral_taxo = false
-params.skip_vcontact2 = false // true while debugging the pipeline
-params.mod_vcontact2 = "Jan2021"
-params.file_vcontact2_db = "-"
-
-// Report
-params.skip_error_barplots = false
-//params.beta_diversity = true
-//params.miner_comparison = true
-params.skip_taxonomy_table = false
-//params.heatmap = true
-params.skip_report = false
-
-  
-/* FILE INPUT */
-
-if (params.readPaths) {         // declared in profile config
-    if (params.singleEnd) {     // declared in profile config
-        Channel.fromPath("${params.readPaths}/*_single.fastq.gz", checkIfExists: true)
-            .map { file -> tuple(file.simpleName, file) }
-            .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .set { ch_reads_fastp } 
-    } else {
-        Channel.fromFilePairs("${params.readPaths}/*{R1,R2}*.fastq.gz", checkIfExists: true)
-            .ifEmpty { exit 1, "No input files supplied! Please check params.readPaths in your config file!" }
-            .set { ch_reads_fastp }
-    }
-} else
-    error "No input files supplied! Please check params.readPaths in your config file!"
-
-/* METADATA */
-
-if (params.metadata) {
-        Channel.fromPath("${params.metadata}/*_metadata.csv", checkIfExists: true)
-            println "found metadata!"
-            //.set { ch_metadata_betadiverity, ch_metadata_heatmap }
-    } else {
-        println "No metadata supplied! Metadata are mandatory for beta diversity and heatmaps plots!"
-        println "If you are interested in these plots, simply provide a metadata .csv file using params.metadata in your config file!"
-        println "For more informations, check the metadata paragraph on the wiki at _______________"     //provide wiki url
-        params.betadiversity = false
-        params.heatmap = false
-}
-
-/* PROCESSES */
-
+// Default command to launch is:
+//                              nextflow run main.nf -profile [load_profile],[dataset_profile]
+//                              where [load_profile] is the profile for your machine and [dataset_profile] the one for your datasets paths and variables!
 def welcomeScreen() {
     println """
         ====================================================
@@ -108,37 +18,91 @@ def welcomeScreen() {
 def cursystem = System.properties['os.name']
 welcomeScreen()
 
-/* STEP 0 - check presence and download required files */
-process db_manager {
-    if (params.db_manager_reports) { echo true }
+/* INPUT FILES */
 
-    tag "Downloading missing databases..."
+// Sequences
+if (params.readPath) {
+    if (params.singleEnd) {
+        Channel.fromPath("${params.readPath}/*_single.fastq.gz", checkIfExists: true)
+            .map { file -> tuple(file.simpleName, file) }
+            .ifEmpty { exit 1, "No input files supplied! Please check params.readPath in your config file!" }
+            .set { ch_reads_fastp } 
+    } else {
+        Channel.fromFilePairs("${params.readPath}/*{_1,_2}*.fastq.gz", checkIfExists: true)
+            .ifEmpty { exit 1, "No input files supplied! Please check params.readPath in your config file!" }
+            .set { ch_reads_fastp }
+    }
+} else
+    error "No input files supplied! Please check the env variable readPath in your config file!"
+
+// Metadata
+if (params.metadata == true) {
+    Channel.fromPath("${params.metaPath}/*metadata.csv", checkIfExists: true)
+        .ifEmpty { exit 1, "No metadata file found! Please check params.metadata in your config file!"}
+        .into { ch_metadata_checker }
+    println "found metadata!"
+} else {
+    println "No metadata supplied! Metadata are mandatory for beta diversity and heatmaps plots!"
+    println "If you are interested in these plots, simply provide a metadata .csv file using params.metadata in your config file!"
+    println "For more informations, check the metadata paragraph on the wiki at https://github.com/MattiaPandolfoVR/MetaPhage#input_files"
+    params.skip_report = true
+    ch_metadata_summary = Channel.empty()
+    params.skip_taxonomy_table = true
+    ch_metadata_taxonomy = Channel.empty()
+    params.skip_alpha_diversity = true
+    ch_metadata_alphadiversity = Channel.empty()
+    params.skip_beta_diversity = true
+    ch_metadata_betadiversity = Channel.empty()
+    params.skip_heatmap = true
+    ch_metadata_heatmap = Channel.empty()
+    params.skip_violin_plots = true
+    ch_metadata_violin = Channel.empty()
+}
+
+/* STEP 0 - check metadata and db presence and download required files */
+
+process csv_validator {
+    tag "$code"
+    label 'min_res'
+
+    input:
+    val code from 'Checking metadata format...'
+    path(metadata) from ch_metadata_checker
 
     output:
-    file("file_phix_alone") into (ch_file_phix_alone)
-    file("file_kraken2_db") into (ch_file_kraken2_db, ch_file_bracken_db)
-    file("file_vibrant_db") into (ch_file_vibrant_db)
-    file("file_phigaro_config") into (ch_file_phigaro_config)
-    file("file_virsorter_db") into (ch_file_virsorter_db)
-    file("file_vcontact2_db") into (ch_file_vcontact2_db, ch_file_extender_db)
+    path("metadata.csv") into (ch_metadata_summary, ch_metadata_taxonomy, ch_metadata_alphadiversity, ch_metadata_betadiversity, ch_metadata_heatmap, ch_metadata_violin)
 
     script:
     """
-    python $workflow.projectDir/bin/db_manager.py \
-    --mod_phix ${params.mod_phix} --keep_phix ${params.keep_phix} --file_phix_alone ${params.file_phix_alone} \
-    --mod_kraken2 ${params.mod_kraken2} --skip_kraken2 ${params.skip_kraken2} --file_kraken2_db ${params.file_kraken2_db} \
-    --mod_vibrant ${params.mod_vibrant} --skip_vibrant ${params.skip_vibrant} --file_vibrant_db ${params.file_vibrant_db} \
-    --mod_phigaro ${params.mod_phigaro} --skip_phigaro ${params.skip_phigaro} --file_phigaro_config ${params.file_phigaro_config} \
-    --mod_virsorter ${params.mod_virsorter} --skip_virsorter ${params.skip_virsorter} --file_virsorter_db ${params.file_virsorter_db} \
-    --mod_vcontact2 ${params.mod_vcontact2} --skip_vcontact2 ${params.skip_vcontact2} --file_vcontact2_db ${params.file_vcontact2_db}
+    mv ${metadata} metadata_to_check.csv
+    python3 $baseDir/bin/python/csv_checker.py
+    """
+}
+
+process db_manager {
+    tag "$code"
+    label 'big_res'
+
+    input:
+    val code from 'Downloading missing databases...'
+
+    output:
+    path("db_path.csv") into (ch_dbm_phix, ch_dbm_kraken2, ch_dbm_vibrant, ch_dbm_virsorter, ch_dbm_vcontact2)
+
+    script:
+    """
+    python3 $baseDir/bin/python/db_manager.py \
+    -o ${params.dbPath} \
+    -m ${task.cpus}
     """
 }
 
 /* STEP 1 - quality check and trimming */
+
 process fastp {
     tag "$seqID"
-    publishDir "${params.outdir}/fastp_qc/", mode: 'copy',
-        saveAs: {filename -> filename.endsWith(".html") ? "$filename" : null}
+    label 'med_res'
+    publishDir "${params.outdir}/fastp_qc/${seqID}", mode: 'copy', pattern: "*.html"
 
     when:
     !params.skip_qtrimming
@@ -149,10 +113,10 @@ process fastp {
     output:
     tuple val(seqID), file("*_trimmed.fastq*") into (ch_fastp_phix)
     file("${seqID}_qc_report.html")
-    file("${seqID}_fastp.json") into (ch_fastp_multiqc)
+    file("${seqID}_fastp.json") into ch_fastp_multiqc
 
     script: 
-    def ext = params.keep_phix ? ".gz" : "" // hts_SeqScreener accepts only .fastq (NOT .fastq.gz)
+    def ext = params.keep_phix ? ".gz" : ""
     def inp = params.singleEnd ? "-i ${reads[0]}" : "-i ${reads[0]} -I ${reads[1]}"
     def out = params.singleEnd ? "-o ${seqID}_trimmed.fastq${ext}" : "-o ${seqID}_R1_trimmed.fastq${ext} -O ${seqID}_R2_trimmed.fastq${ext}"
     """
@@ -172,162 +136,112 @@ process fastp {
 }
 
 if(!params.keep_phix) {
+
+    ch_phix = ch_dbm_phix.splitCsv().flatMap { it -> "${it[0]}" + "/${params.mod_phix}.fasta" }
+    
     process remove_phix {
         tag "$seqID"
+        label 'low_res'
 
         when:
         !params.skip_qtrimming
 
         input:
-        file file_phix_alone from ch_file_phix_alone
+        each file_phix_alone from ch_phix
         tuple val(seqID), file(reads) from ch_fastp_phix
-
+        
         output:
-        tuple val(seqID), file("*.fastq.gz") into (ch_trimm_kraken2, ch_trimm_metaspades, ch_trimm_megahit, ch_trimm_mapping, ch_trimm_derep)
+        tuple val(seqID), file("*.gz") into (ch_trimm_kraken2, ch_trimm_derep)
+        tuple val(seqID), file("*.fastq") into ch_trimm_megahit
 
         script:
-        path_file_phix_alone = file("$workflow.projectDir/bin/.groovy_vars/${file_phix_alone}").text
         def inp = params.singleEnd ? "-U ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
         def check = params.singleEnd ? "" : "--check-read-2"
         """
         hts_SeqScreener \
         $inp \
-        --seq $workflow.projectDir/${path_file_phix_alone} \
+        --seq ${file_phix_alone} \
         $check \
         --fastq-output ${seqID}_dephixed \
         --force
+	    cp ${seqID}_dephixed_R1.fastq.gz ${seqID}_2_dephixed_R1.fastq.gz
+	    cp ${seqID}_dephixed_R2.fastq.gz ${seqID}_2_dephixed_R2.fastq.gz
+	    gzip -d ${seqID}_2_dephixed_R1.fastq.gz > ${seqID}_dephixed_R1.fastq
+	    gzip -d ${seqID}_2_dephixed_R2.fastq.gz > ${seqID}_dephixed_R2.fastq
         """
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_kraken2; ch_trimm_metaspades; ch_trimm_megahit; ch_trimm_mapping; ch_trimm_derep}
+    ch_fastp_phix.into {ch_trimm_megahit; ch_trimm_derep}
 }
 
 /* STEP 2 - taxonomy classification */
+
+ch_kraken2 = ch_dbm_kraken2.splitCsv().flatMap { it -> "${it[1]}" + "/${params.mod_kraken2}/" }
+
 process kraken2 {
     tag "$seqID"
-    publishDir "${params.outdir}/taxonomy/kraken2/", mode: 'copy'
+    label 'big_res'
+    publishDir "${params.outdir}/taxonomy/kraken2/${seqID}", mode: 'copy'
 
     when:
     !params.skip_bacterial_taxo && !params.skip_kraken2
 
     input:
-    file file_kraken2_db from ch_file_kraken2_db
+    each file_kraken2_db from ch_kraken2
     tuple val(seqID), file(reads) from ch_trimm_kraken2
 
     output:
     file("${seqID}_output.txt")
-    tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_bracken)
-    tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_krona)
+    tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_krona, ch_kraken2_multiqc)
 
     script:
-    path_file_kraken2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_kraken2_db}").text
     def inp = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
     println "running"
     """
     kraken2 \
     --report-zero-counts \
     --threads ${task.cpus} \
-    --db $workflow.projectDir/${path_file_kraken2_db} \
+    --db ${file_kraken2_db} \
     --output ${seqID}_output.txt \
     --report ${seqID}_report.txt \
     $inp
     """
 }
 
-process bracken {
-    tag "$seqID"
-    publishDir "${params.outdir}/taxonomy/bracken/", mode: 'copy'
-
-    when:
-    !params.skip_bacterial_taxo && (!params.skip_kraken2 && !params.skip_bracken)
-
-    input:
-    file file_bracken_db from ch_file_bracken_db
-    tuple val(seqID), file(report_kraken2) from ch_kraken2_bracken
-
-    output:
-    file("${seqID}_abundancies.txt")
-    tuple val(seqID), file("${seqID}_report_bracken_species.txt") into (ch_bracken_krona)
-
-    script:
-    path_file_bracken_db = file("$workflow.projectDir/bin/.groovy_vars/${file_bracken_db}").text
-    """
-    bracken \
-    -d $workflow.projectDir/${path_file_bracken_db} \
-    -i ${report_kraken2} \
-    -o ${seqID}_abundancies.txt \
-    -r ${params.bracken_read_length} \
-    -l ${params.bracken_abundance_level} 
-    """
-}
-
 process krona {
+    cache 'lenient'
     tag "$seqID"
-    publishDir "${params.outdir}/taxonomy/krona/", mode: 'copy'
+    label 'big_res'
+    publishDir "${params.outdir}/taxonomy/krona/${seqID}", mode: 'copy'
 
     when:
-    !params.skip_bacterial_taxo && !params.skip_kraken2
+    !params.skip_bacterial_taxo && !params.skip_kraken2 && !params.skip_krona
 
     input:
-    tuple val(seqID), file(report) from Channel.empty().mix(ch_kraken2_krona, ch_bracken_krona)
+    tuple val(seqID), file(report) from ch_kraken2_krona
 
     output:
     file("${seqID}_*_krona_abundancies.html")
 
     script:
-    if (params.skip_bracken == true && params.skip_kraken2 == false)
-        """
-        echo "bracken was not run, using kracken2 output to generate krona report!"
-        python $workflow.projectDir/bin/kreport2krona.py \
-        --report-file ${report} \
-        --output to_krona.txt 
-        ktImportText \
-        to_krona.txt \
-        -o ${seqID}_krak_krona_abundancies.html
-        """
-    else
-        """
-        python $workflow.projectDir/bin/kreport2krona.py \
-        --report-file ${report} \
-        --output to_krona.txt 
-        ktImportText \
-        to_krona.txt \
-        -o ${seqID}_brack_krona_abundancies.html
-        """
-}
+    """
+    echo "bracken was not run, using kracken2 output to generate krona report!"
+    python $baseDir/bin/python/kreport2krona.py \
+    --report-file ${report} \
+    --output to_krona.txt 
+    ktImportText \
+    to_krona.txt \
+    -o ${seqID}_krak_krona_abundancies.html
+    """
+    }
 
 /* STEP 3 - assembly */
-process metaspades {
-    tag "$seqID"
-    publishDir "${params.outdir}/assembly/metaspades/${seqID}", mode: 'copy'
-    
-    when:
-    !params.singleEnd && !params.skip_metaspades
-
-    input:
-    tuple val(seqID), file(reads) from ch_trimm_metaspades
-
-    output:
-    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_scaffolds.fasta") into (ch_metaspades_quast, ch_metaspades_mapping, ch_metaspades_vibrant, ch_metaspades_phigaro, ch_metaspades_virsorter, ch_metaspades_virfinder, ch_metaspades_virfinderproc)
-    tuple val(seqID), val("metaspades"), file("${seqID}_metaspades_contigs.fasta")
-
-    script:
-    def inp = params.singleEnd ? "" : "--pe1-1 ${reads[0]} --pe1-2 ${reads[1]}"
-    """    
-    spades.py \
-    --meta \
-    --threads ${task.cpus} \
-    --memory ${task.memory.toGiga()} \
-    $inp \
-    -o ./
-    mv scaffolds.fasta ${seqID}_metaspades_scaffolds.fasta
-    mv contigs.fasta ${seqID}_metaspades_contigs.fasta
-    """
-}
 
 process megahit {
+    cache 'lenient'
     tag "$seqID"
+    label 'big_res'
     publishDir "${params.outdir}/assembly/megahit/${seqID}", mode: 'copy'
 
     when:
@@ -337,7 +251,8 @@ process megahit {
     tuple val(seqID), file(reads) from ch_trimm_megahit
 
     output:
-    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro, ch_megahit_virsorter, ch_megahit_virfinder, ch_megahit_virfinderproc)
+    tuple val(seqID), val("megahit"), file("${seqID}_megahit_contigs.fasta") into (ch_megahit_quast, ch_megahit_vibrant, ch_megahit_phigaro,
+     ch_megahit_virsorter, ch_megahit_virfinder)
     
     script:
     def inp = params.singleEnd ? "--read ${reads[0]}" : "-1 ${reads[0]} -2 ${reads[1]}"
@@ -353,17 +268,20 @@ process megahit {
 }
 
 process metaquast {
+    cache 'lenient'
     tag "$assembler-$seqID"
+    label 'med_res'
     publishDir "${params.outdir}/assembly/${assembler}/metaquast", mode: 'copy'
 
     when:
-    (!params.skip_metaspades && !params.skip_megahit) || !params.skip_metaquast 
+    !params.skip_megahit || !params.skip_metaquast 
 
     input:
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_quast, ch_megahit_quast)
+    tuple val(seqID), val(assembler), file(scaffold) from ch_megahit_quast
 
     output:
-    file("${seqID}") into (ch_metaquast_multiqc) // here ${seqID} is a folder 
+    file("*")
+    file("${seqID}") into ch_metaquast_multiqc
 
     script:
     """
@@ -377,74 +295,74 @@ process metaquast {
     """
 }
 
-/* STEP 6 - phage mining */
+/* STEP 4 - phage mining */
 
-process vibrant_legacy {
+ch_vibrant = ch_dbm_vibrant.splitCsv().flatMap { it -> "${it[2]}" + "/${params.mod_vibrant}/" }
+
+process vibrant {
+    cache 'lenient'
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy', overwrite: true
+    label 'big_res'
+    publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
     when:
     !params.skip_mining && !params.skip_vibrant
 
     input:
-    file file_vibrant_db from ch_file_vibrant_db
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_vibrant, ch_megahit_vibrant)
+    each file_vibrant_db from ch_vibrant
+    tuple val(seqID), val(assembler), file(scaffold) from ch_megahit_vibrant
 
     output:
     file("*")
-    tuple val(seqID), val(assembler), val("vibrant"), file("**/*.phages_combined.fna") into (ch_vibrant_cdhit)
+    tuple val(seqID), val(assembler), val("vibrant"), file("${seqID}_vibrant/VIBRANT_phages_${seqID}_megahit_contigs/${seqID}_correct_vibrant.fna") into ch_vibrant_cdhit optional true
 
     script:
-    path_file_vibrant_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vibrant_db}").text
-    if (params.mod_vibrant == "legacy")
+    if(!params.virome_dataset)
         """
         VIBRANT_run.py \
         -t ${task.cpus} \
         -i ${scaffold} \
-        -k $workflow.projectDir/${path_file_vibrant_db}KEGG_profiles_prokaryotes.HMM \
-        -p $workflow.projectDir/${path_file_vibrant_db}Pfam-A_v32.HMM \
-        -v $workflow.projectDir/${path_file_vibrant_db}VOGDB94_phage.HMM \
-        -e $workflow.projectDir/${path_file_vibrant_db}Pfam-A_plasmid_v32.HMM \
-        -a $workflow.projectDir/${path_file_vibrant_db}Pfam-A_phage_v32.HMM \
-        -c $workflow.projectDir/${path_file_vibrant_db}VIBRANT_categories.tsv \
-        -n $workflow.projectDir/${path_file_vibrant_db}VIBRANT_names.tsv \
-        -s $workflow.projectDir/${path_file_vibrant_db}VIBRANT_KEGG_pathways_summary.tsv \
-        -m $workflow.projectDir/${path_file_vibrant_db}VIBRANT_machine_model.sav \
-        -g $workflow.projectDir/${path_file_vibrant_db}VIBRANT_AMGs.tsv
+        -d ${file_vibrant_db} \
+        -m ${file_vibrant_db}
         mv VIBRANT_*/ ${seqID}_vibrant/
+        sed 's/^>/>vibrant_/' ${seqID}_vibrant/VIBRANT_phages_${seqID}_megahit_contigs/${seqID}_megahit_contigs.phages_combined.fna >\
+         ${seqID}_vibrant/VIBRANT_phages_${seqID}_megahit_contigs/${seqID}_correct_vibrant.fna
         rm -f temp*
         """
-    else 
+    else
         """
         VIBRANT_run.py \
         -t ${task.cpus} \
         -i ${scaffold} \
-        -d $workflow.projectDir/${path_file_vibrant_db}databases/ \
-        -m $workflow.projectDir/${path_file_vibrant_db}files/
+        -d ${file_vibrant_db} \
+        -m ${file_vibrant_db} \
+        -virome
         mv VIBRANT_*/ ${seqID}_vibrant/
+        sed 's/^>/>vibrant_/' ${seqID}_vibrant/VIBRANT_phages_${seqID}_megahit_contigs/${seqID}_megahit_contigs.phages_combined.fna >\
+         ${seqID}_vibrant/VIBRANT_phages_${seqID}_megahit_contigs/${seqID}_correct_vibrant.fna
         rm -f temp*
         """
 }
 
 process phigaro {
+    errorStrategy 'ignore'
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy', overwrite: true
+    label 'big_res'
+    publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy', pattern: "${seqID}_phigaro"
 
     when:
     !params.skip_mining && !params.skip_phigaro
 
     input:
-    file file_phigaro_config from ch_file_phigaro_config // this acts just like a timer
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_phigaro, ch_megahit_phigaro)
+    tuple val(seqID), val(assembler), file(scaffold) from ch_megahit_phigaro
 
     output:
     file("*")
-    tuple val(seqID), val(assembler), val("phigaro"), file("**/*.phigaro.fasta") into (ch_phigaro_cdhit)
+    tuple val(seqID), val(assembler), val("phigaro"), file("${seqID}_phigaro/${seqID}_correct_phigaro.fasta") into ch_phigaro_cdhit optional true
 
     script:
-    path_file_phigaro_config = file("$workflow.projectDir/bin/.groovy_vars/${file_phigaro_config}").text
     """
-    python $workflow.projectDir/bin/phigaro_config_creator.py
+    python $baseDir/bin/python/phigaro_config_creator.py ${params.dbPath}
     printf 'Y\n' | phigaro \
     --threads ${task.cpus} \
     --fasta-file ${scaffold} \
@@ -454,28 +372,39 @@ process phigaro {
     --not-open \
     --save-fasta \
     --mode basic
+    # Add a control for unexistent phigaro files
+    if [ ! -e ${seqID}_phigaro/*.phigaro.fasta ]; then
+        mkdir -p ${seqID}_phigaro && touch ${seqID}_phigaro/${seqID}_megahit_contigs.phigaro.fasta
+    fi
+    # add miner flag at each fasta header
+    sed 's/^>/>phigaro_/' ${seqID}_phigaro/${seqID}_megahit_contigs.phigaro.fasta > ${seqID}_phigaro/${seqID}_correct_tmp_phigaro.fasta
+    sed 's/_prophage/ prophage/' ${seqID}_phigaro/${seqID}_correct_tmp_phigaro.fasta > ${seqID}_phigaro/${seqID}_correct_phigaro.fasta
+    rm ${seqID}_phigaro/${seqID}_correct_tmp_phigaro.fasta
     """
-}    
+}
 
-process virsorter_legacy {
+ch_virsorter = ch_dbm_virsorter.splitCsv().flatMap { it -> "${it[3]}" + "/${params.mod_virsorter}/" }
+
+process virsorter {
+    cache 'lenient'
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy', overwrite: true
+    label 'big_res'
+    publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
 
     when:
     !params.skip_mining && !params.skip_virsorter
 
     input:
-    file file_virsorter_db from ch_file_virsorter_db 
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virsorter, ch_megahit_virsorter)
+    each file_virsorter_db from ch_virsorter
+    tuple val(seqID), val(assembler), file(scaffold) from ch_megahit_virsorter
 
     output:
     file("*")
-    tuple val(seqID), val(assembler), val("1virsorter"), file("**/${seqID}_VIRSorter_cat-1.fasta") into (ch_1virsorter_cdhit)
-    tuple val(seqID), val(assembler), val("4virsorter"), file("**/${seqID}_VIRSorter_prophages_cat-4.fasta") into (ch_4virsorter_cdhit)
+    tuple val(seqID), val(assembler), val("1virsorter"), file("${seqID}_virsorter/Predicted_viral_sequences/${seqID}_correct_virsorter_cat-1.fasta") into ch_1virsorter_cdhit optional true
+    tuple val(seqID), val(assembler), val("4virsorter"), file("${seqID}_virsorter/Predicted_viral_sequences/${seqID}_correct_virsorter_prophages_cat-4.fasta") into ch_4virsorter_cdhit optional true
 
     script:
-    path_file_virsorter_db = file("$workflow.projectDir/bin/.groovy_vars/${file_virsorter_db}").text
-    def viromes = params.virsorter_viromes ? "2" : "1"
+    def viromes = params.virome_dataset ? "2" : "1"
     if (params.mod_virsorter == "legacy")
         """
         wrapper_phage_contigs_sorter_iPlant.pl \
@@ -483,46 +412,60 @@ process virsorter_legacy {
         --db $viromes \
         --wdir ${seqID}_virsorter \
         --ncpu ${task.cpus} \
-        --data-dir $workflow.projectDir/${path_file_virsorter_db}
+        --data-dir ${file_virsorter_db}
         cd ${seqID}_virsorter/Predicted_viral_sequences/
-        for FILENAME in *; do mv \$FILENAME ${seqID}_\$FILENAME; done
-        mv * ../
-        cd ../
-        rmdir Predicted_viral_sequences/
+        for FILENAME in *;
+        do
+            mv \$FILENAME ${seqID}_\$FILENAME;
+            if [ ! -e ${seqID}_VIRSorter_cat-1.fasta ]; then
+                touch ${seqID}_VIRSorter_cat-1.fasta
+            elif [ ! -e  ${seqID}_VIRSorter_prophages_cat-4.fasta ]; then
+                touch ${seqID}_VIRSorter_prophages_cat-4.fasta
+            else
+                break
+            fi
+        done
+        # add a space after sequenceID in header (before flag)
+        sed 's/_flag=/ flag=/' ${seqID}_VIRSorter_cat-1.fasta > ${seqID}_correct_virsorter_cat-1.fasta;
+        sed 's/_flag=/ flag=/' ${seqID}_VIRSorter_prophages_cat-4.fasta > ${seqID}_correct_virsorter_prophages_cat-4.fasta
         """
     else 
         """
-        echo $workflow.projectDir/${path_file_virsorter_db}
+        echo ${file_virsorter_db}
         """
 }
 
 process virfinder {
+    cache 'lenient'
     tag "$assembler-$seqID"
-    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}_virfinder", mode: 'copy', overwrite: true
+    label 'low_res'
+    publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}_virfinder", mode: 'copy'
 
     when:
     !params.skip_mining && !params.skip_virfinder
 
     input:
-    tuple val(seqID), val(assembler), file(scaffold) from Channel.empty().mix(ch_metaspades_virfinder, ch_megahit_virfinder)
+    tuple val(seqID), val(assembler), file(scaffold) from ch_megahit_virfinder
 
     output:
     file("*")
-    tuple val(seqID), val(assembler), val("virfinder"), file("*_viral_sequences.fasta") into (ch_virfinder_cdhit)
+    tuple val(seqID), val(assembler), val("virfinder"), file("${seqID}_viral_sequences.fasta") into ch_virfinder_cdhit optional true
 
     script:
     """
-    Rscript $workflow.projectDir/bin/Rscript/virfinder_execute.R ${scaffold} ${task.cpus} $workflow.projectDir
+    Rscript $baseDir/bin/Rscript/virfinder_execute.R ${scaffold} ${task.cpus} $baseDir
     mv results.txt ${seqID}_results.txt
     mv viral_sequences.fasta ${seqID}_viral_sequences.fasta
     """
 }
 
-/* STEP 7 - dereplication and reads mapping */
+/* STEP 5 - dereplication and reads mapping */
 
 process cdhit {
+    cache 'lenient'
     tag "$assembler"
-    publishDir "${params.outdir}/CD-HIT/", mode: 'copy', overwrite: true
+    label 'med_res'
+    publishDir "${params.outdir}/cd-hit/", mode: 'copy'
 
     when:
     !params.skip_dereplication
@@ -532,86 +475,83 @@ process cdhit {
 
     output:
     file("*")
-    file("renamed_filtered_derep95_${assembler}.fasta") into (ch_cdhit_bowtie2)
-    tuple val(assembler), file("renamed_filtered_derep95_${assembler}.fasta") into (ch_cdhit_prodigal)
+    tuple val(assembler), file("${assembler}_vOTUs_consensus.fasta") into (ch_cdhit_prodigal, ch_cdhit_bowtie2, ch_cdhit_chopper_c, ch_cdhit_taxonomytable_c, ch_cdhit_summary)
+    tuple val(assembler), file("${assembler}_min_comp.tsv") into (ch_cdhit_mincomp, ch_cdhit_taxonomytable_min)
 
     script:
-    if (params.skip_metaspades == false && params.skip_megahit == false)
-        error "Dereplication works with one assembler at a time!"
-    else
-        """
-        cat ${scaffolds} > concat_${assembler}.fasta
-        cd-hit-est \
-        -T ${task.cpus} \
-        -M ${task.memory.toMega()} \
-        -i concat_${assembler}.fasta \
-        -o derep95_${assembler}.fasta \
-        -c 0.95 \
-        -aS 0.85 \
-        -n 9 \
-        -d 0 \
-        -p 1 \
-        -g 1
-        seqkit seq \
-        --min-len ${params.minlen} \
-        --out-file filtered_derep95_${assembler}.fasta \
-        derep95_${assembler}.fasta
-        python << END
-        from Bio import SeqIO
-        from Bio.SeqRecord import SeqRecord
-        corresp = open('corresp.txt', 'w')
-        renamed = []
-        counter = 1
-        for seqrec in SeqIO.parse('filtered_derep95_${assembler}.fasta', 'fasta'):
-            newid = 'VCS_' + str(counter) + '_length_' + str(len(seqrec))
-            corresp.write(seqrec.id + ' '+seqrec.description +'\\n' + newid + '\\n\\n')
-            renamed.append(SeqRecord(seqrec.seq, id=newid, description=''))
-            counter += 1
-        SeqIO.write(renamed, 'renamed_filtered_derep95_${assembler}.fasta', 'fasta')
-        corresp.close()
-        END
-        """
+    """
+    # append all the mined viral scaffolds
+    cat ${scaffolds} > concat_${assembler}.fasta
+    # set viral scaffolds reads header to be unique
+    seqkit rename concat_${assembler}.fasta > concat_unique_${assembler}.fasta
+    # CD-HIT-EST
+    cd-hit-est \
+    -T ${task.cpus} \
+    -M ${task.memory.toMega()} \
+    -i concat_unique_${assembler}.fasta \
+    -o derep95_${assembler}.fasta \
+    -c 0.95 \
+    -aS 0.85 \
+    -n 9 \
+    -d 0 \
+    -p 1 \
+    -t 4 \
+    -g 1
+    # filter dereplicated sequences by length
+    seqkit seq \
+    --min-len ${params.minlen} \
+    --out-file filtered_derep95_${assembler}.fasta \
+    derep95_${assembler}.fasta
+    # obtain which mined viral scaffold collapse in a vOTU
+    python $baseDir/bin/python/miner_comparison.py ${assembler}
+    # sort vOTU file by name
+    seqkit sort --id-regexp ">vOTU_([0-9]+)" vOTU_${assembler}.fasta > ${assembler}_vOTUs_consensus.fasta
+    """
 }
 
-process prodigal { // prokka is better! or even balrog
+process prodigal {
+    cache 'lenient'
     tag "$assembler"
-    publishDir "${params.outdir}/CD-HIT/", mode: 'copy', overwrite: true
+    label 'med_res'
+    publishDir "${params.outdir}/prodigal", mode: 'copy'
 
     when:
     !params.skip_dereplication
 
     input:
-    tuple val(assembler), file(vcs) from ch_cdhit_prodigal
+    tuple val(assembler), file(consensus) from ch_cdhit_prodigal
 
     output:
     file("*")
-    tuple val(assembler), file("derep_prots_${assembler}.faa") into ch_prodigal_diamond
+    tuple val(assembler), file("${assembler}_vOTUs_proteins.faa") into (ch_prodigal_diamond, ch_prodigal_chopper_p, ch_prodigal_taxonomytable_p)
+    tuple val(assembler), file("${assembler}_vOTUs_coords.gff") into (ch_prodigal_chopper_g, ch_prodigal_taxonomytable_g)
 
     script:
     """
     prodigal \
-    -i ${vcs} \
-    -o derep_coords_${assembler}.gff \
-    -a derep_prots_${assembler}.faa \
-    -f gff
+    -i ${consensus} \
+    -o ${assembler}_vOTUs_coords.gff \
+    -a ${assembler}_vOTUs_proteins.faa \
+    -f gff \
+    -p meta
     """
 }
 
 process bowtie2_derep {
-    tag "${seqID}"
-    publishDir "${params.outdir}/bowtie2", mode: 'copy', overwrite: true
+    cache 'lenient'
+    tag "$assembler"
+    label 'med_res'
 
     when:
     !params.skip_dereplication
 
     input:
-    file consensus from ch_cdhit_bowtie2.collect()
+    tuple val(assembler), file(consensus) from ch_cdhit_bowtie2.collect()
     tuple val(seqID), file(reads) from ch_trimm_derep
 
     output:
-    file("*")
-    file("*.sorted.bam") into (ch_bowtie2bam_covtocounts2)
-    file("*.sorted.bam.bai") into (ch_bowtie2bai_covtocounts2)
+    tuple val(assembler), file("${seqID}_${consensus}.sorted.bam") into ch_bowtie2bam_covtocounts2
+    tuple val(assembler), file("${seqID}_${consensus}.sorted.bam.bai") into ch_bowtie2bai_covtocounts2
 
     script:
     """
@@ -641,143 +581,139 @@ process bowtie2_derep {
 }
 
 process covtocounts2 {
-    publishDir "${params.outdir}/bowtie2", mode: 'copy', overwrite: true
+    cache 'lenient'
+    tag "$assembler"
+    label 'low_res'
+    publishDir "${params.outdir}/report/tables", mode: 'copy'
 
     when:
     !params.skip_report
 
     input:
-    file(sortedbam) from ch_bowtie2bam_covtocounts2.collect()
-    file(sortedbambai) from ch_bowtie2bai_covtocounts2.collect()
+    tuple val(assembler), file(sortedbam) from ch_bowtie2bam_covtocounts2.groupTuple()
+    tuple val(assembler), file(sortedbambai) from ch_bowtie2bai_covtocounts2.groupTuple()
 
     output:
-    file("*")
-    tuple file("custom_count_table_mqc.txt"), file("custom_count_plot_mqc.txt") into (ch_covtocounts2_multiqc)
-    file("variance_table.txt") into ch_covtocounts2_barplots
+    file("count_table.csv")
+    file("count_table.csv") into ch_covtocounts2_summary
+    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_betadiversity
+    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_alphadiversity
+    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_heatmap
+    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_violin
 
     script:
     """
     bamcountrefs \
     --threads ${task.cpus} \
     --multiqc \
-    ${sortedbam} > multiqc_model.txt
-    cp multiqc_model.txt variance_table.txt
-    sed -i 1,3d variance_table.txt
-    python $workflow.projectDir/bin/multiqc_model_editor.py
+    ${sortedbam} > count_table_mqc.txt
+    python $baseDir/bin/multiqc/multiqc_model_editor.py ${assembler}
+    cp count_table_mqc.txt count_table.csv 
+    sed -i 1,4d count_table.csv
     """
 }
 
-params.allVSall = "$workflow.projectDir/db/vcontact2/allVSall.csv"
-allVSall = file(params.allVSall)
+/* STEP 6 - viral taxonomy */
 
-/* STEP 8 - viral taxonomy */
+ch_diamond = Channel.fromPath("${params.dbPath}/diamond/${params.mod_vcontact2}/allVSall_${params.mod_vcontact2}.csv")
+ch_vcontact2_db = ch_dbm_vcontact2.splitCsv().flatMap { it -> "${it[4]}" + "/${params.mod_vcontact2}" }
 
 process diamond_vcontact2 {
+    cache 'lenient'
     tag "$assembler"
-    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy', overwrite: true
+    label 'big_res'
+    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy',
+        saveAs: {filename -> filename.startsWith("allVSall_") ? "$filename" : null}
 
     when:
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
     
     input:
-    file file_vcontact2_db from ch_file_vcontact2_db
+    path allVSall from ch_diamond
+    val file_vcontact2_db from ch_vcontact2_db
     tuple val(assembler), file(viral_orfs) from ch_prodigal_diamond
 
     output:
-    file("*")
-    tuple val(assembler), file("allVSall.csv"), file("viral_genomes_g2g.csv") into ch_diamond_vcontact2
+    tuple val(assembler), file("allVSall_${params.mod_vcontact2}_app.csv"), file("viral_genomes_combined.csv") into ch_diamond_vcontact2
 
-    script:
-    path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
-    reference_db_faa = file("$workflow.projectDir/${path_file_vcontact2_db}vConTACT2_proteins.faa")
-    reference_db = file("$workflow.projectDir/db/vcontact2/reference_db.dmnd")
+    script:  
+    reference_db_faa = file("${file_vcontact2_db}/${params.vcontact2_file_head}proteins.faa")
+    gene_to_genome = file("${file_vcontact2_db}/${params.vcontact2_file_head}gene_to_genome.csv")
+    reference_db = file("${file_vcontact2_db}/${params.mod_vcontact2}_reference_db.dmnd")
+
     if(allVSall.exists() == false){
         """
+        # Create the db/vcontact2 directory to store diamond processed files
+        mkdir -p ${params.dbPath}/diamond/${params.mod_vcontact2}/
         # Format reference_db
-        diamond makedb \
-        -p ${task.cpus} \
-        --in ${reference_db_faa} \
-        -d ${reference_db}
+        diamond makedb -p ${task.cpus} --in $reference_db_faa -d $reference_db
         # Align the reference_db against itself to create allVSall
-        diamond blastp \
-        -p ${task.cpus} \
-        --sensitive \
-        -d ${reference_db} \
-        -q ${reference_db_faa} \
-        -o ${allVSall}
+        diamond blastp -p ${task.cpus} --sensitive -d $reference_db -q $reference_db_faa -o $allVSall
         # Format the viral_orf in the correct way
-        $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${viral_orfs}
-        # create gene2genome file
-        $workflow.projectDir/bin/vcontact2_gene2genome.py \
-        -p ${viral_orfs}.simple.faa \
-        -o viral_genomes_g2g.csv \
-        -s 'Prodigal-FAA'
+        $baseDir/bin/python/simplify_faa-ffn_derep.py $viral_orfs
+        # Create gene2genome file
+        $baseDir/bin/python/vcontact2_gene2genome.py -p ${viral_orfs}.simple.faa -o viral_genomes_g2g.csv -s 'Prodigal-FAA'
+        # Combine the mined viral_orfs.faa with inphared protein.faa
+        cat $reference_db_faa ${viral_orfs}.simple.faa > ${viral_orfs}.merged.faa 
+        # Replace "None_provided" to "none" in viral_genomes_g2g.csv column
+        sed -i 's/,None_provided/,none/g' viral_genomes_g2g.csv
+        # Combine viral_genomes_g2g.csv with inphared gene_to_genome.csv, removing the header line of the second
+        sed -i 1d $gene_to_genome
+        cat viral_genomes_g2g.csv $gene_to_genome > viral_genomes_combined.csv
         # Align the viral orfs against the reference_db
-        diamond blastp \
-        -p ${task.cpus} \
-        --sensitive \
-        -d ${reference_db} \
-        -q ${viral_orfs}.simple.faa \
-        -o viral_orfs_alignment.csv
-        # Append the viral orfs alignment to the allVSall file
-        cat viral_orfs_alignment.csv >> ${allVSall}
-        cp ${allVSall} ./allVSall.csv
+        diamond blastp -p ${task.cpus} --sensitive -d $reference_db -q ${viral_orfs}.merged.faa -o viral_orfs_alignment.csv
+        # Append the viral orfs alignment to a copy of the allVSall file 
+        cat viral_orfs_alignment.csv $allVSall > allVSall_${params.mod_vcontact2}_app.csv
         """
     }
     else {
         """
         # Format reference_db
-        diamond makedb \
-        -p ${task.cpus} \
-        --in ${reference_db_faa} \
-        -d ${reference_db}
+        diamond makedb -p ${task.cpus} --in $reference_db_faa -d $reference_db
         # Format the viral_orf in the correct way
-        $workflow.projectDir/bin/simplify_faa-ffn_derep.py ${viral_orfs}
+        $baseDir/bin/python/simplify_faa-ffn_derep.py $viral_orfs
         # create gene2genome file
-        $workflow.projectDir/bin/vcontact2_gene2genome.py \
-        -p ${viral_orfs}.simple.faa \
-        -o viral_genomes_g2g.csv \
-        -s 'Prodigal-FAA'
+        $baseDir/bin/python/vcontact2_gene2genome.py -p ${viral_orfs}.simple.faa -o viral_genomes_g2g.csv -s 'Prodigal-FAA'
+        # Combine the mined viral_orfs.faa with inphared protein.faa
+        cat $reference_db_faa ${viral_orfs}.simple.faa > ${viral_orfs}.merged.faa 
+        # Replace "None_provided" to "none" in viral_genomes_g2g.csv column
+        sed -i 's/,None_provided/,none/g' viral_genomes_g2g.csv
+        # Combine viral_genomes_g2g.csv with inphared gene_to_genome.csv, removing the header line of the second
+        sed -i 1d $gene_to_genome
+        cat viral_genomes_g2g.csv $gene_to_genome > viral_genomes_combined.csv
         # Align the viral orfs against the reference_db
-        diamond blastp \
-        -p ${task.cpus} \
-        --sensitive \
-        -d ${reference_db} \
-        -q ${viral_orfs}.simple.faa \
-        -o viral_orfs_alignment.csv
-        # Append the viral orfs alignment to the allVSall file
-        cat viral_orfs_alignment.csv >> ${allVSall}
-        cp ${allVSall} ./allVSall.csv
+        diamond blastp -p ${task.cpus} --sensitive -d $reference_db -q ${viral_orfs}.merged.faa -o viral_orfs_alignment.csv
+        # Append the viral orfs alignment to a copy of the allVSall file
+        cat viral_orfs_alignment.csv $allVSall > allVSall_${params.mod_vcontact2}_app.csv
         """
     }
 }
 
-params.clusterONE = "$workflow.projectDir/bin/cluster_one-1.0.jar"
-clusterONE = file(params.clusterONE)
-
 process vcontact2 {
+    cache 'lenient'
     tag "$assembler"
-    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy', overwrite: true
+    label 'big_res'
+    publishDir "${params.outdir}/taxonomy/vcontact2/${assembler}", mode: 'copy'
 
     when:
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
-    tuple val(assembler), file(total_alignment), file(gene2genome) from ch_diamond_vcontact2
+    each clusterONE from Channel.fromPath("$baseDir/bin/cluster_one-1.0.jar")
+    tuple val(assembler), file(alignment), file(gene2genome) from ch_diamond_vcontact2
 
     output:
-    file("*")
     tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into ch_vcontact2_extender
 
     script:
     """
     # run vConTACT2
-    vcontact \
+    vcontact2 \
     -t ${task.cpus} \
-    --blast-fp ${total_alignment} \
+    --blast-fp ${alignment} \
     --rel-mode 'Diamond' \
     --proteins-fp ${gene2genome} \
-    --db None \
+    --db 'None' \
     --pcs-mode MCL \
     --vcs-mode ClusterONE \
     --c1-bin ${clusterONE} \
@@ -785,124 +721,279 @@ process vcontact2 {
     """
 }
 
-process vcontact2_extender {
+process graphanalyzer {
+    cache 'lenient'
     tag "$assembler"
-    publishDir "${params.outdir}/report", mode: 'copy', overwrite: true
+    label 'med_res'
+    publishDir "${params.outdir}/taxonomy/vcontact2", mode: 'copy'
+    publishDir "${params.outdir}/report/tables/", mode: 'copy', pattern: '*.csv'
 
     when:
-    !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
+    !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2 && !params.skip_graphanalyzer
 
     input:
-    file file_vcontact2_db from ch_file_extender_db 
+    each file_vcontact2_db from Channel.fromPath("${params.dbPath}/inphared/${params.mod_vcontact2}")
     tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
-    
+
+
     output:
     file("*")
-    file("custom_taxonomy_table_mqc.txt") into ch_vcontact2_taxonomytable
-    file("custom_graph_plot_mqc.html") into ch_vcontact2_multiqc
+    tuple val(assembler), file("taxonomy_table.csv") into (ch_vcontact2_taxonomytable, ch_vcontact2_heatmap, ch_vcontact2_alphadiversity, ch_vcontact2_betadiversity, ch_vcontact2_violin)
 
     script:
-    path_file_vcontact2_db = file("$workflow.projectDir/bin/.groovy_vars/${file_vcontact2_db}").text
     """
-    python $workflow.projectDir/bin/graph_analyzer.py \
-    --input-graph ${netfile} \
-    --input-csv ${csvfile} \
-    --input-metas $workflow.projectDir/${path_file_vcontact2_db}data_excluding_refseq.tsv \
+    python $baseDir/bin/python/graph_analyzer.py \
+    --graph ${netfile} \
+    --csv ${csvfile} \
+    --metas ${file_vcontact2_db}/*data_excluding_refseq.tsv \
     --output ./ \
     --suffix ${assembler}
+    cp custom_taxonomy_table_${assembler}_mqc.txt custom_taxonomy_table_mqc.txt
+    python $baseDir/bin/python/taxonomy_table_namer.py
+    cp custom_taxonomy_table_mqc.txt custom_taxonomy_table_${assembler}_mqc.csv
+    sed -i 1,5d custom_taxonomy_table_${assembler}_mqc.csv
+    mv custom_taxonomy_table_${assembler}_mqc.csv taxonomy_table.csv
+    rm custom_taxonomy_table_megahit_mqc.txt
+    rm custom_taxonomy_table_mqc.txt
     """
 }
 
-/* STEP 9 - statistics and report generation */
+/* STEP 7 - statistics and report section generation */
 
-process error_barplots {
-    tag "all"
-    publishDir "${params.outdir}/report/plots", mode: 'copy', overwrite: true
+process miner_comparison {
+    cache 'lenient'
+    tag "$assembler"
+    label 'low_res'
+    publishDir "${params.outdir}/report/plots", mode: 'copy', pattern: "*comparison.png"
+    
+    when:
+    !params.skip_miner_comparison
+    
+    input:
+    tuple val(assembler), file(min_comp) from ch_cdhit_mincomp
+    
+    output:
+    file("*")
+    file("miner_comparison_mqc.png") into ch_mincomp_multiqc
+    
+    script:
+    """
+    Rscript $baseDir/bin/Rscript/miner_comparison.R ${min_comp}
+    cp miner_comparison.png miner_comparison_mqc.png
+    """
+}
+
+process summary {
+    cache 'lenient'
+    tag "$assembler"
+    label 'low_res'
+    publishDir "${params.outdir}/report/tables", mode: 'copy'
 
     when:
-    !params.skip_report && !params.skip_error_barplots
+    !params.skip_violin_plots
 
     input:
-    file(variance_table) from ch_covtocounts2_barplots
+    file(count_table) from ch_covtocounts2_summary
+    tuple val(assembler), file(vOTUs_consensus) from ch_cdhit_summary
+    path metadata from ch_metadata_summary
 
-    output: 
+    output:
     file("*")
-    file("error_barplots.html") into ch_errorbarplots_multiqc
+    file("vOTUs_summary.html") into ch_summary_multiqc
+
+    script:
+    def path = "${params.outdir}"
+    """
+    Rscript $baseDir/bin/Rscript/summary_report.R ${count_table} ${vOTUs_consensus} ${metadata} ${params.sum_viol_var} $path
+    """
+}
+
+process file_chopper {
+    cache 'lenient'
+    tag "$assembler"
+    label 'low_res'
+    publishDir "${params.outdir}/cd-hit/vOTUs_consensus", mode: 'copy', pattern: "vOTU_*.fasta"
+    publishDir "${params.outdir}/cd-hit/vOTUs_proteins", mode: 'copy', pattern: "vOTU_*.faa"
+    publishDir "${params.outdir}/cd-hit/vOTUs_coords", mode: 'copy', pattern: "vOTU_*.gff"
+
+    when:
+    !params.skip_dereplication
+
+    input:
+    tuple val(assembler), path(vOTUs_consensus) from ch_cdhit_chopper_c
+    tuple val(assembler), path(vOTUs_proteins) from ch_prodigal_chopper_p
+    tuple val(assembler), path(vOTUs_coords) from ch_prodigal_chopper_g
+
+    output:
+    file("*")
 
     script:
     """
-    Rscript $workflow.projectDir/bin/Rscript/error_barplots.R ${variance_table}
+    Rscript $baseDir/bin/Rscript/file_chopper.R ${vOTUs_consensus} ${vOTUs_proteins} ${vOTUs_coords}
     """
 }
 
 process taxonomy_table {
-    tag "all"
-    publishDir "${params.outdir}/report/plots", mode: 'copy', overwrite: true
-
+    cache 'lenient'
+    tag "$assembler"
+    label 'low_res'
+    publishDir "${params.outdir}/report/tables", mode: 'copy'
+    
     when:
-    !params.skip_report && !params.skip_taxonomy_table
+    !params.skip_dereplication && !skip_viral_taxo && !params.skip_taxonomy_table
 
     input:
-    file(taxonomy_table_vcontact2) from ch_vcontact2_taxonomytable
+    tuple val(assembler), path(taxonomy_table) from ch_vcontact2_taxonomytable
+    tuple val(assembler), path(vOTUs_consensus) from ch_cdhit_taxonomytable_c
+    tuple val(assembler), path(vOTUs_proteins) from ch_prodigal_taxonomytable_p
+    tuple val(assembler), path(vOTUs_coords) from ch_prodigal_taxonomytable_g
+    tuple val(assembler), path(min_comp) from ch_cdhit_taxonomytable_min
+    path metadata from ch_metadata_taxonomy
 
-    output: 
-    file("*")
-    file("taxonomy_table_mqc.html") into ch_taxonomytable_multiqc
+    output:
+    file("taxonomy_table.html")
+    file("taxonomy_table.html") into ch_taxonomytable_multiqc
+    file("kraken_files.html") into ch_krakenfiles_multiqc
 
     script:
+    def path = "${params.outdir}"
     """
-    Rscript $workflow.projectDir/bin/Rscript/taxonomy_table.R ${taxonomy_table_vcontact2}
+    Rscript $baseDir/bin/Rscript/taxonomy_table.R ${taxonomy_table} ${vOTUs_consensus} ${vOTUs_proteins} ${vOTUs_coords} $path ${min_comp} ${metadata}
     """
 }
 
-// process taxonomy_table_debug {
-//     tag "all"
-//     publishDir "${params.outdir}/report/plots", mode: 'copy', overwrite: true
+process heatmap {
+    cache 'lenient'
+    tag "$assembler"
+    label 'med_res'
+    publishDir "${params.outdir}/report/plots", mode: 'copy'
 
-//     when:
-//     !params.skip_report && !params.skip_taxonomy_table
+    when:
+    params.metadata && !params.skip_heatmap
 
-//     input:
-//     file(taxonomy_table_vcontact2) from Channel.fromPath("${params.taxoTable}", checkIfExists: true)
+    input:
+    tuple val(assembler), file(count_table) from ch_covtocounts2_heatmap
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_heatmap
+    path metadata from ch_metadata_heatmap
 
-//      output: 
-//      file("*")
-//      file("taxonomy_table_mqc.html") into ch_taxonomytable_multiqc
+    output:
+    file("*")
 
-//     script:
-//     """
-//     Rscript $workflow.projectDir/bin/Rscript/taxonomy_table.R ${taxonomy_table_vcontact2}
-//     """
-// }
+    script:
+    """
+    Rscript $baseDir/bin/Rscript/heatmap.R ${count_table} ${taxonomy_table} ${metadata} ${params.heatmap_var}
+    """
+}
 
-/* STEP 10 summary report */
+process alpha_diversity {
+    cache 'lenient'
+    tag "$assembler"
+    label 'med_res'
+    publishDir "${params.outdir}/report/plots/alpha_div", mode: 'copy', pattern: "*.html"
+
+    when:
+    params.metadata && !params.skip_alpha_diversity
+
+    input:
+    tuple val(assembler), file(count_table) from ch_covtocounts2_alphadiversity
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_alphadiversity
+    path metadata from ch_metadata_alphadiversity
+
+    output:
+    file("*.html")
+
+    script:
+    """
+    Rscript $baseDir/bin/Rscript/alpha_diversity.R ${count_table} ${taxonomy_table} ${metadata} ${params.alpha_var1} ${params.alpha_var2}
+    """
+}
+
+process betadiversity {
+    cache 'lenient'
+    tag "$assembler"
+    label 'med_res'
+    publishDir "${params.outdir}/report/plots/beta_div", mode: 'copy', pattern: "*.html"
+    publishDir "${params.outdir}/report/tables", mode: 'copy', pattern: "*.rds"
+    when:
+    params.metadata && !params.skip_beta_diversity
+
+    input:
+    tuple val(assembler), file(count_table) from ch_covtocounts2_betadiversity
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_betadiversity
+    path metadata from ch_metadata_betadiversity
+
+    output:
+    file("*.html")
+    file("phyloseq.rds")
+    file("phyloseq_css_norm.rds")
+
+    script:
+    """
+    Rscript $baseDir/bin/Rscript/beta_diversity.R ${count_table} ${taxonomy_table} ${metadata} ${params.beta_var}
+    """
+}
+
+process violin_plots {
+    cache 'lenient'
+    tag "$assembler"
+    label 'med_res'
+    publishDir "${params.outdir}/report/plots", mode: 'copy', pattern: "*.html"
+
+    when:
+    !params.skip_violin_plots
+
+    input:
+    tuple val(assembler), path(count_table) from ch_covtocounts2_violin
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_violin
+    path metadata from ch_metadata_violin
+
+    output: 
+    file("*.html")
+
+    script:
+    """
+    Rscript $baseDir/bin/Rscript/violin_plot.R ${count_table} ${taxonomy_table} ${metadata} ${params.violin_var}
+    """
+}
+
+/* STEP 8 summary report */
 
 process multiqc {
-    tag "all"
-    publishDir "${params.outdir}/report/", mode: 'copy', overwrite: true 
+    cache 'lenient'
+    tag "$assembler"
+    label 'low_res'
+    publishDir "${params.outdir}/report/", mode: 'copy'
 
     when:
     !params.skip_report
 
     input:
+    // id:miner_comparison
+    file(min_comp) from ch_mincomp_multiqc.collect().ifEmpty([])
+    // id:vOTUs_summary
+    file(summary_table) from ch_summary_multiqc.collect().ifEmpty([])
+    // id:taxonomy_table
+    file(taxo_table) from ch_taxonomytable_multiqc.collect().ifEmpty([])
+    // id:fastp
     file(fastp) from ch_fastp_multiqc.collect().ifEmpty([])
+    // id:kraken2
+    file(kraken2) from ch_kraken2_multiqc.collect().ifEmpty([])
+    // id:kraken_files
+    file(krakenfiles) from ch_krakenfiles_multiqc.collect().ifEmpty([])
+    // id: quast
     file(metaquast) from ch_metaquast_multiqc.collect().ifEmpty([])
-    tuple file(custom_count_table), file(custom_count_plot) from ch_covtocounts2_multiqc.collect().ifEmpty([])
-    file(error_barplot) from ch_errorbarplots_multiqc.collect().ifEmpty([])
-    file(taxonomy_table) from ch_taxonomytable_multiqc.collect().ifEmpty([])
-    file(graph_plot) from ch_vcontact2_multiqc.collect().ifEmpty([])
 
     output:
-    file("*")
+    file("MetaPhage_report.html")
 
     script:
     """
+    python $baseDir/bin/python/spacer_taxo.py
     multiqc \
-    --config $workflow.projectDir/bin/multiqc/multiqc_config.yaml \
+    --config $baseDir/bin/multiqc/multiqc_config.yaml \
     --filename "MetaPhage_report.html" \
-    --exclude general_stats $workflow.projectDir/bin/multiqc/. -f \
-    . ${error_barplot} ${custom_count_plot} ${custom_count_table} ${taxonomy_table} #${graph_plot}
-    $workflow.projectDir/bin/multiqc/remove_footer.py \
-    MetaPhage_report.html MetaPhage_report.html
+    --exclude general_stats $baseDir/bin/multiqc/. -f \
+    ${min_comp} vOTUs_summary_mqc.html taxonomy_table_mqc.html ${fastp} ${kraken2} kraken_files_mqc.html ${metaquast}
     """
 }
+

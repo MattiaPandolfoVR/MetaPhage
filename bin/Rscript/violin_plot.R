@@ -1,0 +1,85 @@
+shhh <- suppressPackageStartupMessages
+shhh(library(plotly))
+shhh(library(matrixStats))
+shhh(library(dplyr))
+shhh(library(readr))
+shhh(library(phyloseq))
+shhh(library(metagenomeSeq))
+
+# Reading input
+args <- commandArgs(trailingOnly = TRUE)
+############################### COUNT TABLE ####################################
+file_count <- args[1]
+count <- read.csv(file_count, sep = '\t', row.names = 1)
+############################## TAXONOMY TABLE ##################################
+file_taxo <- args[2]
+taxo <- read.csv(file_taxo, sep = '\t', row.names = 1)
+################################ METADATA ######################################
+file_meta <- args[3]
+metadata <- read.csv(file_meta, sep = ',', row.names = 1)
+metadata$Sample <- rownames(metadata)
+violin_var = args[4]
+
+# Phyloseq object creation
+ps0 <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
+                tax_table(as.matrix(taxo)),
+                sample_data(metadata))
+ps_r <- ps0
+################################## FILTERING ###################################
+# Filter uncharacterized taxas
+ps <- subset_taxa(ps0, !is.na(Phylum) & !Phylum %in% c("", "Unclassified"))
+# relative abundance filter
+FSr  = transform_sample_counts(ps, function(x) x / sum(x))
+FSfr = filter_taxa(FSr, function(x) mean(x) < 0.00005, TRUE)
+rmtaxa = taxa_names(FSfr)
+alltaxa = taxa_names(ps)
+myTaxa = alltaxa[!alltaxa %in% rmtaxa]
+physeqaFS <- prune_taxa(myTaxa, ps)
+ps = filter_taxa(physeqaFS, function(x) sum(x >= 1) >= (2), TRUE)
+
+################################ NORMALIZATION #################################
+# CSS
+ps_m <- phyloseq::phyloseq_to_metagenomeSeq(ps)
+# normalized count matrix
+ps_norm <- metagenomeSeq::MRcounts(ps_m, norm = TRUE, log = TRUE)
+# abundance to css-normalized
+phyloseq::otu_table(ps) <- phyloseq::otu_table(ps_norm, taxa_are_rows = T)
+# Restore sample_data rownames
+row.names(ps@sam_data) <- c(1:nrow(ps@sam_data))
+
+################################## PLOTS #######################################
+# Metadata processing
+df_new_meta = data.frame(Sample = metadata$Sample, metadata[[violin_var]])
+colnames(df_new_meta)[2] <- paste(violin_var)
+# Dataframes creation
+df_tot = data.frame()
+for(sample in colnames(ps@otu_table[1,2:ncol(ps@otu_table)])){
+  df_new = data.frame(sample, rownames(ps@otu_table), ps@otu_table[,sample])
+  colnames(df_new) <- c("Sample","viralOTU","Abundance")
+  df_tot <- rbind(df_tot, df_new)
+}
+rownames(df_tot) <- 1:nrow(df_tot)
+df_tot$temp <- df_new_meta[,2][match(df_tot$Sample, df_new_meta$Sample)]
+colnames(df_tot)[4] <- paste(violin_var)
+df_tot <- df_tot[order(df_tot$Sample),]
+ps_rich <- estimate_richness(ps_r)
+df_rich <- data.frame(Sample = as.character(rownames(ps_rich)),
+                      Richness = ps_rich$Observed)
+df_rich <- df_rich[order(df_rich$Sample),]
+df_tot$Richness <- df_rich[,2][match(df_tot$Sample, df_rich$Sample)]
+
+v1 <- df_tot %>%
+  plot_ly(
+    x = ~Study_group,
+    y = ~Richness,
+    split = ~get(violin_var),
+    type = "violin", bandwidth = 50,
+    box = list(
+      visible = T
+    ),
+    meanline = list(
+      visible = T
+    )
+  )
+htmlwidgets::saveWidget(v1, "violin_plot_richness.html",
+                        selfcontained = TRUE, libdir = NULL)
