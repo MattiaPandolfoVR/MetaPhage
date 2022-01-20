@@ -39,7 +39,7 @@ if (params.readPath) {
 if (params.metadata == true) {
     Channel.fromPath("${params.metaPath}/*metadata.csv", checkIfExists: true)
         .ifEmpty { exit 1, "No metadata file found! Please check params.metadata in your config file!"}
-        .into { ch_metadata_checker }
+        .set { ch_metadata_checker }
     println "found metadata!"
 } else {
     println "No metadata supplied! Metadata are mandatory for beta diversity and heatmaps plots!"

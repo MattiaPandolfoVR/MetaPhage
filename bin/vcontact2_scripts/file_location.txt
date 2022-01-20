@@ -1,0 +1,2 @@
+protein_cluster.py -> ~/.conda/envs/metaphage/lib/python3.7/site-packages/vcontact2
+vcontact2 -> ~/.conda/envs/metaphage_dec/bin/
