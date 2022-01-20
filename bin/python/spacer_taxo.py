@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 file = open("taxonomy_table.html", "r")
 line = file.read()

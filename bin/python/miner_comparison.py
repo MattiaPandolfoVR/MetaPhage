@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Coded by Gioele Lazzari and Mattia Pandolfo (gioele.lazza@studenti.univr.it, mattia.pandolfo@univr.it)
 software = "miner_comparison.py"
 version = "0.0.1"

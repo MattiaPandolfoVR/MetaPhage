@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from pickle import TRUE
 import pandas as pd
 import sys

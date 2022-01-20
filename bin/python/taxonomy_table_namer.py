@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 
 file = open("custom_taxonomy_table_mqc.txt", "r")
