@@ -61,7 +61,7 @@ config = """
     "name": "vConTACT2",
     "url": "https://zenodo.org/record/5879332/files/2022-01-inphared.tar.gz?download=1",
     "md5": "8c66e1b0c8359dff2a11a407826efa02",
-    "file": "inphared.tar.gz",
+    "file": "2022-01-inphared.tar.gz",
     "provides": ["inphared"],
     "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
     "cleanup": "rm inphared.*"

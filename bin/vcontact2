@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #!/g100/home/userexternal/mpandolf/.conda/envs/metaphage/bin/python
 """vConTACT 2 - Copyright 2018 Benjamin Bolduc, Guilhem Doulcier.
 
@@ -20,7 +21,8 @@ import pandas as pd
 import numpy as np
 import pkg_resources
 import vcontact2
-import vcontact2.protein_clusters
+#import vcontact2.protein_clusters
+import protein_clusters
 import vcontact2.pcprofiles
 import vcontact2.contig_clusters
 import vcontact2.evaluations

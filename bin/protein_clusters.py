@@ -7,10 +7,12 @@ import pandas as pd
 import logging
 import subprocess
 import numpy as np
-
+import sys
 
 logger = logging.getLogger(__name__)
 
+if os.environ.get('METAPHAGE_DEBUG') == "1":
+    print("Metaphage: Customised protein_cluster.py", file=sys.stderr)
 
 def merge_aa(user_aa_fp, ref_db_fp, merged_aa_fp):
     """
