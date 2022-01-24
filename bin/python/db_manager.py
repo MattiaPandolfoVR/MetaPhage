@@ -4,9 +4,15 @@
 software = "db_manager.py"
 version = "0.0.2"
 
-import wget, json, argparse, os, time, re, sys
+import json, argparse, os, time, re, sys
 import concurrent.futures
 
+# Try importing wget
+try:
+  import wget
+except ImportError:
+  eprint(f"{software} requires wget to be installed")
+  quit()
 start = time.perf_counter()
 progresses = {"_printed": []}
 
@@ -64,7 +70,7 @@ config = """
     "file": "2022-01-inphared.tar.gz",
     "provides": ["inphared"],
     "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm inphared.*"
+    "cleanup": "rm *inphared*.tar.gz"
   }
 }
 """
@@ -194,6 +200,6 @@ if __name__ == "__main__":
     path_virsorter = parameters.outdir + "/virsorter"
     path_vcontact2 = parameters.outdir + "/inphared"
 
-    file_db_path = open("db_path.csv", "a")
+    file_db_path = open("db_path.csv", "w")
     file_db_path.writelines("%s,%s,%s,%s,%s" % (path_phix, path_kraken2, path_vibrant, path_virsorter, path_vcontact2))
     file_db_path.close()

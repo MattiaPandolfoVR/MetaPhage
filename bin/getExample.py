@@ -25,6 +25,20 @@ def getUris(urlTsvFile):
         print("Error in getUris: %s" % e)
         sys.exit(1)
 
+def readMd5(filename):
+    """
+    Read the md5 from a file containing MD5 and filename
+    """
+    try:
+        with open(filename, "r") as f:
+            for line in f:
+                line = line.strip()
+                fields = line.split(" ")
+                return fields[0]
+    except Exception as e:
+        print("Error in readMd5: %s" % e)
+        sys.exit(1)
+
 def getSamples(metadataFile):
     """
     Metadata file (csv), get the first sample "Sample"
@@ -40,15 +54,27 @@ def getSamples(metadataFile):
                 samples.append(cols[0])
         return samples
     except Exception as e:
-        print("Error in getUris: %s" % e)
-        sys.exit(1)
+        return None
 
 def downloadFileToDest(URL, destination, verbose=False):
     """
     Retrieve a file from an URL and save it to destination
     """
     cmd = ["wget", "--quiet", "-O", destination, URL]
-        
+    # Check if file is already there
+    if os.path.exists(destination) and os.path.exists( os.path.join( os.path.dirname(destination) , "md5", os.path.basename(destination))):
+        md5sum = readMd5( os.path.join( os.path.dirname(destination) , "md5", os.path.basename(destination)) )
+        if not md5sum is None:
+            realmd5 = subprocess.check_output(["md5sum", destination]).split()[0].decode("utf-8")
+            if md5sum == realmd5:
+                if verbose:
+                    print("File %s already exists and is valid." % destination)
+                return destination
+            else:
+                print("File {} already exists but MD5 mismatches: {} vs {}".format(destination, md5sum, realmd5))
+        else:
+            print("Invalid MD5 file for %s" % destination)
+
     try:
         subprocess.check_call(cmd)
         return destination
@@ -96,10 +122,10 @@ if __name__ == "__main__":
 
     results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=int(args.threads)) as executor:
-        for sample in SampleList:
+        for index, sample in enumerate(SampleList):
             for url in URLs[sample]:
                 if args.verbose:
-                    print(" * Queueing {}".format(url))
+                    print(" * Sample {}: Queueing {}".format(index, url))
                 filename = os.path.basename(url)
                 destination = os.path.join(args.outdir, filename)
                 #downloadFileToDest(url, destination, args.verbose)

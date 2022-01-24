@@ -10,3 +10,4 @@ mainQuadram.nf
 extra
 nohup*
 *.simg
+SR*.fastq.gz

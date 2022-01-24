@@ -1,9 +1,9 @@
 name: metaphage
 channels:
   - anaconda
-  - bioconda
-  - conda-forge
   - defaults
+  - conda-forge
+  - bioconda
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
@@ -62,7 +62,7 @@ dependencies:
   - ca-certificates=2021.10.26=h06a4308_2
   - cairo=1.16.0=h6cf1ce9_1008
   - cd-hit=4.8.1=h2e03b76_5
-  - certifi=2021.10.8=py37h89c1867_1
+  - certifi=2021.10.8=py37h06a4308_2
   - cffi=1.15.0=py37h036bc23_0
   - chardet=4.0.0=py37h89c1867_1
   - charset-normalizer=2.0.8=pyhd8ed1ab_0
@@ -679,6 +679,7 @@ dependencies:
   - seaborn=0.11.1=ha770c72_0
   - seaborn-base=0.11.1=pyhd8ed1ab_1
   - sed=4.8=he412f7d_0
+  - seqfu=1.9.0=h38613fd_0
   - seqkit=0.16.1=h9ee0642_0
   - setuptools=59.4.0=py37h89c1867_0
   - simplejson=3.17.3=py37h5e8e339_0
@@ -746,3 +747,4 @@ dependencies:
     - singleton==0.1.0
     - soupsieve==2.2.1
     - spectra==0.0.11
+prefix: /mnt/disk/miniconda3/envs/metaphage

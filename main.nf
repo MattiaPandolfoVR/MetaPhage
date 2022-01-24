@@ -14,6 +14,10 @@ def welcomeScreen() {
                                                  |___/      
         ====================================================
         """.stripIndent()
+    
+    println " Input:      " + params.readPath
+    println " Metadata:   " + params.metaPath
+    println " Databases:  " + params.dbPath
 }
 def cursystem = System.properties['os.name']
 welcomeScreen()
@@ -616,7 +620,7 @@ process covtocounts2 {
 /* STEP 6 - viral taxonomy */
 
 ch_diamond = Channel.fromPath("${params.dbPath}/diamond/${params.mod_vcontact2}/allVSall_${params.mod_vcontact2}.csv")
-ch_vcontact2_db = ch_dbm_vcontact2.splitCsv().flatMap { it -> "${it[4]}" + "/${params.mod_vcontact2}" }
+ch_vcontact2_db = ch_dbm_vcontact2.splitCsv().flatMap { it -> "${it[4]}"  }
 
 process diamond_vcontact2 {
     cache 'lenient'
@@ -643,6 +647,13 @@ process diamond_vcontact2 {
 
     if(allVSall.exists() == false){
         """
+        # Vcontact db: ${file_vcontact2_db}
+        # Vcontact file head: ${params.vcontact2_file_head}
+        # Vcontact mod: ${params.mod_vcontact2}
+        # Reference DB faa: ${reference_db_faa}
+        # Gene to genome: ${gene_to_genome}
+        # Reference DB: ${reference_db}
+
         # Create the db/vcontact2 directory to store diamond processed files
         mkdir -p ${params.dbPath}/diamond/${params.mod_vcontact2}/
         # Format reference_db
@@ -708,7 +719,7 @@ process vcontact2 {
     script:
     """
     # run vConTACT2
-    vcontact2 \
+    vcontact2_local \
     -t ${task.cpus} \
     --blast-fp ${alignment} \
     --rel-mode 'Diamond' \
@@ -732,7 +743,7 @@ process graphanalyzer {
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2 && !params.skip_graphanalyzer
 
     input:
-    each file_vcontact2_db from Channel.fromPath("${params.dbPath}/inphared/${params.mod_vcontact2}")
+    each file_vcontact2_db from Channel.fromPath("${params.dbPath}/inphared/")
     tuple val(assembler), file(netfile), file(csvfile) from ch_vcontact2_extender
 
 
