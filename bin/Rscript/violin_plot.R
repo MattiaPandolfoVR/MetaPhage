@@ -70,7 +70,7 @@ df_tot$Richness <- df_rich[,2][match(df_tot$Sample, df_rich$Sample)]
 
 v1 <- df_tot %>%
   plot_ly(
-    x = ~Study_group,
+    x = ~get(violin_var),
     y = ~Richness,
     split = ~get(violin_var),
     type = "violin", bandwidth = 50,

@@ -61,7 +61,8 @@ df_merged$Kingdom <- NULL
 df_meta <- metadata[metadata$Sample %in% colnames(count),]
 # Fix labels in rowside and colside columns
 colside <- as.data.frame(df_meta[,c("Sample",heatmap_var)])
-colside <- colside[order(colside$Study_group),]
+#colside <- colside[order(colside$Study_group),]
+colside <- colside[order(colside[,2]),]
 colside$Sample <- NULL
 # create data_frame to plot
 df_heatmap <- df_merged[,c(match(rownames(colside),colnames(df_merged)),
