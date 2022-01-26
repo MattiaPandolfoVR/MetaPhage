@@ -22,7 +22,10 @@ metadata$Sample <- rownames(metadata)
 ############################### META_VARS ######################################
 alpha_var1 <- args[4]
 alpha_var2 <- args[5]
-
+# Check if only one variable is passed
+if(alpha_var2 = FALSE){
+  alpha_var2 <- alpha_var1
+}
 # Phyloseq object creation
 ps <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
                tax_table(as.matrix(taxo)),

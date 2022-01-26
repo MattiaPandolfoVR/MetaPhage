@@ -3,6 +3,7 @@
 work/*
 db/*
 bin/.groovy_vars/*
+bin/__pycache__/*
 output*/*
 .nextflow*
 ._*
@@ -11,3 +12,5 @@ extra
 nohup*
 *.simg
 SR*.fastq.gz
+conf/datasets/mattia.config
+datasets/*

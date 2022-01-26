@@ -78,15 +78,15 @@ nextflow run main.nf -profile base --readPath /your/path/
 
 ### `--readPath`
 
-Specify the folder where your datasets are stored. Default is `./datasets/base/`.
+Specify the folder where your datasets are stored. Default is `$projectDir/dataset`. Note that $projectDir correspond to the MetaPhage folder.
 
 ### `--metaPath`
 
-Specify the folder where the dataset's metadata are stored. Default is `./datasets/base/metadata/`.
+Specify the folder where the dataset's metadata are stored. Default is `$readPath/metadata/`.
 
 ### `--dbPath`
 
-Specify the folder where databases are stored. Default is `./db`.
+Specify the folder where databases are stored. Default is `$projectDir/db`.
 
 ### `--virome_dataset`
 
@@ -98,11 +98,15 @@ Specify the folder where databases are stored. Default is `./db`.
 
 ### `--outdir`
 
-Specify the folder where your results are stored. Default is `./results/`.
+Specify the folder where your results are stored. Default is `$projectDir/output`.
 
 ### `--temp_dir`
 
-Specify the folder where your temporary files are stored. Default is `./temp/`.
+Specify the folder where your temporary files are stored. Default is `$projectDir/temp`.
+
+### `--workDir`
+
+Specify the directory where tasks temporary files are created. Default is `$projectDir/work`.
 
 ## Quality check and trimming
 

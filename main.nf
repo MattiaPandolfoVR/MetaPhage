@@ -27,12 +27,12 @@ welcomeScreen()
 // Sequences
 if (params.readPath) {
     if (params.singleEnd) {
-        Channel.fromPath("${params.readPath}/*_single.fastq.gz", checkIfExists: true)
+        Channel.fromPath("${params.readPath}/*.fastq.gz", checkIfExists: true)
             .map { file -> tuple(file.simpleName, file) }
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPath in your config file!" }
             .set { ch_reads_fastp } 
     } else {
-        Channel.fromFilePairs("${params.readPath}/*{_1,_2}*.fastq.gz", checkIfExists: true)
+        Channel.fromFilePairs("${params.readPath}/*{1,2}*.fastq.gz", checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPath in your config file!" }
             .set { ch_reads_fastp }
     }
@@ -49,7 +49,8 @@ if (params.metadata == true) {
     println "No metadata supplied! Metadata are mandatory for beta diversity and heatmaps plots!"
     println "If you are interested in these plots, simply provide a metadata .csv file using params.metadata in your config file!"
     println "For more informations, check the metadata paragraph on the wiki at https://github.com/MattiaPandolfoVR/MetaPhage#input_files"
-    params.skip_report = true
+    ch_metadata_kraken_files = Channel.empty()
+    params.skip_kraken_files = true
     ch_metadata_summary = Channel.empty()
     params.skip_taxonomy_table = true
     ch_metadata_taxonomy = Channel.empty()
@@ -74,18 +75,19 @@ process csv_validator {
     path(metadata) from ch_metadata_checker
 
     output:
-    path("metadata.csv") into (ch_metadata_summary, ch_metadata_taxonomy, ch_metadata_alphadiversity, ch_metadata_betadiversity, ch_metadata_heatmap, ch_metadata_violin)
+    path("metadata.csv") into ( ch_metadata_kraken_files, ch_metadata_summary, ch_metadata_taxonomy,
+     ch_metadata_alphadiversity, ch_metadata_betadiversity, ch_metadata_heatmap, ch_metadata_violin)
 
     script:
     """
     mv ${metadata} metadata_to_check.csv
-    python3 $baseDir/bin/python/csv_checker.py
+    python3 $projectDir/bin/python/csv_checker.py
     """
 }
 
 process db_manager {
     tag "$code"
-    label 'big_res'
+    label 'low_res'
 
     input:
     val code from 'Downloading missing databases...'
@@ -95,7 +97,7 @@ process db_manager {
 
     script:
     """
-    python3 $baseDir/bin/python/db_manager.py \
+    python3 $projectDir/bin/python/db_manager.py \
     -o ${params.dbPath} \
     -m ${task.cpus}
     """
@@ -231,7 +233,7 @@ process krona {
     script:
     """
     echo "bracken was not run, using kracken2 output to generate krona report!"
-    python $baseDir/bin/python/kreport2krona.py \
+    python $projectDir/bin/python/kreport2krona.py \
     --report-file ${report} \
     --output to_krona.txt 
     ktImportText \
@@ -366,7 +368,7 @@ process phigaro {
 
     script:
     """
-    python $baseDir/bin/python/phigaro_config_creator.py ${params.dbPath}
+    python $projectDir/bin/python/phigaro_config_creator.py ${params.dbPath}
     printf 'Y\n' | phigaro \
     --threads ${task.cpus} \
     --fasta-file ${scaffold} \
@@ -457,7 +459,7 @@ process virfinder {
 
     script:
     """
-    Rscript $baseDir/bin/Rscript/virfinder_execute.R ${scaffold} ${task.cpus} $baseDir
+    Rscript $projectDir/bin/Rscript/virfinder_execute.R ${scaffold} ${task.cpus} $projectDir
     mv results.txt ${seqID}_results.txt
     mv viral_sequences.fasta ${seqID}_viral_sequences.fasta
     """
@@ -507,7 +509,7 @@ process cdhit {
     --out-file filtered_derep95_${assembler}.fasta \
     derep95_${assembler}.fasta
     # obtain which mined viral scaffold collapse in a vOTU
-    python $baseDir/bin/python/miner_comparison.py ${assembler}
+    python $projectDir/bin/python/miner_comparison.py ${assembler}
     # sort vOTU file by name
     seqkit sort --id-regexp ">vOTU_([0-9]+)" vOTU_${assembler}.fasta > ${assembler}_vOTUs_consensus.fasta
     """
@@ -527,8 +529,8 @@ process prodigal {
 
     output:
     file("*")
-    tuple val(assembler), file("${assembler}_vOTUs_proteins.faa") into (ch_prodigal_diamond, ch_prodigal_chopper_p, ch_prodigal_taxonomytable_p)
-    tuple val(assembler), file("${assembler}_vOTUs_coords.gff") into (ch_prodigal_chopper_g, ch_prodigal_taxonomytable_g)
+    tuple val(assembler), file("${assembler}_vOTUs_proteins.faa") into (ch_prodigal_diamond, ch_prodigal_chopper_p, ch_prodigal_taxonomytable_p) optional true
+    tuple val(assembler), file("${assembler}_vOTUs_coords.gff") into (ch_prodigal_chopper_g, ch_prodigal_taxonomytable_g) optional true
 
     script:
     """
@@ -554,7 +556,7 @@ process bowtie2_derep {
     tuple val(seqID), file(reads) from ch_trimm_derep
 
     output:
-    tuple val(assembler), file("${seqID}_${consensus}.sorted.bam") into ch_bowtie2bam_covtocounts2
+    tuple val(assembler), file("${seqID}_${consensus}.sorted.bam") into ch_bowtie2bam_covtocounts2 
     tuple val(assembler), file("${seqID}_${consensus}.sorted.bam.bai") into ch_bowtie2bai_covtocounts2
 
     script:
@@ -611,7 +613,7 @@ process covtocounts2 {
     --threads ${task.cpus} \
     --multiqc \
     ${sortedbam} > count_table_mqc.txt
-    python $baseDir/bin/multiqc/multiqc_model_editor.py ${assembler}
+    python $projectDir/bin/multiqc/multiqc_model_editor.py ${assembler}
     cp count_table_mqc.txt count_table.csv 
     sed -i 1,4d count_table.csv
     """
@@ -638,7 +640,7 @@ process diamond_vcontact2 {
     tuple val(assembler), file(viral_orfs) from ch_prodigal_diamond
 
     output:
-    tuple val(assembler), file("allVSall_${params.mod_vcontact2}_app.csv"), file("viral_genomes_combined.csv") into ch_diamond_vcontact2
+    tuple val(assembler), file("allVSall_${params.mod_vcontact2}_app.csv"), file("viral_genomes_combined.csv") into ch_diamond_vcontact2 optional true
 
     script:  
     reference_db_faa = file("${file_vcontact2_db}/${params.vcontact2_file_head}proteins.faa")
@@ -661,9 +663,9 @@ process diamond_vcontact2 {
         # Align the reference_db against itself to create allVSall
         diamond blastp -p ${task.cpus} --sensitive -d $reference_db -q $reference_db_faa -o $allVSall
         # Format the viral_orf in the correct way
-        $baseDir/bin/python/simplify_faa-ffn_derep.py $viral_orfs
+        $projectDir/bin/python/simplify_faa-ffn_derep.py $viral_orfs
         # Create gene2genome file
-        $baseDir/bin/python/vcontact2_gene2genome.py -p ${viral_orfs}.simple.faa -o viral_genomes_g2g.csv -s 'Prodigal-FAA'
+        $projectDir/bin/python/vcontact2_gene2genome.py -p ${viral_orfs}.simple.faa -o viral_genomes_g2g.csv -s 'Prodigal-FAA'
         # Combine the mined viral_orfs.faa with inphared protein.faa
         cat $reference_db_faa ${viral_orfs}.simple.faa > ${viral_orfs}.merged.faa 
         # Replace "None_provided" to "none" in viral_genomes_g2g.csv column
@@ -679,12 +681,10 @@ process diamond_vcontact2 {
     }
     else {
         """
-        # Format reference_db
-        diamond makedb -p ${task.cpus} --in $reference_db_faa -d $reference_db
         # Format the viral_orf in the correct way
-        $baseDir/bin/python/simplify_faa-ffn_derep.py $viral_orfs
+        $projectDir/bin/python/simplify_faa-ffn_derep.py $viral_orfs
         # create gene2genome file
-        $baseDir/bin/python/vcontact2_gene2genome.py -p ${viral_orfs}.simple.faa -o viral_genomes_g2g.csv -s 'Prodigal-FAA'
+        $projectDir/bin/python/vcontact2_gene2genome.py -p ${viral_orfs}.simple.faa -o viral_genomes_g2g.csv -s 'Prodigal-FAA'
         # Combine the mined viral_orfs.faa with inphared protein.faa
         cat $reference_db_faa ${viral_orfs}.simple.faa > ${viral_orfs}.merged.faa 
         # Replace "None_provided" to "none" in viral_genomes_g2g.csv column
@@ -710,11 +710,11 @@ process vcontact2 {
     !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2
 
     input:
-    each clusterONE from Channel.fromPath("$baseDir/bin/cluster_one-1.0.jar")
+    each clusterONE from Channel.fromPath("$projectDir/bin/cluster_one-1.0.jar")
     tuple val(assembler), file(alignment), file(gene2genome) from ch_diamond_vcontact2
 
     output:
-    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into ch_vcontact2_extender
+    tuple val(assembler), file("c1.ntw"), file("genome_by_genome_overview.csv") into ch_vcontact2_extender optional true
 
     script:
     """
@@ -748,19 +748,19 @@ process graphanalyzer {
 
 
     output:
-    file("*")
-    tuple val(assembler), file("taxonomy_table.csv") into (ch_vcontact2_taxonomytable, ch_vcontact2_heatmap, ch_vcontact2_alphadiversity, ch_vcontact2_betadiversity, ch_vcontact2_violin)
+    file("*") optional true
+    tuple val(assembler), file("taxonomy_table.csv") into (ch_vcontact2_taxonomytable, ch_vcontact2_heatmap, ch_vcontact2_alphadiversity, ch_vcontact2_betadiversity, ch_vcontact2_violin) optional true
 
     script:
     """
-    python $baseDir/bin/python/graph_analyzer.py \
+    python $projectDir/bin/python/graph_analyzer.py \
     --graph ${netfile} \
     --csv ${csvfile} \
     --metas ${file_vcontact2_db}/*data_excluding_refseq.tsv \
     --output ./ \
     --suffix ${assembler}
     cp custom_taxonomy_table_${assembler}_mqc.txt custom_taxonomy_table_mqc.txt
-    python $baseDir/bin/python/taxonomy_table_namer.py
+    python $projectDir/bin/python/taxonomy_table_namer.py
     cp custom_taxonomy_table_mqc.txt custom_taxonomy_table_${assembler}_mqc.csv
     sed -i 1,5d custom_taxonomy_table_${assembler}_mqc.csv
     mv custom_taxonomy_table_${assembler}_mqc.csv taxonomy_table.csv
@@ -770,6 +770,28 @@ process graphanalyzer {
 }
 
 /* STEP 7 - statistics and report section generation */
+
+process kraken_file {
+    cache 'lenient'
+    tag "Creating the table..."
+    label 'low_res'
+    publishDir "${params.outdir}/report/tables", mode: 'copy'
+    
+    when:
+    !params.skip_dereplication && !skip_bacterial_taxo && !params.skip_kraken2 && !params.skip_kraken_files
+
+    input:
+    path metadata from ch_metadata_kraken_files
+
+    output:
+    file("kraken_files.html") into ch_krakenfiles_multiqc
+
+    script:
+    def path = "${params.outdir}"
+    """
+    Rscript $projectDir/bin/Rscript/kraken_files.R $path ${metadata}
+    """
+}
 
 process miner_comparison {
     cache 'lenient'
@@ -781,15 +803,14 @@ process miner_comparison {
     !params.skip_miner_comparison
     
     input:
-    tuple val(assembler), file(min_comp) from ch_cdhit_mincomp
+    tuple val(assembler), file(min_comp) from ch_cdhit_mincomp.collect().ifEmpty([])
     
     output:
-    file("*")
     file("miner_comparison_mqc.png") into ch_mincomp_multiqc
     
     script:
     """
-    Rscript $baseDir/bin/Rscript/miner_comparison.R ${min_comp}
+    Rscript $projectDir/bin/Rscript/miner_comparison.R ${min_comp}
     cp miner_comparison.png miner_comparison_mqc.png
     """
 }
@@ -798,24 +819,23 @@ process summary {
     cache 'lenient'
     tag "$assembler"
     label 'low_res'
-    publishDir "${params.outdir}/report/tables", mode: 'copy'
+    publishDir "${params.outdir}/report/tables", mode: 'copy', pattern: "*_plot.html"
 
     when:
     !params.skip_violin_plots
 
     input:
-    file(count_table) from ch_covtocounts2_summary
-    tuple val(assembler), file(vOTUs_consensus) from ch_cdhit_summary
+    file(count_table) from ch_covtocounts2_summary.collect().ifEmpty([])
+    tuple val(assembler), file(vOTUs_consensus) from ch_cdhit_summary.collect().ifEmpty([])
     path metadata from ch_metadata_summary
 
     output:
-    file("*")
     file("vOTUs_summary.html") into ch_summary_multiqc
 
     script:
     def path = "${params.outdir}"
     """
-    Rscript $baseDir/bin/Rscript/summary_report.R ${count_table} ${vOTUs_consensus} ${metadata} ${params.sum_viol_var} $path
+    Rscript $projectDir/bin/Rscript/summary_report.R ${count_table} ${vOTUs_consensus} ${metadata} ${params.sum_viol_var} $path
     """
 }
 
@@ -831,16 +851,16 @@ process file_chopper {
     !params.skip_dereplication
 
     input:
-    tuple val(assembler), path(vOTUs_consensus) from ch_cdhit_chopper_c
-    tuple val(assembler), path(vOTUs_proteins) from ch_prodigal_chopper_p
-    tuple val(assembler), path(vOTUs_coords) from ch_prodigal_chopper_g
+    tuple val(assembler), path(vOTUs_consensus) from ch_cdhit_chopper_c.collect().ifEmpty([])
+    tuple val(assembler), path(vOTUs_proteins) from ch_prodigal_chopper_p.collect().ifEmpty([])
+    tuple val(assembler), path(vOTUs_coords) from ch_prodigal_chopper_g.collect().ifEmpty([])
 
     output:
     file("*")
 
     script:
     """
-    Rscript $baseDir/bin/Rscript/file_chopper.R ${vOTUs_consensus} ${vOTUs_proteins} ${vOTUs_coords}
+    Rscript $projectDir/bin/Rscript/file_chopper.R ${vOTUs_consensus} ${vOTUs_proteins} ${vOTUs_coords}
     """
 }
 
@@ -854,22 +874,20 @@ process taxonomy_table {
     !params.skip_dereplication && !skip_viral_taxo && !params.skip_taxonomy_table
 
     input:
-    tuple val(assembler), path(taxonomy_table) from ch_vcontact2_taxonomytable
-    tuple val(assembler), path(vOTUs_consensus) from ch_cdhit_taxonomytable_c
-    tuple val(assembler), path(vOTUs_proteins) from ch_prodigal_taxonomytable_p
-    tuple val(assembler), path(vOTUs_coords) from ch_prodigal_taxonomytable_g
-    tuple val(assembler), path(min_comp) from ch_cdhit_taxonomytable_min
+    tuple val(assembler), path(taxonomy_table) from ch_vcontact2_taxonomytable.collect().ifEmpty([])
+    tuple val(assembler), path(vOTUs_consensus) from ch_cdhit_taxonomytable_c.collect().ifEmpty([])
+    tuple val(assembler), path(vOTUs_proteins) from ch_prodigal_taxonomytable_p.collect().ifEmpty([])
+    tuple val(assembler), path(vOTUs_coords) from ch_prodigal_taxonomytable_g.collect().ifEmpty([])
+    tuple val(assembler), path(min_comp) from ch_cdhit_taxonomytable_min.collect().ifEmpty([])
     path metadata from ch_metadata_taxonomy
 
     output:
-    file("taxonomy_table.html")
     file("taxonomy_table.html") into ch_taxonomytable_multiqc
-    file("kraken_files.html") into ch_krakenfiles_multiqc
 
     script:
     def path = "${params.outdir}"
     """
-    Rscript $baseDir/bin/Rscript/taxonomy_table.R ${taxonomy_table} ${vOTUs_consensus} ${vOTUs_proteins} ${vOTUs_coords} $path ${min_comp} ${metadata}
+    Rscript $projectDir/bin/Rscript/taxonomy_table.R ${taxonomy_table} ${vOTUs_consensus} ${vOTUs_proteins} ${vOTUs_coords} $path ${min_comp} ${metadata}
     """
 }
 
@@ -883,16 +901,16 @@ process heatmap {
     params.metadata && !params.skip_heatmap
 
     input:
-    tuple val(assembler), file(count_table) from ch_covtocounts2_heatmap
-    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_heatmap
+    tuple val(assembler), file(count_table) from ch_covtocounts2_heatmap.collect().ifEmpty([])
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_heatmap.collect().ifEmpty([])
     path metadata from ch_metadata_heatmap
 
     output:
-    file("*")
+    file("*.html")
 
     script:
     """
-    Rscript $baseDir/bin/Rscript/heatmap.R ${count_table} ${taxonomy_table} ${metadata} ${params.heatmap_var}
+    Rscript $projectDir/bin/Rscript/heatmap.R ${count_table} ${taxonomy_table} ${metadata} ${params.heatmap_var}
     """
 }
 
@@ -906,8 +924,8 @@ process alpha_diversity {
     params.metadata && !params.skip_alpha_diversity
 
     input:
-    tuple val(assembler), file(count_table) from ch_covtocounts2_alphadiversity
-    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_alphadiversity
+    tuple val(assembler), file(count_table) from ch_covtocounts2_alphadiversity.collect().ifEmpty([])
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_alphadiversity.collect().ifEmpty([])
     path metadata from ch_metadata_alphadiversity
 
     output:
@@ -915,7 +933,7 @@ process alpha_diversity {
 
     script:
     """
-    Rscript $baseDir/bin/Rscript/alpha_diversity.R ${count_table} ${taxonomy_table} ${metadata} ${params.alpha_var1} ${params.alpha_var2}
+    Rscript $projectDir/bin/Rscript/alpha_diversity.R ${count_table} ${taxonomy_table} ${metadata} ${params.alpha_var1} ${params.alpha_var2}
     """
 }
 
@@ -929,8 +947,8 @@ process betadiversity {
     params.metadata && !params.skip_beta_diversity
 
     input:
-    tuple val(assembler), file(count_table) from ch_covtocounts2_betadiversity
-    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_betadiversity
+    tuple val(assembler), file(count_table) from ch_covtocounts2_betadiversity.collect().ifEmpty([])
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_betadiversity.collect().ifEmpty([])
     path metadata from ch_metadata_betadiversity
 
     output:
@@ -940,7 +958,7 @@ process betadiversity {
 
     script:
     """
-    Rscript $baseDir/bin/Rscript/beta_diversity.R ${count_table} ${taxonomy_table} ${metadata} ${params.beta_var}
+    Rscript $projectDir/bin/Rscript/beta_diversity.R ${count_table} ${taxonomy_table} ${metadata} ${params.beta_var}
     """
 }
 
@@ -954,8 +972,8 @@ process violin_plots {
     !params.skip_violin_plots
 
     input:
-    tuple val(assembler), path(count_table) from ch_covtocounts2_violin
-    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_violin
+    tuple val(assembler), path(count_table) from ch_covtocounts2_violin.collect().ifEmpty([])
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_violin.collect().ifEmpty([])
     path metadata from ch_metadata_violin
 
     output: 
@@ -963,7 +981,7 @@ process violin_plots {
 
     script:
     """
-    Rscript $baseDir/bin/Rscript/violin_plot.R ${count_table} ${taxonomy_table} ${metadata} ${params.violin_var}
+    Rscript $projectDir/bin/Rscript/violin_plot.R ${count_table} ${taxonomy_table} ${metadata} ${params.violin_var}
     """
 }
 
@@ -971,7 +989,7 @@ process violin_plots {
 
 process multiqc {
     cache 'lenient'
-    tag "$assembler"
+    tag "Generating the report..."
     label 'low_res'
     publishDir "${params.outdir}/report/", mode: 'copy'
 
@@ -999,11 +1017,11 @@ process multiqc {
 
     script:
     """
-    python $baseDir/bin/python/spacer_taxo.py
+    python $projectDir/bin/python/spacer_taxo.py
     multiqc \
-    --config $baseDir/bin/multiqc/multiqc_config.yaml \
+    --config $projectDir/bin/multiqc/multiqc_config.yaml \
     --filename "MetaPhage_report.html" \
-    --exclude general_stats $baseDir/bin/multiqc/. -f \
+    --exclude general_stats $projectDir/bin/multiqc/. -f \
     ${min_comp} vOTUs_summary_mqc.html taxonomy_table_mqc.html ${fastp} ${kraken2} kraken_files_mqc.html ${metaquast}
     """
 }
