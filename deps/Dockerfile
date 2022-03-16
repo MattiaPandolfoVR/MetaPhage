@@ -1,6 +1,6 @@
 FROM nfcore/base:1.9
 LABEL authors="Andrea Telatin" \
-      description="Docker image containing all software requirements for the telatin/nextflow-example project"
+      description="Docker image containing all software requirements for the MetaPhage project"
 
 # Install the conda environment
 COPY env.yaml /environment.yml
