@@ -11,10 +11,15 @@ import concurrent.futures
 try:
   import wget
 except ImportError:
-  eprint(f"{software} requires wget to be installed")
+  print(f"{software} requires wget to be installed", file=sys.stderr)
   quit()
 start = time.perf_counter()
 progresses = {"_printed": []}
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+# Initial     #"url":    "https://zenodo.org/record/5879332/files/2022-01-inphared.tar.gz?download=1",
 
 config = """
 {
@@ -64,13 +69,13 @@ config = """
     "cleanup": "rm phigaro.*"
   },
   "vcontact2": {
-    "name": "vConTACT2",
-    "url": "https://zenodo.org/record/5879332/files/2022-01-inphared.tar.gz?download=1",
-    "md5": "8c66e1b0c8359dff2a11a407826efa02",
-    "file": "2022-01-inphared.tar.gz",
+    "name":    "vConTACT2",
+    "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
+    "md5":     "72c9a0be3b93364e44338ced659341fe",
+    "file":    "2022-01-inphared.tar.gz",
     "provides": ["inphared"],
-    "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm *inphared*.tar.gz"
+    "expand":   ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+    "cleanup":  "rm *inphared*.tar.gz"
   }
 }
 """
@@ -81,9 +86,7 @@ except Exception as e:
   eprint(f"Invalid JSON database: {e}")
   quit()
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs) 
- 
+
 def fill_template(template, source):
   matches = re.findall(r'\{(.*?)\}', template)
   for m in matches:
@@ -119,7 +122,6 @@ def getDatabase(package, attempts=5):
   for cmd_template in package["expand"]:
     cmd = fill_template(cmd_template, package)
     shell_commands.append(cmd)
-    
   eprint(f" 📦  Preparing to download {package['name']}") 
   
   for i in range(attempts + 1):
