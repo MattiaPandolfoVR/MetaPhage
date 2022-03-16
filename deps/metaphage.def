@@ -1,0 +1,29 @@
+Bootstrap: docker
+From: centos:centos7.6.1810
+
+%files
+    ./env.yaml /etc/env.yaml
+
+%environment
+    source /opt/software/conda/bin/activate /opt/software/conda_env
+
+
+%post
+    yum -y install epel-release wget which nano curl zlib-devel
+    yum -y groupinstall "Development Tools"
+
+    mkdir -p /opt/software
+
+    cd /opt/software
+    curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    sh ./Miniconda3-latest-Linux-x86_64.sh -p /opt/software/conda -b
+
+    /opt/software/conda/bin/conda config --add channels defaults
+    /opt/software/conda/bin/conda config --add channels conda-forge
+    /opt/software/conda/bin/conda config --add channels bioconda
+    /opt/software/conda/bin/conda install -y -c conda-forge mamba
+    ls -l /etc/*.yaml
+    /opt/software/conda/bin/mamba env create -p /opt/software/conda_env  --file /etc/env.yaml
+    source /opt/software/conda/bin/activate /opt/software/conda_env
+
+    cd /opt/software
