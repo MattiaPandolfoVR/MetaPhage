@@ -14,8 +14,15 @@ import tempfile
 import csv
 import multiprocessing
 
+meminfo = {}
+meminfo["MemTotal"] = 8
+try:
+    if os.path.exists("/proc/meminfo"):
+        meminfo = dict((i.split()[0].rstrip(':'),int(i.split()[1])) for i in open('/proc/meminfo').readlines())
+except Exception:
+    print("WARNING: Could not read memory info from /proc/meminfo. Assuming 8GB of RAM.", file=sys.stderr)
+    pass
 
-meminfo = dict((i.split()[0].rstrip(':'),int(i.split()[1])) for i in open('/proc/meminfo').readlines())
 MEM = round(meminfo['MemTotal'] / 1000000)
 CORES = multiprocessing.cpu_count()
 
@@ -75,8 +82,15 @@ class Metaphage:
 
         // INPUT PATHS
         readPath = "$readPath"
+        fqpattern = "$fqpattern"
         metaPath = "$metaPath"
+        dbPath = "$dbPath"
 
+        // OUTPUT/WORKING PATHS
+        outdir = "$outdir"
+        temp_dir = "$temp_dir"
+
+        // METADATA 
         metadata = $metadata
         virome_dataset = true
         singleEnd = $singleEnd
@@ -87,9 +101,7 @@ class Metaphage:
         beta_var = "$beta_var" 
         violin_var = "$violin_var" 
 
-        // OUTPUT DIRS
-        outdir = "$outdir"
-        temp_dir = "$temp_dir"
+
     }
     """)
 
@@ -100,7 +112,7 @@ class Metaphage:
         # Self dir is the parent dir of bin
         self.dir        = os.path.dirname(self.bins)
         self.input      = os.path.realpath(args.readsdir)
-        
+        self.pattern    = ""
         
         # Copy metadata to metadatadir
         if args.metadata is not None:
@@ -148,7 +160,9 @@ class Metaphage:
             os.path.join(self.dir, "main.nf"),
             '--projectName', self.project,
             '--readPath', self.input,
+            '--fqpattern', self.pattern,
             '--metaPath', os.path.dirname(self.metadata),
+            '--dbPath', self.db,
             '--metadata', 'true' if self.metadata else 'false',
             '--singleEnd', 'true' if self.singleEnd else 'false',
             '--sum_viol_var', self.vSumViol,
@@ -166,7 +180,9 @@ class Metaphage:
             dictionary = {
                 'projectName': self.project,
                 'readPath': self.input,
+                'fqpattern': self.pattern,
                 'metaPath': os.path.dirname(self.metadata),
+                'dbPath': self.db,
                 'metadata': 'true' if self.metadata else 'false',
                 'singleEnd': 'true' if self.singleEnd else 'false',
                 'sum_viol_var': self.vSumViol,
@@ -239,28 +255,43 @@ class Metaphage:
 
     def setSamples(self):
         extensions = ['.fastq', '.fq', '.fastq.gz', '.fq.gz']
-        tags = ['_1', '_2', '_R1', '_R2']
+        tags = ['_1', '_2', '_R1_001', '_R2_001', '_R1', '_R2']
+        patterns = {'_1' : '_{1,2}', '_2' : '_{1,2}', '_R1_001' : '_R{1,2}_001', '_R2_001' : '_R{1,2}_001', '_R1' : '_R{1,2}', '_R2' : '_R{1,2}'}
         samples = {}
-        for file in os.listdir(self.input):
+        thispattern = []
+        for file in os.listdir(self.input): 
+            original = file
             # Check if one of the extensions is at the end of the file
             for ext in extensions:
-                if file.endswith(ext):
-                    # Remove ext
-                    file = file[:-len(ext)]
-                    # Check if one of the tags is in the file
-
-                    for tag in tags:
-                        if tag in file:
-                            file = file[:-len(tag)]
-                            if file in samples:
-                                samples[file] += 1
-                            else:
-                                samples[file] = 1
-                            break
-                    break
+                    if file.endswith(ext):
+                        # Remove ext
+                        file = file[:-len(ext)]
+                        # Check if one of the tags is in the file
+                        for tag in tags:
+                            if tag in file:
+                            
+                                # Substitute globalextension tag with X
+                                pattern = original[-len(tag)-len(ext):].replace(tag, patterns[tag]) 
+                                if pattern not in thispattern:
+                                    thispattern.append(pattern)
+                                    
+                                file = file[:-len(tag)]
+                                if file in samples:
+                                    samples[file] += 1
+                                else:
+                                    samples[file] = 1
+                                break
+                        break
+        if len(thispattern) != 1:
+            print(f"Error: more than one pattern found for the samples {thispattern}")
+            self.valid = False
+        else:
+            self.pattern = thispattern[0]
+        
         # Check the value of samples
         if len(samples) == 0:
             print("ERROR: No fastq files found in {}".format(self.input), file=sys.stderr)
+            print("  Valid extensions are .fq, .fastq (.gz). Pair tags are _1/_2 or ) _R1/_R2", file=sys.stderr)
             self.valid = False
         
         paired = 0
