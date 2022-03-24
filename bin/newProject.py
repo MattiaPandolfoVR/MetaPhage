@@ -107,11 +107,16 @@ class Metaphage:
 
   
     def __init__(self, args) -> None:
-        metadatadir = tempfile.mkdtemp()
+        
         self.bins = os.path.dirname(os.path.realpath(__file__))
         # Self dir is the parent dir of bin
         self.dir        = os.path.dirname(self.bins)
         self.input      = os.path.realpath(args.readsdir)
+        metadatadir     = os.path.join(self.input, "metadata")
+        if (not os.path.exists(metadatadir)):
+            os.mkdir(metadatadir)
+        else:
+            metadatadir = tempfile.mkdtemp(prefix="MetaPhage_", suffix="_metadata", dir=self.input)
         self.pattern    = ""
         
         # Copy metadata to metadatadir

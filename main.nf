@@ -21,7 +21,7 @@ def welcomeScreen() {
 }
 def cursystem = System.properties['os.name']
 welcomeScreen()
-
+params.fqpattern = "_{1,2}.fastq.gz"
 /* INPUT FILES */
 
 // Sequences
@@ -32,7 +32,7 @@ if (params.readPath) {
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPath in your config file!" }
             .set { ch_reads_fastp } 
     } else {
-        Channel.fromFilePairs("${params.readPath}/*{1,2}*.fastq.gz", checkIfExists: true)
+        Channel.fromFilePairs("${params.readPath}/*" + params.fqpattern, checkIfExists: true)
             .ifEmpty { exit 1, "No input files supplied! Please check params.readPath in your config file!" }
             .set { ch_reads_fastp }
     }
@@ -198,7 +198,7 @@ process kraken2 {
     tuple val(seqID), file(reads) from ch_trimm_kraken2
 
     output:
-    file("${seqID}_output.txt")
+    file("${seqID}_output.txt") into ch_kraken2_output
     tuple val(seqID), file("${seqID}_report.txt") into (ch_kraken2_krona, ch_kraken2_multiqc)
 
     script:
@@ -782,6 +782,7 @@ process kraken_file {
 
     input:
     path metadata from ch_metadata_kraken_files
+    path locker from ch_kraken2_output
 
     output:
     file("kraken_files.html") into ch_krakenfiles_multiqc
