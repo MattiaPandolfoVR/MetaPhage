@@ -1,0 +1,8 @@
+Sample,Infant_feeding_type,Infant_formula_type,Infant_delivery_type,Infant_gender
+Sample3218,Formula,cow-milk based,C-Section without labor,Male
+Sample3221,Formula,cow-milk based,C-Section without labor,Male
+Sample3248,Formula,cow-milk based,C-Section without labor,Male
+Sample3247,Formula,soy-protein based,C-Section without labor,Female
+Sample3084,Formula,cow-milk based,Spontaneous vaginal delivery,Female
+Sample2914,Formula,cow-milk based,Spontaneous vaginal delivery,Female
+Sample2969,Formula,cow-milk based,Spontaneous vaginal delivery,Male

@@ -1,0 +1,21 @@
+title: MetaPhage
+repository: MattiaPandolfoVR/MetaPhage
+lang: en
+description: "MetaPhage - reads to report metaviromics"
+
+readme_index:
+  with_frontmatter: true
+
+theme: null
+
+remote_theme: telatin/docs-theme
+
+plugins:
+  - jekyll-remote-theme
+  - jemoji
+  - jekyll-gist
+
+markdown: CommonMarkGhPages
+commonmark:
+  options: ['SMART']
+  extensions: ['table']
