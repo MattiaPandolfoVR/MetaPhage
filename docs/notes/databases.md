@@ -40,3 +40,5 @@ of the repository.
 pip install wget
 python ${MFDIR}/bin/python/db_manager.py -o ${MFDIR}/db/ -m 4
 ```
+
+The whole process takes about 5-10 minutes.

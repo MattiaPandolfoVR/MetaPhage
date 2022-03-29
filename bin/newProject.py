@@ -13,7 +13,7 @@ from string import Template
 import tempfile
 import csv
 import multiprocessing
-
+__version__ = "1.0.0"
 meminfo = {}
 meminfo["MemTotal"] = 8
 try:
@@ -256,8 +256,10 @@ class Metaphage:
             self.has_access = True
         except FileNotFoundError or subprocess.CalledProcessError:
             self.has_access = False
+            print("INFO: this environment is not ready to run MetaPhage. Remember to use a container or activate the environment.", file=sys.stderr)
+        except Exception:
+            self.has_access = False
             print("INFO: this environment is not suitable for metaphage. Use a container or activate the environment.", file=sys.stderr)
-
     def setSamples(self):
         extensions = ['.fastq', '.fq', '.fastq.gz', '.fq.gz']
         tags = ['_1', '_2', '_R1_001', '_R2_001', '_R1', '_R2']
@@ -391,8 +393,12 @@ if __name__ == "__main__":
     other.add_argument("--tmp", dest="tempdir",help="Temporary directory [default: %(default)s]", default=os.environ.get("METAPHAGE_TMP", "/tmp") )
     other.add_argument("--work", dest="workingdir", help="Nextflow work directory [default: %(default)s]", default=os.environ.get("METAPHAGE_WD", "/tmp") )
     other.add_argument("--verbose",   action="store_true", help="Enable verbose output")
+    other.add_argument("--version",   action="store_true", help="Print version and exit")
     args = parser.parse_args()
 
+    if args.version:
+        print(f"{__version__}")
+        sys.exit(0)
     metaphage = Metaphage(args)
     if not metaphage.valid:
         print("ERROR: Configuration failed")

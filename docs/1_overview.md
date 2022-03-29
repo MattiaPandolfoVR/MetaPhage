@@ -48,5 +48,3 @@ in the repository.
 
 
 ![MetaPhage Schematics (workflow SVG)]({{ site.baseurl }}{% link imgs/metaphage.drawio.svg %})
-
-
