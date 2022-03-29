@@ -144,3 +144,46 @@ process {
     clusterOptions = ' --constraint=intel '
 }
 ```
+
+## The execution
+
+If the script starts properly, this is what the Nextflow pipeline
+will look like in the terminal:
+
+```text
+ __  __      _        _____  _
+|  \/  |    | |      |  __ \| |
+| \  / | ___| |_ __ _| |__) | |__   __ _  __ _  ___
+| |\/| |/ _ \ __/ _` |  ___/| '_ \ / _` |/ _` |/ _ \
+| |  | |  __/ || (_| | |    | | | | (_| | (_| |  __/
+|_|  |_|\___|\__\__,_|_|    |_| |_|\__,_|\__, |\___|
+                                          __/ |
+                                         |___/
+====================================================
+              
+ Input:      /share/MetaPhage-0.2.0/demo
+ Metadata:   /share/MetaPhage-0.2.0/demo/MetaPhage_7n2mhdur_metadata
+ Databases:  /share/MetaPhage-0.2.0/db
+found metadata!
+
+[9c/143f92] process > csv_validator (Checking metadata format...)   [100%] 1 of 1 
+[05/f6c251] process > db_manager (Downloading missing databases...) [100%] 1 of 1 
+[5d/666333] process > fastp (SRR8653090)                            [100%] 10 of 10
+[05/26146e] process > remove_phix (SRR8653221)                      [100%] 10 of 10
+[e5/6c3e3b] process > kraken2 (SRR8652969)                          [ 30%] 3 of 10
+[-        ] process > krona                                         [  0%] 0 of 3
+[3b/b73173] process > megahit (SRR8652969)                          [ 20%] 2 of 10
+[-        ] process > metaquast                                     [  0%] 0 of 2
+[-        ] process > vibrant                                       [  0%] 0 of 2
+[-        ] process > phigaro                                       [  0%] 0 of 2
+[-        ] process > virsorter                                     [  0%] 0 of 2
+[-        ] process > virfinder                                     [  0%] 0 of 2
+[-        ] process > cdhit                                         -
+[-        ] process > prodigal                                      -
+[-        ] process > bowtie2_derep                                 -
+[-        ] process > covtocounts2                                  -
+...
+```
+
+Each line represents a step (e.g. *kraken2*), and for each step you have the number
+of samples processed over the total.
