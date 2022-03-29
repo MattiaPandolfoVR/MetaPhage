@@ -10,7 +10,7 @@ permalink: /overview
 A reads to report workflow for metavirome analysis:
 
 * Raw reads cleanup and profiling with [Kraken2](https://ccb.jhu.edu/software/kraken2/)
-* Assembly with [SPAdes](https://github.com/ablab/spades#readme) or [Megahit](https://github.com/voutcn/megahit#readme) (overview with [MetaQuast](http://quast.sourceforge.net/metaquast))
+* Assembly with [Megahit](https://github.com/voutcn/megahit#readme) (overview with [MetaQuast](http://quast.sourceforge.net/metaquast))
 * Phage mining with:
   * [VirFinder](https://github.com/jessieren/VirFinder#readme)
   * [VirSorter](https://github.com/simroux/VirSorter#readme)
@@ -47,6 +47,6 @@ in the repository.
 ## The workflow
 
 
-![MetaPhage Schematics]({{ site.baseurl }}{% link imgs/workflow.svg %})
+![MetaPhage Schematics (workflow SVG)]({{ site.baseurl }}{% link imgs/metaphage.drawio.svg %})
 
 

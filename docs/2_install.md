@@ -13,9 +13,9 @@ The dependencies can be installed in a [Conda environment](https://docs.conda.io
 
 The pipeline requires:
 
-* A set of dependencies (provided via Conda or Singularity or Docker)
+* A set of dependencies (provided via Conda or [Singularity image]({{ site.baseurl }}{% link notes/singularity.md %}) or [Docker container]({{ site.baseurl }}{% link notes/docker.md %}))
 * A Linux system capable of performing *de novo* assemblies (a single local machine or an HPC cluster)
-* A set of databases (installable with a script provided in the repository)
+* A set of **databases** (installable with a script provided in the repository, see [here]({{ site.baseurl }}{% link notes/databases.md %}))
 
 ## Installation
 
