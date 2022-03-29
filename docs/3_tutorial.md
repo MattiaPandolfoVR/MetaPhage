@@ -5,6 +5,10 @@ permalink: /tutorial
 
 # Tutorial
 
+This tutorial will guide through the download of MetaPhage, its {{ site.baseurl }}{% link notes/databases.md %}
+and dependencies, and a test dataset, and show how to run MetaPhage on it 
+(either using a Conda environment or a Singularity image).
+
 ## Before we start
 
 This tutorial will show how to run the pipeline using either Conda or Singularity as package providers. **Linux** is required.
@@ -13,6 +17,9 @@ This tutorial will show how to run the pipeline using either Conda or Singularit
 * Ensure you have Miniconda or Singularity installed (try `conda info` or `singularity --version`)
 
 ## Download MetaPhage
+
+We recommend downloading a release, to ensure reproducible results.
+This tutorial is based on version 0.2.0.
 
 ```bash
 # Download MetaPhage and expand it
@@ -104,9 +111,9 @@ Where:
 To run the pipeline locally you will need at least 64 Gb of RAM and 16 CPUs,
 provided that the appropriate *conda environment is active*:
 
-
 :bulb: If you have less, see 
-[here]({{ site.baseurl }}{% link notes/resources.md %}))
+[here]({{ site.baseurl }}{% link notes/resources.md %})
+
 ```bash
 cd $METAPHAGE_DIR
 nextflow run main.nf -c demo.conf
