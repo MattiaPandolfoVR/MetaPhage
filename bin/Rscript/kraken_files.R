@@ -1,3 +1,7 @@
+#!/usr/bin/env Rscript
+# A script to generate the HTML table with the links
+# to Kraken/Krona files
+
 shhh <- suppressPackageStartupMessages
 shhh(library(DT))
 shhh(library(readr))
@@ -23,7 +27,7 @@ if (! file.exists(kraken_path)){
   stop("ERROR: taxonomy/kraken2 not found in: ", kraken_path, "\n")
 }
 if (! file.exists(krona_path)){
-  stop("ERROR: taxonomy/krona not found in: ", krona_path, "\n")
+  cat("WARNING: taxonomy/krona not found in: ", krona_path, "\n")
 }
 # Check if kraken_path and krona_path exist
 

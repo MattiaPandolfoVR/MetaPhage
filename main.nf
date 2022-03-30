@@ -228,7 +228,7 @@ process krona {
     tuple val(seqID), file(report) from ch_kraken2_krona
 
     output:
-    file("${seqID}_*_krona_abundancies.html")
+    file("${seqID}_*_krona_abundancies.html") into ch_krona_output
 
     script:
     """
@@ -782,7 +782,8 @@ process kraken_file {
 
     input:
     path metadata from ch_metadata_kraken_files
-    path locker from ch_kraken2_output
+    file(kraken) from ch_kraken2_output.collect()
+    file(krona) from ch_krona_output.collect().ifEmpty([])
 
     output:
     file("kraken_files.html") into ch_krakenfiles_multiqc
