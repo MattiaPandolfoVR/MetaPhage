@@ -23,7 +23,7 @@ custom_data:
   my_taxonomy_table:
     id: "taxonomy_table"
     section_name: "Taxonomy Table"
-    description: "Custom vOTUs taxonomy generated over vConTACT outputs."
+    description: "Custom vOTUs taxonomy generated over vConTACT outputs. More details on results interpetation can be found <a href=https://github.com/lazzarigioele/graphanalyzer/#interpretation-of-results>here</a>."
   my_kraken_files:
     id: "kraken_files"
     section_name: "Kraken2 and Krona files"
