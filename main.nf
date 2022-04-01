@@ -1,6 +1,8 @@
 // Default command to launch is:
 //                              nextflow run main.nf -profile [load_profile],[dataset_profile]
 //                              where [load_profile] is the profile for your machine and [dataset_profile] the one for your datasets paths and variables!
+params.fqpattern = "_{1,2}.fastq.gz"
+
 def welcomeScreen() {
     println """
         ====================================================
@@ -18,10 +20,12 @@ def welcomeScreen() {
     println " Input:      " + params.readPath
     println " Metadata:   " + params.metaPath
     println " Databases:  " + params.dbPath
+    println " Output:     " + params.outdir
+    println " Resources:  " + params.max_cpus + " CPUs, " + params.max_memory + " RAM"
 }
 def cursystem = System.properties['os.name']
 welcomeScreen()
-params.fqpattern = "_{1,2}.fastq.gz"
+
 /* INPUT FILES */
 
 // Sequences
@@ -44,7 +48,7 @@ if (params.metadata == true) {
     Channel.fromPath("${params.metaPath}/*metadata.csv", checkIfExists: true)
         .ifEmpty { exit 1, "No metadata file found! Please check params.metadata in your config file!"}
         .set { ch_metadata_checker }
-    println "found metadata!"
+    //println " Metadata loaded."
 } else {
     println "No metadata supplied! Metadata are mandatory for beta diversity and heatmaps plots!"
     println "If you are interested in these plots, simply provide a metadata .csv file using params.metadata in your config file!"
@@ -203,7 +207,7 @@ process kraken2 {
 
     script:
     def inp = params.singleEnd ? "${reads}" :  "--paired ${reads[0]} ${reads[1]}"
-    println "running"
+    //println "running"
     """
     kraken2 \
     --report-zero-counts \
@@ -308,7 +312,7 @@ ch_vibrant = ch_dbm_vibrant.splitCsv().flatMap { it -> "${it[2]}" + "/${params.m
 process vibrant {
     cache 'lenient'
     tag "$assembler-$seqID"
-    label 'big_res'
+    label 'med_res'
     publishDir "${params.outdir}/mining/vibrant/${assembler}", mode: 'copy'
 
     when:
@@ -353,7 +357,7 @@ process vibrant {
 process phigaro {
     errorStrategy 'ignore'
     tag "$assembler-$seqID"
-    label 'big_res'
+    label 'med_res'
     publishDir "${params.outdir}/mining/phigaro/${assembler}", mode: 'copy', pattern: "${seqID}_phigaro"
 
     when:
@@ -394,7 +398,7 @@ ch_virsorter = ch_dbm_virsorter.splitCsv().flatMap { it -> "${it[3]}" + "/${para
 process virsorter {
     cache 'lenient'
     tag "$assembler-$seqID"
-    label 'big_res'
+    label 'med_res'
     publishDir "${params.outdir}/mining/virsorter/${assembler}", mode: 'copy'
 
     when:
@@ -444,7 +448,7 @@ process virsorter {
 process virfinder {
     cache 'lenient'
     tag "$assembler-$seqID"
-    label 'low_res'
+    label 'big_res'
     publishDir "${params.outdir}/mining/virfinder/${assembler}/${seqID}_virfinder", mode: 'copy'
 
     when:
@@ -729,6 +733,13 @@ process vcontact2 {
     --vcs-mode ClusterONE \
     --c1-bin ${clusterONE} \
     --output-dir ./
+    """
+    stub:
+    """
+    if [[ -e ${projectDir}/tests/assets/vcontact2/c1/ntw.gz ]]; then
+        cp ${projectDir}/tests/assets/vcontact2/*gz .
+        gunzip *gz
+    fi
     """
 }
 

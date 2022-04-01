@@ -16,3 +16,4 @@ conf/datasets/mattia.config
 datasets/*
 local
 *.simg
+local_tests/
