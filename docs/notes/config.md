@@ -75,7 +75,7 @@ actvitate it before running the workflow.
 ### Singularity
 
 If you want to use Singularity, you have to
-[download the image]({{ site.baseurl }}{% notes/singularity.md %}) first and then
+[download the image]({{ site.baseurl }}{% link notes/singularity.md %}) first and then
 either add `-with-singularity PATH_TO_IMAGE` to the pipeline execution, or add
 
 ```groovy
@@ -87,7 +87,7 @@ process {
 
 ### Docker
 
-A Docker image is also available, as [described here]({{ site.baseurl }}{% notes/docker.md %}).
+A Docker image is also available, as [described here]({{ site.baseurl }}{% link notes/docker.md %}).
 
 ## Nextflow documentation
 
