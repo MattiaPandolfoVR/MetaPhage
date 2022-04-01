@@ -19,16 +19,16 @@ This tutorial will show how to run the pipeline using either Conda or Singularit
 ## Download MetaPhage
 
 We recommend downloading a release, to ensure reproducible results.
-This tutorial is based on version 0.2.0.
+This tutorial is based on version 0.3.0.
 
 ```bash
 # Download MetaPhage and expand it
-wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.2.0.tar.gz
-tax xvf v0.2.0.tar.gz
+wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.3.0.tar.gz
+tax xvf v0.3.0.tar.gz
 
 # Keep note of the installation directory:
 # If you move away you can return with `cd "$METAPHAGE_DIR"`
-export METAPHAGE_DIR=$(readlink -f MetaPhage-0.2.0)
+export METAPHAGE_DIR=$(readlink -f MetaPhage-0.3.0)
 ```
 
 ## Download the databases
@@ -161,9 +161,9 @@ will look like in the terminal:
                                          |___/
 ====================================================
               
- Input:      /share/MetaPhage-0.2.0/demo
- Metadata:   /share/MetaPhage-0.2.0/demo/MetaPhage_7n2mhdur_metadata
- Databases:  /share/MetaPhage-0.2.0/db
+ Input:      /share/MetaPhage-0.3.0/demo
+ Metadata:   /share/MetaPhage-0.3.0/demo/MetaPhage_7n2mhdur_metadata
+ Databases:  /share/MetaPhage-0.3.0/db
 found metadata!
 
 [9c/143f92] process > csv_validator (Checking metadata format...)   [100%] 1 of 1 
