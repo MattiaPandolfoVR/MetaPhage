@@ -8,15 +8,11 @@ import json, argparse, os, time, re, sys
 import concurrent.futures
 
 # Try importing wget
-withWget = False
 try:
   import wget
-  withWget = True
 except ImportError:
-  withWget = False
   print(f"{software} requires wget to be installed", file=sys.stderr)
-
-
+  quit()
 start = time.perf_counter()
 progresses = {"_printed": []}
 
@@ -119,19 +115,6 @@ def globalbar(cur, tot, step=100):
     time.sleep(0.1)
     eprint(f"Downloading: {ratio}% done")
 
-def downloadPackage(url, dest):
-  if withWget:
-    try:
-      wget.download(url, bar=globalbar)
-    except Exception as e:
-      eprint(f"Error downloading {url}:\n{e}")
-  else:
-    try:
-      os.system(f"wget -q -O '{dest}' '{url}'")
-    except Exception as e:
-      eprint(f"Error downloading {url}:\n{e}")
-
-  
 def getDatabase(package, attempts=5):
   starttime = time.perf_counter()
   package["downloaded"] = False
@@ -143,7 +126,7 @@ def getDatabase(package, attempts=5):
   
   for i in range(attempts + 1):
     try:
-      downloadPackage(package["url"], package["file"])
+      wget.download(package["url"], bar=globalbar )
       package["downloaded"] = True
       break
     except Exception as e:

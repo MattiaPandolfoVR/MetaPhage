@@ -5,15 +5,18 @@ permalink: /tutorial
 
 # Tutorial
 
-This tutorial will guide through the download of MetaPhage, its {{ site.baseurl }}{% link notes/databases.md %}
-and dependencies, and a test dataset, and show how to run MetaPhage on it 
+This tutorial will guide through the download of MetaPhage 0.3.0, its 
+{{ site.baseurl }}{% link notes/databases.md %}
+and dependencies, and a test dataset, and show how to run MetaPhage on it
 (either using a Conda environment or a Singularity image).
 
 ## Before we start
 
-This tutorial will show how to run the pipeline using either Conda or Singularity as package providers. **Linux** is required.
+This tutorial will show how to run the pipeline using either
+Conda or Singularity as package providers. **Linux** is required.
 
-* Ensure you have Nextflow installed (try `nextflow -version`), or install it [as described here](https://www.nextflow.io/docs/latest/getstarted.html#installation)
+* Ensure you have Nextflow installed (try `nextflow -version`),
+* or install it [as described here](https://www.nextflow.io/docs/latest/getstarted.html#installation)
 * Ensure you have Miniconda or Singularity installed (try `conda info` or `singularity --version`)
 
 ## Download MetaPhage
@@ -38,7 +41,10 @@ We will download the databases before starting the pipeline, as
 
 ```bash
 # This will download the database in "$METAPHAGE_DIR/db/"
+# Note that installing python-wget will no longer be needed in future releases
+
 cd $METEAPHAGE_DIR
+python3 -m pip install wget
 ./bin/python/db_manager.py -o ./db/ -m 6
 ```
 
