@@ -56,6 +56,7 @@ conda env create -n MetaPhage --file env.yaml
 ```
 
 To execute the pipeline, remember to activate the environment first:
+
 ```bash
 conda activate MetaPhage
 ```

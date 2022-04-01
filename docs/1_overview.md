@@ -24,11 +24,13 @@ A reads to report workflow for metavirome analysis:
 
 The workflow is written in [Nextflow](https://nextflow.io/), a DSL and task
 orchestrator that allows the reproducible execution and scale up from:
+
 * local execution (e.g. virtual machine)
 * HPC (Slurm, PBS...)
 * Cloud (Amazon, Google,...)
 
 The dependencies can be easily installed, via:
+
 * Docker
 * Singularity
 * Conda environment
