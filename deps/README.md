@@ -18,6 +18,7 @@ graph TD;
  FASTP --> SEQ_SCREEN;
  SEQ_SCREEN --> KRAKEN2;
  KRAKEN2 --> KRONA_plot;
+ KRONA_plot -->  R_Diversity_Scripts;
  SEQ_SCREEN --> ASSEMBLY;
  ASSEMBLY --> QUAST;
  ASSEMBLY --> VirFinder:::miner;
