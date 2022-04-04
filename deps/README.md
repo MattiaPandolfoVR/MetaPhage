@@ -9,8 +9,8 @@ file is provided to:
 
 The environment contains all the tools used in the pipeline and Nextflow itself:
 
+ 
 ```mermaid
-
 graph TD;
  style input fill:#ff9,stroke:#333,stroke-width:2px
  classDef miner fill:#f99,stroke:#333,stroke-width:2px
@@ -33,8 +33,9 @@ graph TD;
  CD-HIT --> PRODIGAL;
  PRODIGAL --> vConTACT2;
  vConTACT2 --> GraphAnalyzer;
- GraphAnalyzer --> REPORT;
- BAMTOCOUNTS --> REPORT;
+ GraphAnalyzer --> "R Diversity Scripts";
+ BAMTOCOUNTS --> "R Diversity Scripts";
  FASTP --> REPORT;
  QUAST --> REPORT;
- ```
+ "R Diversity Scripts" --> REPORT; 
+```
