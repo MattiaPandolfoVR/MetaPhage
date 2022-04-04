@@ -33,9 +33,9 @@ graph TD;
  CD-HIT --> PRODIGAL;
  PRODIGAL --> vConTACT2;
  vConTACT2 --> GraphAnalyzer;
- GraphAnalyzer --> "R Diversity Scripts";
- BAMTOCOUNTS --> "R Diversity Scripts";
+ GraphAnalyzer --> R_Diversity_Scripts;
+ BAMTOCOUNTS --> R_Diversity_Scripts;
  FASTP --> REPORT;
  QUAST --> REPORT;
- "R Diversity Scripts" --> REPORT; 
+ R_Diversity_Scripts --> REPORT; 
 ```
