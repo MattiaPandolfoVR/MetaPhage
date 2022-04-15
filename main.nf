@@ -79,8 +79,9 @@ process csv_validator {
     path(metadata) from ch_metadata_checker
 
     output:
-    path("metadata.csv") into ( ch_metadata_kraken_files, ch_metadata_summary, ch_metadata_taxonomy,
-     ch_metadata_alphadiversity, ch_metadata_betadiversity, ch_metadata_heatmap, ch_metadata_violin)
+    path("metadata.csv") into (ch_metadata_kraken_files, ch_metadata_summary, ch_metadata_phylo,
+    ch_metadata_taxonomy, ch_metadata_alphadiversity, ch_metadata_betadiversity, ch_metadata_heatmap,
+    ch_metadata_violin)
 
     script:
     """
@@ -597,7 +598,7 @@ process covtocounts2 {
     publishDir "${params.outdir}/report/tables", mode: 'copy'
 
     when:
-    !params.skip_report
+    !params.skip_dereplication
 
     input:
     tuple val(assembler), file(sortedbam) from ch_bowtie2bam_covtocounts2.groupTuple()
@@ -605,11 +606,8 @@ process covtocounts2 {
 
     output:
     file("count_table.csv")
-    file("count_table.csv") into ch_covtocounts2_summary
-    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_betadiversity
-    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_alphadiversity
-    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_heatmap
-    tuple val(assembler), file("count_table.csv") into ch_covtocounts2_violin
+    tuple val(assembler), file("count_table.csv") into (ch_covtocounts2_summary, ch_covtocounts2_phylo, ch_covtocounts2_heatmap,
+    ch_covtocounts2_alphadiversity, ch_covtocounts2_betadiversity, ch_covtocounts2_violin)
 
     script:
     """
@@ -760,7 +758,8 @@ process graphanalyzer {
 
     output:
     file("*") optional true
-    tuple val(assembler), file("taxonomy_table.csv") into (ch_vcontact2_taxonomytable, ch_vcontact2_heatmap, ch_vcontact2_alphadiversity, ch_vcontact2_betadiversity, ch_vcontact2_violin) optional true
+    tuple val(assembler), file("taxonomy_table.csv") into (ch_vcontact2_phylo, ch_vcontact2_taxonomytable,
+    ch_vcontact2_heatmap, ch_vcontact2_alphadiversity, ch_vcontact2_betadiversity, ch_vcontact2_violin) optional true
 
     script:
     """
@@ -838,7 +837,7 @@ process summary {
     !params.skip_violin_plots
 
     input:
-    file(count_table) from ch_covtocounts2_summary.collect().ifEmpty([])
+    tuple val(assembler), file(count_table) from ch_covtocounts2_summary.collect().ifEmpty([])
     tuple val(assembler), file(vOTUs_consensus) from ch_cdhit_summary.collect().ifEmpty([])
     path metadata from ch_metadata_summary
 
@@ -849,6 +848,30 @@ process summary {
     def path = "${params.outdir}"
     """
     Rscript $projectDir/bin/Rscript/summary_report.R ${count_table} ${vOTUs_consensus} ${metadata} ${params.sum_viol_var} $path
+    """
+}
+
+process phylo_obj {
+    cache 'lenient'
+    tag "$assembler"
+    label 'min_res'
+    publishDir "${params.outdir}/report/tables", mode: 'copy', pattern: "*.rds"
+
+    when:
+    params.metadata && !params.skip_dereplication && !params.skip_viral_taxo && !params.skip_vcontact2 && !params.skip_graphanalyzer
+
+    input:
+    tuple val(assembler), file(count_table) from ch_covtocounts2_phylo.collect().ifEmpty([])
+    tuple val(assembler), file(taxonomy_table) from ch_vcontact2_phylo.collect().ifEmpty([])
+    path metadata from ch_metadata_phylo
+
+    output:
+    file("phyloseq.rds")
+    file("phyloseq_css_norm.rds")
+
+    script:
+    """
+    Rscript $projectDir/bin/Rscript/phyloseq.R ${count_table} ${taxonomy_table} ${metadata}
     """
 }
 
@@ -955,7 +978,6 @@ process betadiversity {
     tag "$assembler"
     label 'med_res'
     publishDir "${params.outdir}/report/plots/beta_div", mode: 'copy', pattern: "*.html"
-    publishDir "${params.outdir}/report/tables", mode: 'copy', pattern: "*.rds"
     when:
     params.metadata && !params.skip_beta_diversity
 

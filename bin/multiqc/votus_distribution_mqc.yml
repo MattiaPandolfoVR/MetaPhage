@@ -1,5 +1,5 @@
-id: 'interactive_plots'
-section_name: 'Interactive Plots'
+id: 'votus_distribution'
+section_name: 'vOTUs Distribution'
 description: 'Links to the analysis plots. The link will open the relative plot directly on the browser'
 plot_type: 'table'
 pconfig:

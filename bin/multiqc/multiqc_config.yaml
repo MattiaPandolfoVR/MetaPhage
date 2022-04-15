@@ -40,7 +40,7 @@ report_section_order:
       order: 10
   taxonomy_table:
       order: 9
-  interactive_plots:
+  votus_distribution:
       order: 8
   alphadiversity_plots:
       order: 7

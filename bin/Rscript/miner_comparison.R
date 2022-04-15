@@ -14,7 +14,7 @@ df$Length <- NULL
 png(filename="./miner_comparison.png", width = 1400, height= 800)
 upset(df, sets = c("Phigaro","Vibrant","Virfinder","Virsorter"),
       sets.bar.color = c("#0277bd","#0277bd","#0277bd","#0277bd"),
-      mainbar.y.label = "vOTU intersection", sets.x.label = "vOTU per miner",
+      mainbar.y.label = "VCSs intersection", sets.x.label = "VCSs per miner",
       order.by = "freq",
       mb.ratio = c(0.6, 0.4),
       number.angles = 0, 

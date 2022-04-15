@@ -24,8 +24,6 @@ beta_var <- args[4]
 ps0 <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
                 tax_table(as.matrix(taxo)),
                 sample_data(metadata))
-# save phyloseq object
-saveRDS(ps0, "phyloseq.rds")
 
 ################################## FILTERING ###################################
 # Filter uncharacterized taxas
@@ -48,8 +46,6 @@ ps_norm <- metagenomeSeq::MRcounts(ps_m, norm = TRUE, log = TRUE)
 phyloseq::otu_table(ps) <- phyloseq::otu_table(ps_norm, taxa_are_rows = T)
 # Restore sample_data rownames
 row.names(ps@sam_data) <- c(1:nrow(ps@sam_data))
-# save normalized phyloseq object
-saveRDS(ps, "phyloseq_css_norm.rds")
 
 ################################# 2D PLOTS #####################################
 # Beta-Diversity measurments
