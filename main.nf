@@ -988,8 +988,6 @@ process betadiversity {
 
     output:
     file("*.html")
-    file("phyloseq.rds")
-    file("phyloseq_css_norm.rds")
 
     script:
     """
