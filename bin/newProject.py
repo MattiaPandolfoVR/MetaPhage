@@ -249,7 +249,7 @@ class Metaphage:
             
 
         # Check environment is active (non fatal)
-        command = ["phigaros", "-V"]
+        command = ["phigaro", "-V"]
         try:
             # Check if command is available without printing anything
             subprocess.check_output(command, stderr=subprocess.STDOUT)
