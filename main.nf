@@ -45,7 +45,7 @@ if (params.readPath) {
 
 // Metadata
 if (params.metadata == true) {
-    Channel.fromPath("${params.metaPath}/*metadata.csv", checkIfExists: true)
+    Channel.fromPath("${params.metaPath}/*.csv", checkIfExists: true)
         .ifEmpty { exit 1, "No metadata file found! Please check params.metadata in your config file!"}
         .set { ch_metadata_checker }
     //println " Metadata loaded."
