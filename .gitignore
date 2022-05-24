@@ -17,3 +17,4 @@ datasets/*
 local
 *.simg
 local_tests/
+test.nf
