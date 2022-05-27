@@ -2,6 +2,7 @@ shhh <- suppressPackageStartupMessages
 shhh(library(heatmaply))
 shhh(library(phyloseq))
 shhh(library(metagenomeSeq))
+shhh(source("bin/Rscript/filter&CSSnormalize.R"))
 
 # Reading input
 args <- commandArgs(trailingOnly = TRUE)
@@ -23,27 +24,8 @@ ps0 <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
                 tax_table(as.matrix(taxo)),
                 sample_data(metadata))
 
-################################## FILTERING ###################################
-# Filter uncharacterized taxas
-ps <- subset_taxa(ps0, !is.na(Phylum) & !Phylum %in% c("", "Unclassified"))
-# relative abundance filter
-FSr  = transform_sample_counts(ps, function(x) x / sum(x))
-FSfr = filter_taxa(FSr, function(x) mean(x) < 0.00005, TRUE)
-rmtaxa = taxa_names(FSfr)
-alltaxa = taxa_names(ps)
-myTaxa = alltaxa[!alltaxa %in% rmtaxa]
-physeqaFS <- prune_taxa(myTaxa, ps)
-ps = filter_taxa(physeqaFS, function(x) sum(x >= 1) >= (2), TRUE)
-
-################################ NORMALIZATION #################################
-# CSS
-ps_m <- phyloseq::phyloseq_to_metagenomeSeq(ps)
-# normalized count matrix
-ps_norm <- metagenomeSeq::MRcounts(ps_m, norm = TRUE, log = TRUE)
-# abundance to css-normalized
-phyloseq::otu_table(ps) <- phyloseq::otu_table(ps_norm, taxa_are_rows = T)
-# Restore sample_data rownames
-row.names(ps@sam_data) <- c(1:nrow(ps@sam_data))
+####################### FILTER & CSS NORMALIZE #################################
+ps <- filter_CSSnormalize(ps0)
 
 # Data-frames creation
 df_merged <- merge(x = ps@otu_table, y = ps@tax_table, by = 0 )
@@ -74,13 +56,13 @@ h1 <- heatmaply(df_heatmap,
                 row_dend_left = FALSE,
                 col_side_colors = colside,
                 dendrogram = "row",
+                scale= 'column',
                 show_dendrogram = FALSE,
-                scale="row",
                 showticklabels = c(TRUE,FALSE),
                 k_col = NA, k_row = NA,
                 row_text_angle = 0,
                 column_text_angle = 45,
-                label_names = c("vOTU", "Sample", "Abundance"),
+                label_names = c("vOTU", "Sample", "log_CSS_normalized_counts"),
                 plot_method = c("ggplot"),
                 margins = c(100,10,50,10),
                 hide_colorbar = FALSE) %>%
