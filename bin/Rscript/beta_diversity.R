@@ -1,3 +1,4 @@
+
 shhh <- suppressPackageStartupMessages
 shhh(library(dplyr))
 shhh(library(data.table))
@@ -22,8 +23,8 @@ beta_var <- args[4]
 
 # Phyloseq object creation
 ps <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
-                tax_table(as.matrix(taxo)),
-                sample_data(metadata))
+               tax_table(as.matrix(taxo)),
+               sample_data(metadata))
 
 ####################### FILTER & CSS NORMALIZE #################################
 ################################## FILTERING ###################################
@@ -47,6 +48,7 @@ ps_norm <- metagenomeSeq::MRcounts(ps_m, norm = TRUE, log = TRUE)
 phyloseq::otu_table(ps_filter) <- phyloseq::otu_table(ps_norm, taxa_are_rows = T)
 # Restore sample_data rownames
 row.names(ps_filter@sam_data) <- c(1:nrow(ps_filter@sam_data))
+ps <- ps_filter
 
 ################################# 2D PLOTS #####################################
 # Beta-Diversity measurments
