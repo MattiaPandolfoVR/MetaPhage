@@ -867,7 +867,7 @@ process phylo_obj {
 
     output:
     file("phyloseq.rds")
-    file("phyloseq_css_norm.rds")
+    file("phyloseq_filt_css_norm.rds")
 
     script:
     """
