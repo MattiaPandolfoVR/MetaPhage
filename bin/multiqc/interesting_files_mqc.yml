@@ -15,7 +15,7 @@ data:
     Philoseq_obj:
         Link: '<a href="./tables/phyloseq.rds"> Phyloseq </a>'
     Philoseq_css_norm_obj:
-        Link: '<a href="./tables/phyloseq_css_norm.rds"> Phyloseq_css_norm </a>'
+        Link: '<a href="./tables/phyloseq_filt_css_norm.rds"> Phyloseq_css_norm </a>'
     vOTUs_multifasta:
         Link: '<a href="../cd-hit/megahit_vOTUs_consensus.fasta"> vOTUs_multifasta </a>'
     vOTUs_proteins:
