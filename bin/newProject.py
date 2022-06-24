@@ -435,7 +435,7 @@ if __name__ == "__main__":
 
     metaphage = Metaphage(args)
     if not metaphage.valid:
-        print("ERROR: Configuration failed")
+        print("FATAL ERROR: Unable to generate a configuration file. See error messages above.", file=sys.stderr)
         sys.exit(1)
     else:
         if args.save:
