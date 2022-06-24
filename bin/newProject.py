@@ -12,8 +12,9 @@ import subprocess
 from string import Template
 import tempfile
 import csv
+import re
 import multiprocessing
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 meminfo = {}
 meminfo["MemTotal"] = 8
 try:
@@ -135,6 +136,7 @@ class Metaphage:
         self.workingdir = os.path.realpath(args.workingdir)
         self.db         = os.path.realpath(args.database_dir) if args.database_dir else os.path.join(self.dir, 'db')
         self.verbose    = args.verbose
+        self.force      = args.force
         self.valid      = True
         self.ready      = True
         self.has_database = True if self.db else False
@@ -158,6 +160,11 @@ class Metaphage:
         self.setSamples()
         self.setMetadata()
 
+    def valid_name(self, name):
+        if re.match(r'^[a-zA-Z][a-zA-Z0-9_]+$', name):
+            return True
+        else:
+            return False
     def cmd(self):
         return [
             "nextflow",
@@ -202,7 +209,7 @@ class Metaphage:
             string = self.raw.substitute(dictionary)
             return string
         except Exception as e:
-            print(e, file=sys.stderr)
+            print("ERROR generating template: ", e, file=sys.stderr)
             return None
 
     def __repr__(self) -> str:
@@ -232,6 +239,16 @@ class Metaphage:
         Metadata:   {len(self.vars)} variables""".rstrip()
         
 
+    def testcmd(self, command):
+        try:
+            # Check if command is available without printing anything
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
+            return True
+        except FileNotFoundError or subprocess.CalledProcessError:
+            return False
+        except Exception as e:
+            print("DEBUG: Error testing {}: {}".format(" ".join(command), e), file=sys.stderr)
+            return False
     def checkInstallation(self):
         # Check directory
         for filename in ['nextflow.config', 'main.nf']:
@@ -249,17 +266,24 @@ class Metaphage:
             
 
         # Check environment is active (non fatal)
-        command = ["phigaro", "-V"]
-        try:
-            # Check if command is available without printing anything
-            subprocess.check_output(command, stderr=subprocess.STDOUT)
+        commands = [
+            ["phigaro", "-V"],
+            ["seqfu"],
+            ["megahit", "--version"],
+            ["fastp", "--version"]
+        ]
+        failed = 0
+        for command in commands:
+            if not self.testcmd(command):
+                failed += 1
+
+        if failed > 0:
+            print('ERROR: {} of {} commands not found in PATH: MetaPhage installation looks corrupted.'.format(failed, len(commands)), file=sys.stderr)
+            self.has_access = False
+        else:
+            print("INFO: Working environment detected.", file=sys.stderr)
             self.has_access = True
-        except FileNotFoundError or subprocess.CalledProcessError:
-            self.has_access = False
-            print("INFO: this environment is not ready to run MetaPhage. Remember to use a container or activate the environment.", file=sys.stderr)
-        except Exception:
-            self.has_access = False
-            print("INFO: this environment is not suitable for metaphage. Use a container or activate the environment.", file=sys.stderr)
+        
     def setSamples(self):
         extensions = ['.fastq', '.fq', '.fastq.gz', '.fq.gz']
         tags = ['_1', '_2', '_R1_001', '_R2_001', '_R1', '_R2']
@@ -303,7 +327,11 @@ class Metaphage:
         
         paired = 0
         single = 0
+        # Check valid sample names!
         for key, val in samples.items():
+            if not self.valid_name(key) and not self.force:
+                print("ERROR: Invalid sample name: {}\nShould not start by number and be alphanumerical. Use --force to ignore.".format(key), file=sys.stderr)
+                self.valid = False
             if val == 2:
                 paired += 1
             if val == 1:
@@ -316,6 +344,7 @@ class Metaphage:
             self.singleEnd = False
         elif single > 0:
             self.singleEnd = True
+        
         
         
         print(f"INFO: Found {len(self.samples)} samples in {self.input}", file=sys.stderr)
@@ -349,7 +378,10 @@ class Metaphage:
                         return
                     if row[0] not in self.samples:
                         print(f"ERROR: Sample {row[0]} in your metadata file is not present in the reads directory.", file=sys.stderr)
-        
+        else:
+            print("ERROR: No metadata provided. MetaPhage without metadata is unsupported.", file=sys.stderr)
+            self.valid = False
+
     def checkDatabase(self):
         for subdir in [  'inphared',  'kraken2',  'phigaro',  'phix',  'vibrant',  'virsorter']:
             if not os.path.isdir(os.path.join(self.db, subdir)):
@@ -358,7 +390,7 @@ class Metaphage:
         
         for subdir in [ 'diamond' ]:
             if not os.path.isdir(os.path.join(self.db, subdir)):
-                print('WARNING: Database directory will be created: {}'.format(os.path.join(self.db, subdir)), file=sys.stderr)
+                print('INFO: {} Database directory will be created: {}'.format(subdir, os.path.join(self.db, subdir)), file=sys.stderr)
                 self.ready = False            
 
 
@@ -392,6 +424,7 @@ if __name__ == "__main__":
     
     other.add_argument("--tmp", dest="tempdir",help="Temporary directory [default: %(default)s]", default=os.environ.get("METAPHAGE_TMP", "/tmp") )
     other.add_argument("--work", dest="workingdir", help="Nextflow work directory [default: %(default)s]", default=os.environ.get("METAPHAGE_WD", "/tmp") )
+    other.add_argument("--force",   action="store_true", help="Disable checks ")
     other.add_argument("--verbose",   action="store_true", help="Enable verbose output")
     other.add_argument("--version",   action="store_true", help="Print version and exit")
     args = parser.parse_args()
@@ -399,6 +432,7 @@ if __name__ == "__main__":
     if args.version:
         print(f"{__version__}")
         sys.exit(0)
+
     metaphage = Metaphage(args)
     if not metaphage.valid:
         print("ERROR: Configuration failed")
@@ -410,8 +444,11 @@ if __name__ == "__main__":
         else:
             out = sys.stdout
 
-
-        print(metaphage.template(), file=out)
+        if metaphage.template() is not None:
+            print(metaphage.template(), file=out)
+        else:
+            print("ERROR: Configuration failed", file=sys.stderr)
+            sys.exit(1)
     
         if args.local_run and has_nextflow() and args.save:
             deps = 'local'
