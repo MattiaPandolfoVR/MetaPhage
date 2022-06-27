@@ -66,6 +66,7 @@ if (params.metadata == true) {
     ch_metadata_heatmap = Channel.empty()
     params.skip_violin_plots = true
     ch_metadata_violin = Channel.empty()
+    ch_metadata_checker = Channel.empty()
 }
 
 /* STEP 0 - check metadata and db presence and download required files */
