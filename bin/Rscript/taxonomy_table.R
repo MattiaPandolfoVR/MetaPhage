@@ -9,42 +9,78 @@ shhh(library(gtools))
 
 # Reading input
 args <- commandArgs(trailingOnly = TRUE)
-############################## TAXONOMY TABLE ##################################
-file_df <- args[1]
-df <- read.csv(file_df, sep = '\t')
+# check arguments
+if (length(args) < 7) {
+  stop("Usage: taxonomy_table.R <taxonomy_table> <vOTUs_consensus> <vOTUs_proteins> <vOTUs_coords> <path> <min_comp> <metadata>\n")
+}
+################################ TAXONOMY TABLE ################################
+file_taxo <- args[1]
+if (! file.exists(file_taxo)){
+  stop("ERROR: taxonomy table file not found in: ", file_taxo, "\n")
+}
+taxo <- read.delim(file_taxo, sep = "\t", check.names = F)
 # mutate the taxonomy data.frame
-df <- mutate_if(df, is.character, as.factor)
-################################## FILES #######################################
+taxo <- mutate_if(taxo, is.character, as.factor)
+########################## .fna, .faa, .gff FILES ##############################
 file_fna <- args[2]
+if (! file.exists(file_fna)){
+  stop("ERROR: .fna file not found in: ", file_fna, "\n")
+}
 fna <- read.fasta(file_fna, set.attributes = FALSE, as.string=TRUE,
                   forceDNAtolower = FALSE)
 file_faa <- args[3]
+if (! file.exists(file_faa)){
+  stop("ERROR: .faa file not found in: ", file_faa, "\n")
+}
 faa <- read.fasta(file_faa, set.attributes = FALSE, as.string=TRUE,
                   forceDNAtolower = FALSE)
 file_gff <- args[4]
+if (! file.exists(file_gff)){
+  stop("ERROR: .gff file not found in: ", file_gff, "\n")
+}
 gff <- read.delim(file_gff, header=F, comment.char="#")
-################################## PATHS #######################################
+#################################### PATHS #####################################
 file_paths <- args[5]
 fna_path <- file.path(file_paths, "cd-hit/vOTUs_consensus")
+if (! file.exists(fna_path)){
+  cat("WARNING: cd-hit/vOTUs_consensus folder not found in: ", fna_path, "\n")
+}
 faa_path <- file.path(file_paths, "cd-hit/vOTUs_proteins")
+if (! file.exists(faa_path)){
+  cat("WARNING: cd-hit/vOTUs_proteins folder not found in: ", faa_path, "\n")
+}
 gff_path <- file.path(file_paths, "cd-hit/vOTUs_coords")
+if (! file.exists(gff_path)){
+  cat("WARNING: cd-hit/vOTUs_coords folder not found in: ", gff_path, "\n")
+}
 graph_path <- file.path(file_paths, "taxonomy/vcontact2/single-views_megahit")
-
-############################ MINER COMPARISON ##################################
+if (! file.exists(graph_path)){
+  cat("WARNING: taxonomy/vcontact2/single-views_megahit folder not found in: ", graph_path, "\n")
+}
+############################### MINER COMPARISON ###############################
 file_min <- args[6]
-min_com <- read.csv(file_min, sep = '')
-############################### METADATA #######################################
-metadata <- args[7]                                                             
-meta <- read.csv(metadata, sep = ',')
+if (! file.exists(file_min)){
+  stop("ERROR: miner comparison file not found in: ", file_min, "\n")
+}
+min_com <- read.delim(file_min, sep = "", check.names = F)
+################################### METADATA ###################################
+file_meta <- args[7]
+if (! file.exists(file_meta)){
+  stop("ERROR: metadata file not found in: ", file_meta, "\n")
+}
+metadata <- read.delim(file_meta, row.names=1, sep = ",", check.names = F)
+metadata$Sample <- rownames(metadata)
+metadata <- metadata %>%
+  select(Sample, everything())
 
-############################## CONSENSUS FILES #################################
+############################### CONSENSUS FILES ################################
 # read the consensus fasta files and create a data.frame of paths
 consensus_path <- list.files(path = fna_path, 
                                pattern = "vOTU*", 
                                full.names=T)
 df_fasta_fp <- as.data.frame(consensus_path)
 # match the consensus to the vOTU in taxo table
-matching_cons = names(fna)[names(fna) %in% df$ViralOTU]
+matching_cons = names(fna)[names(fna) %in% taxo$ViralOTU]
 # and to the path of the relative .fasta
 match_cons_fp =  df_fasta_fp[match(matching_cons, 
                            str_extract(consensus_path, 
@@ -70,7 +106,7 @@ proteins_path <- list.files(path = faa_path,
 df_prot_fp <- as.data.frame(proteins_path)
 # match the proteins to the vOTU in taxo table
 prot_names = unique(str_extract(names(faa), "vOTU_[0-9]+"))
-matching_prots = prot_names[prot_names %in% df$ViralOTU]
+matching_prots = prot_names[prot_names %in% taxo$ViralOTU]
 # and to the path of the relative .faa
 matching_prots_fp =  df_prot_fp[match(matching_prots,
                                      str_extract(proteins_path, "vOTU_\\d+")),]
@@ -95,7 +131,7 @@ coords_path <- list.files(path = gff_path,
 df_coord_fp <- as.data.frame(coords_path)
 # match the coordinates to the vOTU in taxo table
 coord_names = unique(gff$V1)
-matching_coords = coord_names[coord_names %in% df$ViralOTU]
+matching_coords = coord_names[coord_names %in% taxo$ViralOTU]
 # and to the path of the relative .gff
 matching_coords_fp =  df_coord_fp[match(matching_coords,
                                      str_extract(coords_path, "vOTU_\\d+")),]
@@ -120,7 +156,7 @@ graphs_path <- list.files(path = graph_path,
 df_graphs_fp <- as.data.frame(graphs_path)
 # match the coordinates to the vOTU in taxo table
 graphs_names = unique(str_extract(graphs_path, "vOTU_[0-9]+"))
-matching_graphs = graphs_names[graphs_names %in% df$ViralOTU]
+matching_graphs = graphs_names[graphs_names %in% taxo$ViralOTU]
 # and to the path of the relative .gff
 graphs_names_fp =  df_graphs_fp[match(matching_graphs,
                                         str_extract(graphs_path, "vOTU_\\d+")),]
@@ -138,7 +174,7 @@ df_graphs$file.z <- NULL
 df_graphs$path_graphs <- NULL
 
 ############################## PER vOTU MINERS #################################
-df_mincomp <- merge(df[,c("ViralOTU","Status")],
+df_mincomp <- merge(taxo[,c("ViralOTU","Status")],
                     min_com[, c("ViralOTU",
                                 "Phigaro",
                                 "Vibrant",
@@ -159,7 +195,7 @@ df_mincomp <- mutate_if(df_mincomp, is.numeric, as.factor)
 # merge the data.frames in a single one, containing for each vOTU the links
 # to the relative files
 df_tot <-Reduce(function(x,y) merge(x = x, y = y, by = "ViralOTU"), 
-       list(df, df_consensus, df_proteins, df_coords, df_mincomp))
+       list(taxo, df_consensus, df_proteins, df_coords, df_mincomp))
 df_tot <- merge(df_tot, df_graphs, by = "ViralOTU", all=TRUE)
 df_tot[is.na(df_tot)] <- "n.a."
 # change characters to factors

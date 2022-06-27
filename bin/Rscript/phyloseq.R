@@ -7,16 +7,34 @@ shhh(library(metagenomeSeq))
 
 # Reading input
 args <- commandArgs(trailingOnly = TRUE)
-################################### COUNT TABLE ################################
+# check arguments
+if (length(args) < 3) {
+  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata>\n")
+}
+################################## COUNT TABLE #################################
 file_count <- args[1]
-count <- read.csv(file_count, sep = '\t', row.names = 1)
-################################# TAXONOMY TABLE ###############################
+if (! file.exists(file_count)){
+  stop("ERROR: count table file not found in: ", file_count, "\n")
+}
+count <- read.delim(file_count, row.names=1, sep = "\t", check.names = F)
+################################ TAXONOMY TABLE ################################
 file_taxo <- args[2]
-taxo <- read.csv(file_taxo, sep = '\t', row.names = 1)
+if (! file.exists(file_taxo)){
+  stop("ERROR: taxonomy table file not found in: ", file_taxo, "\n")
+}
+taxo <- read.delim(file_taxo, row.names=1, sep = "\t", check.names = F)
 ################################### METADATA ###################################
-metadata <- args[3]                                                             
-metadata <- read.csv(metadata, sep = ',', row.names = 1)
+file_meta <- args[3]
+if (! file.exists(file_meta)){
+  stop("ERROR: metadata file not found in: ", file_meta, "\n")
+}
+metadata <- read.delim(file_meta, row.names=1, sep = ",", check.names = F)
 metadata$Sample <- rownames(metadata)
+metadata <- metadata %>%
+  select(Sample, everything())
+
+# change "O", "n.a." and "uncharacterize" to "NA" in taxonomy table
+
 
 # Phyloseq object creation
 ps0 <- phyloseq(otu_table(count, taxa_are_rows = TRUE),

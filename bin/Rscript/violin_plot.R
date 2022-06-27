@@ -8,22 +8,43 @@ shhh(library(metagenomeSeq))
 
 # Reading input
 args <- commandArgs(trailingOnly = TRUE)
-############################### COUNT TABLE ####################################
+# check arguments
+if (length(args) < 4) {
+  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata> <violin_var>\n")
+}
+################################## COUNT TABLE #################################
 file_count <- args[1]
-count <- read.csv(file_count, sep = '\t', row.names = 1)
-############################## TAXONOMY TABLE ##################################
+if (! file.exists(file_count)){
+  stop("ERROR: count table file not found in: ", file_count, "\n")
+}
+count <- read.delim(file_count, row.names=1, sep = "\t", check.names = F)
+################################ TAXONOMY TABLE ################################
 file_taxo <- args[2]
-taxo <- read.csv(file_taxo, sep = '\t', row.names = 1)
-################################ METADATA ######################################
+if (! file.exists(file_taxo)){
+  stop("ERROR: taxonomy table file not found in: ", file_taxo, "\n")
+}
+# change "O", "n.a." and "uncharacterize" to "NA" in taxonomy table
+taxo <- read.delim(file_taxo, row.names=1, sep = "\t", check.names = F, na.strings = c("n.a.", "O", "Unclassified"))
+################################### METADATA ###################################
 file_meta <- args[3]
-metadata <- read.csv(file_meta, sep = ',', row.names = 1)
+if (! file.exists(file_meta)){
+  stop("ERROR: metadata file not found in: ", file_meta, "\n")
+}
+metadata <- read.delim(file_meta, row.names=1, sep = ",", check.names = F)
 metadata$Sample <- rownames(metadata)
+metadata <- metadata %>%
+  select(Sample, everything())
+################################ VIOLIN VARIABLE ###############################
 violin_var = args[4]
+if (violin_var == FALSE){
+  stop("ERROR: violin_var parameter not found. You can set it in your project config.file (e.g. violin_var = \"metadata_variable1\" \n")
+}
 
 # Phyloseq object creation
 ps0 <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
                 tax_table(as.matrix(taxo)),
                 sample_data(metadata))
+# Phyloseq for richness estimation
 ps_r <- ps0
 # Phyloseq object creation
 ps <- ps0

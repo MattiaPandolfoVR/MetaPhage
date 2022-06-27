@@ -7,36 +7,58 @@ shhh(library(data.table))
 
 # Reading input
 args <- commandArgs(trailingOnly = TRUE)
-############################### COUNT TABLE ####################################
+# check arguments
+if (length(args) < 5) {
+  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata> <alpha_var1> <alpha_var2>\n")
+}
+################################## COUNT TABLE #################################
 file_count <- args[1]
-count <- read.csv(file_count, sep = '\t', row.names = 1)
-############################## TAXONOMY TABLE ##################################
+if (! file.exists(file_count)){
+  stop("ERROR: count table file not found in: ", file_count, "\n")
+}
+count <- read.delim(file_count, row.names = 1, sep = "\t", check.names = F)
+################################ TAXONOMY TABLE ################################
 file_taxo <- args[2]
-taxo <- read.csv(file_taxo, sep = '\t', row.names = 1)
+if (! file.exists(file_taxo)){
+  stop("ERROR: taxonomy table file not found in: ", file_taxo, "\n")
+}
+# change "O", "n.a." and "uncharacterize" to "NA" in taxonomy table
+taxo <- read.delim(file_taxo, row.names = 1, sep = "\t", check.names = F, na.strings = c("n.a.", "O", "Unclassified"))
 # Extract the scaffold id and the last 2 column from taxonomy table
 taxo <- taxo[,c("Host","Family","Genus")]
-################################ METADATA ######################################
-metadata <- args[3]                                                             
-metadata <- read.csv(metadata, sep = ',', row.names = 1)
+################################### METADATA ###################################
+file_meta <- args[3]
+if (! file.exists(file_meta)){
+  stop("ERROR: metadata file not found in: ", file_meta, "\n")
+}
+metadata <- read.delim(file_meta, row.names = 1, sep = ",", check.names = F)
 metadata$Sample <- rownames(metadata)
-############################### META_VARS ######################################
+metadata <- metadata %>%
+  select(Sample, everything())
+################################ ALPHA VARIABLES ###############################
 alpha_var1 <- args[4]
 alpha_var2 <- args[5]
 # Check if only one variable is passed
-if(alpha_var2 == FALSE){
+if(alpha_var1 == FALSE && alpha_var2 == FALSE){
+  stop("ERROR: alpha_var1 and alpha_var2 parameters not found. Please set at lease one of the two in your project config.file (e.g. alpha_var1 = \"metadata_variable1\" \n")
+} else if(alpha_var1 == FALSE) {
+  alpha_var1 <- alpha_var2
+} else if(alpha_var2 == FALSE) {
   alpha_var2 <- alpha_var1
 }
+
 # Phyloseq object creation
 ps <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
                tax_table(as.matrix(taxo)),
                sample_data(metadata))
-# Remove NAs from taxonomy table
-ps <- subset_taxa(ps, !is.na(Family) & !is.na(Genus))
+# Remove NAs at phylum level
 # Restore sample_data rownames
 row.names(ps@sam_data) <- c(1:nrow(ps@sam_data))
 # Calculate alpha_diversity measurments
 df_div <- estimate_richness(ps)
 df_div$Sample <- rownames(df_div)
+df_div <- df_div %>%
+  select(Sample, everything())
 # Transform ps@sample_data in a df
 sample_df <- as.matrix(ps@sam_data)
 sample_df <- as.data.frame(sample_df)

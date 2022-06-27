@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Generate a Metaphage configuration file for a new project.
-
 CHECKS
 - put metadata in the right place where it is the only csv file
 - cpus/memory are defined?
@@ -80,17 +79,14 @@ class Metaphage:
     params {
         config_profile_name = '$projectName'
         config_profile_description = 'MetaPhage analysis configuration'
-
         // INPUT PATHS
         readPath = "$readPath"
         fqpattern = "$fqpattern"
         metaPath = "$metaPath"
         dbPath = "$dbPath"
-
         // OUTPUT/WORKING PATHS
         outdir = "$outdir"
         temp_dir = "$temp_dir"
-
         // METADATA 
         metadata = $metadata
         virome_dataset = true
@@ -101,8 +97,6 @@ class Metaphage:
         alpha_var2 = "$alpha_var2" 
         beta_var = "$beta_var" 
         violin_var = "$violin_var" 
-
-
     }
     """)
 
@@ -193,7 +187,7 @@ class Metaphage:
                 'projectName': self.project,
                 'readPath': self.input,
                 'fqpattern': self.pattern,
-                'metaPath': os.path.dirname(self.metadata),
+                'metaPath': os.path.dirname(self.metadata) if self.has_metadata else "false",
                 'dbPath': self.db,
                 'metadata': 'true' if self.metadata else 'false',
                 'singleEnd': 'true' if self.singleEnd else 'false',
@@ -330,7 +324,7 @@ class Metaphage:
         # Check valid sample names!
         for key, val in samples.items():
             if not self.valid_name(key) and not self.force:
-                print("ERROR: Invalid sample name: {}\nShould not start by number and be alphanumerical. Use --force to ignore.".format(key), file=sys.stderr)
+                print("ERROR: Invalid sample name: {}\n\tShould not start by number and be alphanumerical. Use --force to ignore.".format(key), file=sys.stderr)
                 self.valid = False
             if val == 2:
                 paired += 1
@@ -379,8 +373,10 @@ class Metaphage:
                     if row[0] not in self.samples:
                         print(f"ERROR: Sample {row[0]} in your metadata file is not present in the reads directory.", file=sys.stderr)
         else:
-            print("ERROR: No metadata provided. MetaPhage without metadata is unsupported.", file=sys.stderr)
+            print("WARNING: No metadata provided. MetaPhage without metadata is unsupported.", file=sys.stderr)
+            self.has_metadata = False
             self.valid = False
+            
 
     def checkDatabase(self):
         for subdir in [  'inphared',  'kraken2',  'phigaro',  'phix',  'vibrant',  'virsorter']:
@@ -401,7 +397,7 @@ if __name__ == "__main__":
     main.add_argument("-s", "--save", help="Configuration file output [default: %(default)s]")
     
     main.add_argument("-i", "--reads-dir", dest="readsdir", required=True, help="Directory containing the reads.")
-    main.add_argument("-o", "--output-dir", help="Output directory [default: %(default)s]", default="./MetaPhage")
+    main.add_argument("-o", "--output-dir", help="Output directory [default: %(default)s]", default="./MetaPhage-output")
     main.add_argument("-d", "--database-dir", help="Database directory", required=False)
     main.add_argument("-m", "--metadata-file", dest="metadata", required=False, help="Metadata file.")
     main.add_argument("-p", "--project", help="Project name", required=False)
@@ -435,7 +431,8 @@ if __name__ == "__main__":
 
     metaphage = Metaphage(args)
     if not metaphage.valid:
-        print("FATAL ERROR: Unable to generate a configuration file. See error messages above.", file=sys.stderr)
+        print("----------------------------------------------------------\n",
+        "FATAL ERROR: Unable to generate a configuration file. See error messages above.", file=sys.stderr)
         sys.exit(1)
     else:
         if args.save:
@@ -484,7 +481,3 @@ if __name__ == "__main__":
             except subprocess.CalledProcessError as e:
                 print(f"ERROR: Nextflow execution failed: {e}", file=sys.stderr)
                 sys.exit(1)
-
-
-
-     
