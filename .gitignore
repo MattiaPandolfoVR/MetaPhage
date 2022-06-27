@@ -20,3 +20,5 @@ local_tests/
 test.nf
 ./*.zip
 db_path.csv
+.Rhistory
+climb
