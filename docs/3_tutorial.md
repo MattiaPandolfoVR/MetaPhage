@@ -22,16 +22,16 @@ Conda or Singularity as package providers. **Linux** is required.
 ## Download MetaPhage
 
 We recommend downloading a release, to ensure reproducible results.
-This tutorial is based on version 0.3.0.
+This tutorial is based on version 0.3.2.
 
 ```bash
 # Download MetaPhage and expand it
-wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.3.0.tar.gz
+wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.3.2.tar.gz
 tax xvf v0.3.0.tar.gz
 
 # Keep note of the installation directory:
 # If you move away you can return with `cd "$METAPHAGE_DIR"`
-export METAPHAGE_DIR=$(readlink -f MetaPhage-0.3.0)
+export METAPHAGE_DIR=$(readlink -f MetaPhage-0.3.2)
 ```
 
 ## Download the databases
@@ -41,10 +41,9 @@ We will download the databases before starting the pipeline, as
 
 ```bash
 # This will download the database in "$METAPHAGE_DIR/db/"
-# Note that installing python-wget will no longer be needed in future releases
+# Note that `wget` is required
 
 cd $METEAPHAGE_DIR
-python3 -m pip install wget
 ./bin/python/db_manager.py -o ./db/ -m 6
 ```
 
