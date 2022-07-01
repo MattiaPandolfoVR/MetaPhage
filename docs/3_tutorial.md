@@ -27,7 +27,7 @@ This tutorial is based on version 0.3.2.
 ```bash
 # Download MetaPhage and expand it
 wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.3.2.tar.gz
-tax xvf v0.3.0.tar.gz
+tar zxvf v0.3.0.tar.gz
 
 # Keep note of the installation directory:
 # If you move away you can return with `cd "$METAPHAGE_DIR"`
@@ -43,7 +43,7 @@ We will download the databases before starting the pipeline, as
 # This will download the database in "$METAPHAGE_DIR/db/"
 # Note that `wget` is required
 
-cd $METEAPHAGE_DIR
+cd $METAPHAGE_DIR
 ./bin/python/db_manager.py -o ./db/ -m 6
 ```
 
