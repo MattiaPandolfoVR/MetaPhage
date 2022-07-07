@@ -34,8 +34,7 @@ metadata$Sample <- rownames(metadata)
 metadata <- metadata %>%
   select(Sample, everything())
 ################################# BETA VARIABLE ################################
-beta_var <- "Study_group"
-  #args[4]
+beta_var <- args[4]
 if (beta_var == FALSE){
   stop("ERROR: beta_var parameter not found. You can set it in your project config.file (e.g. beta_var = \"metadata_variable1\" \n")
 }
