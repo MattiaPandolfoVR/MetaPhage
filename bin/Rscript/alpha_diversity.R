@@ -56,9 +56,11 @@ ps <- phyloseq(otu_table(count, taxa_are_rows = TRUE),
 row.names(ps@sam_data) <- c(1:nrow(ps@sam_data))
 # Calculate alpha_diversity measurments
 df_div <- estimate_richness(ps)
-df_div$Sample <- rownames(df_div)
+row.names(df_div) <- ps@sam_data$Sample
+df_div$Sample <- row.names(df_div)
 df_div <- df_div %>%
   select(Sample, everything())
+row.names(df_div) <- c(1:nrow(df_div))
 # Transform ps@sample_data in a df
 sample_df <- as.matrix(ps@sam_data)
 sample_df <- as.data.frame(sample_df)
