@@ -1,15 +1,20 @@
+# Implemented by Mattia Pandolfo (mattia.pandolfo@univr.it)
 library(VirFinder)
 require(Biostrings)
 require(parallel)
 library(seqinr)
 
-# Take the input passed by Nextflow, which are
-# ${scaffold}
-# ${task.cpus}
-# $workflow.projectDir
-args <- commandArgs(trailingOnly = TRUE) 
-fileinFASTA <- args[1] 
+# Reading input
+args <- commandArgs(trailingOnly = TRUE)
+# check arguments
+if (length(args) < 3) {
+  stop("Usage: virfinder_execute.R <scaffold> <task.cpus> <projectDir>\n")
+}
+################################## FASTA FILE ##################################
+fileinFASTA <- args[1]
+################################# CORES NUMBER #################################
 taskcpus <- args[2]
+############################### PROJECT DIRECTORY ###############################
 workdir <- args[3]
 
 # Check if the parVF_pred script is in the bin folder

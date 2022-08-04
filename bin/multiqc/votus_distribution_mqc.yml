@@ -1,14 +1,14 @@
 id: 'votus_distribution'
-section_name: 'vOTUs Distribution'
+section_name: 'vOTUs Heatmap and total samples Violin plot'
 description: 'Links to the analysis plots. The link will open the relative plot directly on the browser'
 plot_type: 'table'
 pconfig:
-    id: 'interactive_links'
-    title: 'Interactive'
+    col1_header: 'Plot'
     scale: false
-    col1_header: 'Graph'
 data:
     Heatmap:
-        Link: '<a href="./plots/heatmap.html"> Heatmap </a>'
-    Violin:
-        Link: '<a href="./plots/violin_plot_richness.html"> Violin </a>'
+        Link: '<a href="./plots/heatmap/heatmap.html">Heatmap.html</a>'
+    Samples-richness Violin plots:
+        Link: '<a href="./plots/total_violin/violin_plot_richness.html">Sample_Violin_plots.html</a>'
+    
+    

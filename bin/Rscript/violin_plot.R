@@ -1,3 +1,4 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(plotly))
 shhh(library(matrixStats))
@@ -10,7 +11,7 @@ shhh(library(metagenomeSeq))
 args <- commandArgs(trailingOnly = TRUE)
 # check arguments
 if (length(args) < 4) {
-  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata> <violin_var>\n")
+  stop("Usage: violin_plot.R <count_table> <taxonomy_table> <metadata> <violin_var>\n")
 }
 ################################## COUNT TABLE #################################
 file_count <- args[1]
@@ -81,7 +82,7 @@ colnames(df_new_meta)[2] <- paste(violin_var)
 df_tot = data.frame()
 for(sample in colnames(ps@otu_table[1,1:ncol(ps@otu_table)])){
   df_new = data.frame(sample, rownames(ps@otu_table), ps@otu_table[,sample])
-  colnames(df_new) <- c("Sample","viralOTU","Abundance")
+  colnames(df_new) <- c("Sample","ViralOTU","Abundance")
   df_tot <- rbind(df_tot, df_new)
 }
 rownames(df_tot) <- 1:nrow(df_tot)
@@ -99,7 +100,11 @@ v1 <- df_tot %>%
     x = ~get(violin_var),
     y = ~Richness,
     split = ~get(violin_var),
-    type = "violin", bandwidth = 50,
+    hovertext = paste0("Sample: ", df_tot$Sample, "<br>",
+                       "vOTU: ", df_tot$ViralOTU),
+    hoveron = "points+kde",
+    type = "violin",
+    bandwidth = 50,
     box = list(
       visible = T
     ),
@@ -107,5 +112,15 @@ v1 <- df_tot %>%
       visible = T
     )
   )
+v1 <- v1 %>%
+  layout(
+    xaxis = list(
+      title = violin_var
+    ),
+    yaxis = list(
+      rangemode = "nonnegative"
+    )
+  )
+v1
 htmlwidgets::saveWidget(v1, "violin_plot_richness.html",
                         selfcontained = TRUE, libdir = NULL)

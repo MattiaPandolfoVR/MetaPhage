@@ -22,3 +22,5 @@ test.nf
 db_path.csv
 .Rhistory
 climb
+conf/datasets/mattia.config
+conf/load/locale.config

@@ -1,3 +1,4 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(DT))
 shhh(library(readr))
@@ -12,35 +13,35 @@ shhh(library(magrittr))
 args <- commandArgs(trailingOnly = TRUE)
 # check arguments
 if (length(args) != 2) {
-  stop("Usage: kraken_files.R <input_path> <metadata>")
+  stop("Usage: kraken_files.R <outdir_path> <metadata>")
 }
 ############################# FILES AND PATHS ##################################
 file_paths <- args[1]
 # Check if kraken_path and krona_path exist
-kraken_path <- file.path(file_paths, "taxonomy/kraken2")
+kraken_path <- file.path(file_paths, "report/taxonomy/kraken2")
 if (! file.exists(kraken_path)){
-  stop("ERROR: taxonomy/kraken2 folder not found in: ", kraken_path, "\n")
+  stop("ERROR: report/taxonomy/kraken2 folder not found in: ", kraken_path, "\n")
 }
-krona_path <-  file.path(file_paths, "taxonomy/krona")
+krona_path <-  file.path(file_paths, "report/taxonomy/krona")
 if (! file.exists(krona_path)){
-  cat("WARNING: taxonomy/krona folder not found in: ", krona_path, "\n")
+  warning("WARNING: report/taxonomy/krona folder not found in: ", krona_path, "\n")
 }
 ############################### METADATA #######################################
 file_meta <- args[2]
 if (! file.exists(file_meta)){
   stop("ERROR: metadata file not found in: ", file_meta, "\n")
 }
-metadata <- read.delim(file_meta, row.names = 1, sep = ",", check.names = F)
+metadata <- read.delim(file_meta, row.names=1, sep = ",", check.names = F)
 metadata$Sample <- rownames(metadata)
 metadata <- metadata %>%
   select(Sample, everything())
-#meta <- read.csv(file_meta, sep = ',')
 ################################ KRAKEN FILES ##################################
 # read the kraken files and create a data.frame of paths
 krakens_path <- list.files(path = kraken_path, 
                            pattern = "_report.txt", 
                            recursive = TRUE,
                            full.names=T)
+# create a df of kraken files path
 df_kraken_fp <- as.data.frame(krakens_path)
 # match the kraken files to the metadata sample names
 krakens_names = unique(basename(krakens_path)) 
@@ -52,8 +53,7 @@ krakens_names_fp = as.data.frame(
 )
 colnames(krakens_names_fp) <- c("krakens_path")
 # modify the matching kraken file path with a relative path: like
-# [1] "../taxonomy/kraken2/SRR8652861/SRR8652861_report.txt" ...
-krakens_fp = paste0("../", str_extract(krakens_names_fp$krakens_path,
+krakens_fp = paste0("./", str_extract(krakens_names_fp$krakens_path,
                                        "taxonomy/kraken2/.+/.+_report.txt"))
 # create the link table
 df_krakens = tibble("Sample" = matching_krakens, file = krakens_fp) %>%
@@ -65,10 +65,9 @@ df_krakens = tibble("Sample" = matching_krakens, file = krakens_fp) %>%
 df_krakens$file <- NULL
 df_krakens$path_krakens <- NULL
 
-################################ KRONA FILES ##################################
+################################ KRONA FILES ###################################
 # check if the krona folder exist
 if(file.exists(krona_path)){
-  cat("Create DT version of the data.frame with kraken AND krona files\n")
   # read the krona files and create a data.frame of paths
   kronas_path <- list.files(path = krona_path, 
                             ".+_krak_krona_abundancies.html", 
@@ -76,22 +75,20 @@ if(file.exists(krona_path)){
                             full.names=T)
   
   df_krona_fp <- as.data.frame(kronas_path)
-  kronas_path
   # match the krona files to the metadata sample names
   kronas_names = unique(basename(kronas_path)) 
-  kronas_names
   kronas_names <- sapply(strsplit(kronas_names,"_krak_krona_abundancies.html"), `[`, 1)
   matching_kronas = kronas_names[kronas_names %in% metadata$Sample]
   # and create a dataframe of theese
   kronas_names_fp <- filter(df_krona_fp,
                             matching_kronas %in% matching_kronas)
   # modify the matching krona file path with a relative path
-  kronas_fp = paste0("../", str_extract(kronas_names_fp$kronas_path,
+  kronas_fp = paste0("./", str_extract(kronas_names_fp$kronas_path,
                                         "taxonomy/krona/.+/.+_krak_krona_abundancies.html"))
   # create the link table
   df_kronas = tibble("Sample" = matching_kronas, file = kronas_fp) %>%
     mutate(file = str_replace_all(file,
-                                  '([^;]*)taxonomy/krona/SRR\\d+/', ''),
+                                  '([^;]*)taxonomy/krona/.*\\d+/', ''),
            path_kronas = file.path(kronas_fp),
            Krona_Plot = paste0('<a target=_blank href=',
                                path_kronas, '>', file,'</a>'))
@@ -110,11 +107,10 @@ if(file.exists(krona_path)){
                          )
   )
   dt_KK$width = 1500
-  htmlwidgets::saveWidget(dt_KK, "kraken_files.html",
+  htmlwidgets::saveWidget(dt_KK, "./kraken_files.html",
                           selfcontained = TRUE, libdir = NULL)
 } else {
   # Create DT version of the data.frame with kraken files paths only
-  cat("Create DT version of the data.frame with kraken files paths only\n")
   dt_K <- DT::datatable(df_krakens, filter="top", rownames = FALSE,
                         extensions = c('Buttons','Scroller'), escape = F, 
                         options = list(scrollY = "650px",
@@ -125,6 +121,6 @@ if(file.exists(krona_path)){
                         )
   )
   dt_K$width = 1200
-  htmlwidgets::saveWidget(dt_K, "kraken_files.html",
+  htmlwidgets::saveWidget(dt_K, "./kraken_files.html",
                           selfcontained = TRUE, libdir = NULL)
 }

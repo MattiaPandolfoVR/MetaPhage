@@ -1,3 +1,4 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(dplyr))
 shhh(library(data.table))
@@ -9,7 +10,7 @@ shhh(library(metagenomeSeq))
 args <- commandArgs(trailingOnly = TRUE)
 # check arguments
 if (length(args) < 4) {
-  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata> <beta_var>\n")
+  stop("Usage: beta_diversity.R <count_table> <taxonomy_table> <metadata> <beta_var>\n")
 }
 ################################## COUNT TABLE #################################
 file_count <- args[1]
@@ -74,75 +75,148 @@ ps <- ps_filter
 set.seed(12345)
 b_ord = ordinate(ps, method = "PCoA", "bray")
 b_ord_df <- as.data.frame(b_ord$vectors)
+colnames(b_ord_df) <- gsub(pattern = "Axis.", replacement = "Bray_axis.", x=colnames(b_ord_df))
+b_ord_df$Sample <- rownames(b_ord_df)
 # Jaccard
 set.seed(12345)
 j_ord = ordinate(ps, method = "PCoA", "jaccard")
 j_ord_df <- as.data.frame(j_ord$vectors)
-# Plots axis labels
-x <- list(
-  title = "PCoA 1"
-)
-y <- list(
-  title = "PCoA 2"
-)
-# check if data are suitable for 2d plots
+colnames(j_ord_df) <- gsub(pattern = "Axis.", replacement = "Jac_axis.", x=colnames(j_ord_df))
+j_ord_df$Sample <- rownames(j_ord_df)
+
+#check if data are suitable for 2d plots
 if (ncol(b_ord_df)<2 || ncol(j_ord_df) <2){
-  message ("Sample numerosity in your data doesn't hallow 2D plots creation!")
+ message ("Sample numerosity in your data does not hallow 2D plots creation!")
 } else {
+  # how many values in beta var?
   # Bray-Curtis
   # create a column for the user metadata of interest and populate it
   b_ord_df[,beta_var] <- sample_data(ps) %>%
     data.frame() %>%
     select(all_of(beta_var)) %>%
     mutate_if(is.factor,as.character)
-  # 2D plot
-  p_2d_b = plot_ly(b_ord_df, x= ~Axis.1, y= ~Axis.2,
-                   color = ~b_ord_df[,beta_var], colors = "Dark2",
-                   mode = "markers",type = "scatter",
-                   text  = row.names(b_ord_df),
-                   alpha = 0.8, size = 800) %>% layout(xaxis = x, yaxis = y)
-  htmlwidgets::saveWidget(p_2d_b, "./beta2D_bray.html",
-                          selfcontained = TRUE, libdir = NULL)
+  b_ord_df <- b_ord_df[order(b_ord_df[,beta_var]), ]
   # Jaccard
   # create a column for the user metadata of interest and populate it
   j_ord_df[,beta_var] <- sample_data(ps) %>%
     data.frame() %>%
     select(all_of(beta_var)) %>%
     mutate_if(is.factor,as.character)
-  # 2D plot
-  p_2d_j = plot_ly(j_ord_df, x= ~Axis.1, y= ~Axis.2,
-                   color = ~j_ord_df[,beta_var], colors = "Dark2",
-                   mode = "markers",type = "scatter",
-                   text  = row.names(j_ord_df),
-                   alpha = 0.8, size = 800) %>% layout(xaxis = x, yaxis = y)
-  htmlwidgets::saveWidget(p_2d_j, "./beta2D_jaccard.html",
-                          selfcontained = TRUE, libdir = NULL)
+  j_ord_df <- j_ord_df[order(j_ord_df[,beta_var]), ]
+  # Merge the single betas in one
+  df_beta <- merge(b_ord_df, j_ord_df, by = c("Sample", beta_var))
+  df_beta[,beta_var] <- as.factor(df_beta[,beta_var])
+  n_beta <- length(levels(df_beta[,beta_var]))
+  # Generate how many true and false to plot the correct graph with buttons
+  if (n_beta == 1) {
+    items_TOT = TRUE
+    items_TOT_inv = FALSE
+  } else {
+    # T and F for Bray-curtis
+    items_TRUE <- paste(rep(TRUE, n_beta))
+    items_FALSE <- paste(rep(FALSE, n_beta))
+    items_TOT <- as.logical(c(items_TRUE,items_FALSE))
+    # F and T for Jaccard
+    items_TOT_inv <- as.logical(c(items_FALSE,items_TRUE))
+  }
+  # create item lists (for 2D plots)
+  items2d <- list(
+    list(label="Bray_Curtis", method = "update", args=list(list(visible=items_TOT),
+                                                           list(title = "2D-Beta diversity<br>Bray_Curtis"))),
+    list(label="Jaccard", method = "update", args=list(list(visible=items_TOT_inv),
+                                                       list(title = "2D-Beta diversity<br>Jaccard")))
+  )
+  # Plot 2D-FIGURE
+  fig_beta_2d <- plot_ly(data = df_beta, x = ~Bray_axis.1, y = ~Bray_axis.2, color = ~df_beta[,beta_var],
+                         colors = "Dark2",  visible=T, type = "scatter", mode = "markers", groupclick = "toggleitem",
+                         hovertext = paste("Sample: ", df_beta$Sample),
+                         alpha = 0.8, size = 800) %>%
+    add_trace(x = ~Jac_axis.1, y = ~Jac_axis.2, color = ~df_beta[,beta_var],
+              colors = "Dark2",  visible=F, hovertext = paste("Sample: ", df_beta$Sample)) %>%
+    layout(
+      title = "2D-Beta diversity<br>Select the metric from the dropdown menu",
+      xaxis = list(title = "PCoA 1"),
+      yaxis = list(title = "PCoA 2"),
+      legend= list(title = list(text= beta_var),
+                   traceorder = "normal",
+                   itemsizing = "constant"),
+      autosize = TRUE,
+      boxmode = "group",
+      margin = list(autosize = TRUE, width = 1400, height = 900),
+      updatemenus = list(
+        list(buttons = items2d)
+      )
+    )
+  htmlwidgets::saveWidget(fig_beta_2d, "./beta2D.html",
+                         selfcontained = TRUE, libdir = NULL)
 }
-################################# 3D PLOTS #####################################
+################################ 3D PLOTS #####################################
 # check if data are suitable for 3d plots
 if (ncol(b_ord_df)<3 || ncol(j_ord_df)<3){
   message ("Sample numerosity in your data doesn't hallow 3D plots creation!")
 } else {
+  # how many values in beta var?
   # Bray-Curtis
-  p_3d_b <- plot_ly(b_ord_df, x = ~Axis.1, y = ~Axis.2, z = ~Axis.3,
-                    color = ~b_ord_df[,beta_var], colors = "Dark2",
-                    text = row.names(b_ord_df),
-                    mode = "markers", type = "scatter3d")
-  p_3d_b <- p_3d_b %>% layout(scene = list(xaxis = list(title = 'PCoA 1'),
-                                           yaxis = list(title = 'PCoA 2'),
-                                           zaxis = list(title = 'PCoA 3')))
-  htmlwidgets::saveWidget(p_3d_b, "./beta3D_bray.html",
-                          selfcontained = TRUE, libdir = NULL)
-  
-  # Jaccard 
-  p_3d_j <- plot_ly(j_ord_df, x = ~Axis.1, y = ~Axis.2, z = ~Axis.3,
-                    color = ~j_ord_df[,beta_var], colors = "Dark2",
-                    text = row.names(j_ord_df),
-                    mode = "markers", type = "scatter3d")
-  p_3d_j <- p_3d_j %>% layout(scene = list(xaxis = list(title = 'PCoA 1'),
-                                           yaxis = list(title = 'PCoA 2'),
-                                           zaxis = list(title = 'PCoA 3')))
-  htmlwidgets::saveWidget(p_3d_b, "./beta3D_jaccard.html",
+  # create a column for the user metadata of interest and populate it
+  b_ord_df[,beta_var] <- sample_data(ps) %>%
+    data.frame() %>%
+    select(all_of(beta_var)) %>%
+    mutate_if(is.factor,as.character)
+  b_ord_df <- b_ord_df[order(b_ord_df[,beta_var]), ]
+  # Jaccard
+  # create a column for the user metadata of interest and populate it
+  j_ord_df[,beta_var] <- sample_data(ps) %>%
+    data.frame() %>%
+    select(all_of(beta_var)) %>%
+    mutate_if(is.factor,as.character)
+  j_ord_df <- j_ord_df[order(j_ord_df[,beta_var]), ]
+  # Merge the single betas in one
+  df_beta <- merge(b_ord_df, j_ord_df, by = c("Sample", beta_var))
+  df_beta[,beta_var] <- as.factor(df_beta[,beta_var])
+  n_beta <- length(levels(df_beta[,beta_var]))
+  # Generate how many true and false to plot the correct graph with buttons
+  if (n_beta == 1) {
+    items_TOT = TRUE
+    items_TOT_inv = FALSE
+  } else {
+    # T and F for Bray-curtis
+    items_TRUE <- paste(rep(TRUE, n_beta))
+    items_FALSE <- paste(rep(FALSE, n_beta))
+    items_TOT <- as.logical(c(items_TRUE,items_FALSE))
+    # F and T for Jaccard
+    items_TOT_inv <- as.logical(c(items_FALSE,items_TRUE))
+  }
+  # create item lists (for 3D plots)
+  items3d <- list(
+    list(label="Bray_Curtis", method = "update", args=list(list(visible=items_TOT),
+                                                           list(title = "3D-Beta diversity<br>Bray_Curtis"))),
+    list(label="Jaccard", method = "update", args=list(list(visible=items_TOT_inv),
+                                                       list(title = "3D-Beta diversity<br>Jaccard")))
+  )
+  # Plot 3D-FIGURE
+  fig_beta_3d <- plot_ly(data = df_beta, x = ~Bray_axis.1, y = ~Bray_axis.2, z = ~Bray_axis.3,
+                         color = ~df_beta[,beta_var], colors = "Dark2",
+                         text = paste("Sample: ", df_beta$Sample),
+                         type = "scatter3d", mode = "markers",
+                         visible=T, hovertext = paste("Sample: ", df_beta$Sample),
+                         alpha = 0.8) %>%
+    add_trace(x = ~Jac_axis.1, y = ~Jac_axis.2, z = ~Jac_axis.3, color = ~df_beta[,beta_var],
+              colors = "Dark2",  visible=F, hovertext = paste("Sample: ", df_beta$Sample)) %>%
+    layout(
+      title = "3D-Beta diversity<br>Select the metric from the dropdown menu",
+      xaxis = list(title = "PCoA 1"),
+      yaxis = list(title = "PCoA 2"),
+      yaxis = list(title = "PCoA 3"),
+      legend= list(title = list(text= beta_var),
+                   traceorder = "normal",
+                   itemsizing = "constant"),
+      autosize = TRUE,
+      boxmode = "group",
+      margin = list(autosize = TRUE, width = 1400, height = 900),
+      updatemenus = list(
+        list(buttons = items3d)
+      )
+    )
+  htmlwidgets::saveWidget(fig_beta_3d, "./beta3D.html",
                           selfcontained = TRUE, libdir = NULL)
 }
-

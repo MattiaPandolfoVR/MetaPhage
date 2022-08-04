@@ -5,12 +5,15 @@ sort: 1
 # MetaPhage databases
 
 MetaPhage requires a set of databases:
-* Inphared
+* PhiX
 * Kraken2/minikraken
 * Phigaro
-* PhiX
 * Vibrant
-* Virsorter
+* Virsorter2
+* CheckV
+* AllVSAll
+* Inphared
+
 
 ## Download the databases
 

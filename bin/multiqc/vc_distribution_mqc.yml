@@ -1,0 +1,11 @@
+id: 'vc_distribution_plot'
+section_name: 'Viral Contigs Distribution Plot (pre-Dereplication).'
+description: 'Links to the viral contigs distribution plot per miner. The link will open the plot in a new browser tab'
+plot_type: 'table'
+pconfig:
+    col1_header: 'Plot'
+    scale: false
+data:
+    Viral contigs distribution plot:
+        Link: '<a href="./plots/vc_distribution_plot_mqc.html">VirConts_dist_plots.html</a>'
+                                                               

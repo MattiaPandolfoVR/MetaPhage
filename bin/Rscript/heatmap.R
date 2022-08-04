@@ -1,3 +1,4 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(heatmaply))
 shhh(library(phyloseq))
@@ -7,7 +8,7 @@ shhh(library(metagenomeSeq))
 args <- commandArgs(trailingOnly = TRUE)
 # check arguments
 if (length(args) < 4) {
-  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata> <heatmap_var>\n")
+  stop("Usage: heatmap.R <count_table> <taxonomy_table> <metadata> <heatmap_var>\n")
 }
 ################################## COUNT TABLE #################################
 file_count <- args[1]
@@ -65,20 +66,14 @@ phyloseq::otu_table(ps_filter) <- phyloseq::otu_table(ps_norm, taxa_are_rows = T
 # Restore sample_data rownames
 row.names(ps_filter@sam_data) <- c(1:nrow(ps_filter@sam_data))
 ps <- ps_filter
+colnames(ps@tax_table)
+# remove unwanted columns
+ps@tax_table <- ps@tax_table[, -(2:10)]
 
 # Data-frames creation
 df_merged <- merge(x = ps@otu_table, y = ps@tax_table, by = 0 )
 rownames(df_merged) = df_merged$Row.names
 df_merged$Row.names <- NULL
-df_merged$Accession <- NULL
-df_merged$Status <- NULL
-df_merged$VC <- NULL
-df_merged$Level <- NULL
-df_merged$Weight <- NULL
-df_merged$Host <- NULL
-df_merged$BaltimoreGroup <- NULL
-df_merged$Realm <- NULL
-df_merged$Kingdom <- NULL
 df_meta <- metadata[metadata$Sample %in% colnames(count),]
 # Fix labels in rowside and colside columns
 colside <- as.data.frame(df_meta[,c("Sample",heatmap_var)])
@@ -108,6 +103,5 @@ h1 <- heatmaply(df_heatmap,
   plotly::layout(showlegend = FALSE,
                  annotations = list(
                    visible = FALSE))
-htmlwidgets::saveWidget(h1, "heatmap.html", 
+htmlwidgets::saveWidget(h1, "./heatmap.html", 
                         selfcontained = TRUE, libdir = NULL)
-

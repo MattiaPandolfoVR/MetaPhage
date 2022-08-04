@@ -1,3 +1,4 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(dplyr))
 shhh(library(data.table))
@@ -9,7 +10,7 @@ shhh(library(metagenomeSeq))
 args <- commandArgs(trailingOnly = TRUE)
 # check arguments
 if (length(args) < 3) {
-  stop("Usage: summary_report.R <count_table> <taxonomy_table> <metadata>\n")
+  stop("Usage: phyloseq.R <count_table> <taxonomy_table> <metadata>\n")
 }
 ################################## COUNT TABLE #################################
 file_count <- args[1]
@@ -22,7 +23,8 @@ file_taxo <- args[2]
 if (! file.exists(file_taxo)){
   stop("ERROR: taxonomy table file not found in: ", file_taxo, "\n")
 }
-taxo <- read.delim(file_taxo, row.names=1, sep = "\t", check.names = F)
+# change "O", "n.a." and "uncharacterize" to "NA" in taxonomy table
+taxo <- read.delim(file_taxo, row.names=1, sep = "\t", check.names = F, na.strings = c("n.a.", "O", "Unclassified"))
 ################################### METADATA ###################################
 file_meta <- args[3]
 if (! file.exists(file_meta)){
@@ -32,9 +34,6 @@ metadata <- read.delim(file_meta, row.names=1, sep = ",", check.names = F)
 metadata$Sample <- rownames(metadata)
 metadata <- metadata %>%
   select(Sample, everything())
-
-# change "O", "n.a." and "uncharacterize" to "NA" in taxonomy table
-
 
 # Phyloseq object creation
 ps0 <- phyloseq(otu_table(count, taxa_are_rows = TRUE),

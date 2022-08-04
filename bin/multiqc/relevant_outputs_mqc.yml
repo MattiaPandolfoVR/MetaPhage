@@ -1,0 +1,24 @@
+id: 'relevant_outputs'
+section_name: 'Relevant Outputs'
+description: 'List of links to the analysis relevant outputs. The link will open the relative file directly on the browser.'
+plot_type: 'table'
+pconfig:
+    col1_header: 'File'
+    scale: false
+data:
+    Count table:
+        Link: '<a href="./tables/count_table.csv">Count_Table.csv</a>'
+    Taxonomy table:
+        Link: '<a href="./tables/taxonomy_table.csv">Taxonomy_Table.csv</a>'
+    vConTACT2 results:
+        Link: '<a href="./taxonomy/vcontact2/results_vcontact2_megahit.csv">vConTACT2_results.csv</a>'
+    Raw Phyloseq:
+        Link: '<a href="./files/phyloseq/phyloseq.rds">Phyloseq.rds</a>'
+    CSS normalized Phyloseq:
+        Link: '<a href="./files/phyloseq/phyloseq_filt_css_norm.rds">CSS_norm_Phyloseq.rds</a>'
+    vOTUs nucleotides multifasta:
+        Link: '<a href="./files/megahit_vOTUs_consensus.fasta">vOTUs_consensus.fasta</a>'
+    vOTUs proteins multifasta:
+        Link: '<a href="./files/megahit_vOTUs_proteins.faa">vOTUs_proteins.fasta</a>'
+    vOTUs coordinates gff:
+        Link: '<a href="./files/megahit_vOTUs_coords.gff">vOTUs_coordinates.gff</a>'

@@ -1,3 +1,4 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(reshape2))
 shhh(library(Biostrings))
@@ -19,7 +20,7 @@ extractSampleID <- function(rawSample, stripPattern) {
 args <- commandArgs(trailingOnly = TRUE)
 # check arguments
 if (length(args) < 5) {
-  stop("Usage: summary_report.R <count_table> <vOTUs_consensus> <metadata> <sum_viol_var> <path>\n")
+  stop("Usage: summary_report.R <count_table> <vOTUs_consensus> <metadata> <sum_viol_var> <outdir_path>\n")
 }
 ################################## COUNT TABLE #################################
 file_count <- args[1]
@@ -56,7 +57,7 @@ if (! file.exists(file_path)){
 # create the violin single plot folder
 single_path = file.path(file_path, "report/plots")
 dir.create(single_path, showWarnings = FALSE)
-single_path = file.path(single_path, "single_violins")
+single_path = file.path(single_path, "single_sample_violins")
 dir.create(single_path, showWarnings = FALSE)
 
 ############################# SUMMARY DATAFRAME ################################
@@ -67,7 +68,6 @@ fasta_range = data.frame(ViralOTU = fasta@ranges@NAMES,
 df_count <- merge(fasta_range, count, by= "ViralOTU")
 # sort the table numerically
 df_count <- df_count[mixedorder(as.character(df_count$ViralOTU)),]
-rm(fasta, fasta_range)
 # melt df_count
 melt_count <- melt(df_count, id.vars = c("ViralOTU", "length"), na.rm = FALSE)
 # use ddply to summarize on each sample 
@@ -90,14 +90,11 @@ dfloop <- df_count[,-c(2)]
 dfloop$ViralOTU <- NULL
 df_votus <- as.data.frame(colSums(dfloop != 0))
 colnames(df_votus) = "vOTUs_number"
-rm(df_count, melt_count, dfloop)
 # merge the three df
 df$Sample <- rownames(df)
 df_sample$Sample <- rownames(df_sample)
 df_votus$Sample <- rownames(df_votus)
 df_final <- join_all(list(df_votus,df_sample,df), by = 'Sample', type = 'full')
-head(df_final)
-rm(df, df_sample, df_votus)
 
 ############################## SINGLE VIOLINS ##################################
 # Metadata processing
@@ -132,8 +129,13 @@ for(sample in colnames(count[1,2:ncol(count)])){
       jitter = 1,
       text = ~viralOTU
     )
+  pltList[[pltName]] <- pltList[[pltName]] %>%
+    layout(
+      yaxis = list(
+        rangemode = "nonnegative"
+      )
+    )
   violin = paste0(paste(single_path, pltName, sep = "/"), "_plot.html")
-  violin
   htmlwidgets::saveWidget(pltList[[pltName]], violin,
                           selfcontained = TRUE, libdir = NULL)
 }
@@ -152,13 +154,13 @@ violins_names_fp = as.data.frame(
   grep(paste(matching_violins,collapse="|"), df_violin_fp$violins_path, value=TRUE)
 )
 colnames(violins_names_fp) <- c("violins_path")
-# modify the matching .gff file path with a relative path
-violins_fp = paste0("../", str_extract(violins_names_fp$violins_path,
-                                       "report/plots/single_violins/.+_violin_plot.html"))
+# modify the matching violin plot path with a relative path
+violins_fp = paste0("./", str_extract(violins_names_fp$violins_path,
+                                       "plots/single_sample_violins/.+_violin_plot.html"))
 # create the link table
 df_violins = tibble("Sample" = matching_violins, file = violins_names_fp) %>%
-  mutate(file = str_replace_all(file,
-                                '([^;]*)plots/single_violins/', ''),
+  mutate(file = str_replace_all(file[,1],
+                                '([^;]*)/plots/single_sample_violins/', ''),
          path_violins = file.path(violins_fp),
          Violin_plots = paste0('<a target=_blank href=',
                                path_violins, '>', file,'</a>'))
@@ -185,5 +187,5 @@ dt_table <- DT::datatable(df_dt, filter="top", rownames = FALSE,
                           )
 ) %>% DT::formatRound(columns=c(2:6), digits=2)
 dt_table$width = 1500
-htmlwidgets::saveWidget(dt_table, "vOTUs_summary.html",
+htmlwidgets::saveWidget(dt_table, "./vOTUs_summary.html",
                         selfcontained = TRUE, libdir = NULL)

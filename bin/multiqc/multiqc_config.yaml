@@ -7,15 +7,19 @@ show_analysis_paths: False
 simple_output: true
 
 report_header_info:
-  - Contact E-mail: "mattia.pandolfo@unipd.it"
+  - Contact E-mail: "mattia.pandolfo@univr.it"
   - Application Type: "Metagenomics"
   - Project Type: "Bacteriophage Mining"
 
 custom_data:
   my_custom_content_image:
-    id: "miner_comparison"
-    section_name: "Miner Comparison"
+    id: "votus_miner_comparison"
+    section_name: "vOTUs Miner Comparison"
     description: "vOTUs prediction per miner, performed on consensus sequences (i.e. after dereplication)."
+  my_vc_miner_comparison_table:
+    id: "vc_miner_comparison_table"
+    section_name: "Viral Contigs miner comparison table (pre-Dereplication)"
+    description: "Table showing all the viral contigs mined from the assembly."
   my_vOTUs_summary:
     id: "vOTUs"
     section_name: "Summary Table"
@@ -23,22 +27,32 @@ custom_data:
   my_taxonomy_table:
     id: "taxonomy_table"
     section_name: "Taxonomy Table"
-    description: "Custom vOTUs taxonomy generated over vConTACT outputs. More details on results interpetation can be found <a href=https://github.com/lazzarigioele/graphanalyzer/#interpretation-of-results>here</a>."
+    description: "Custom vOTUs taxonomy generated over vConTACT2 outputs. More details on results interpetation can be found <a href=https://github.com/lazzarigioele/graphanalyzer/#interpretation-of-results>here</a>. Click on Column visibility or Fasta files to display more informations."
   my_kraken_files:
     id: "kraken_files"
     section_name: "Kraken2 and Krona files"
     description: "Links to the Kraken2 and Krona reports in your local folder."
+  my_checkV:
+    id: "checkv_table"
+    section_name: "CheckV quality summary"
+    description: "Interactive table that show the quality_summary.tsv produced by checkV. All the other output files are contained in the output folder subdirectory cdhit/checkV/consensus_genomes_checkv"
 sp:
   my_custom_content_image:
     fn: "miner_comparison_mqc.png"
 ignore_images: false
 
 report_section_order:
-  miner_comparison:
-      order: 11
+  votus_miner_comparison:
+      order: 14
+  vc_miner_comparison_table:
+      order: 13
+  vc_distribution_plot:
+      order: 12
   vOTUs:
-      order: 10
+      order: 11
   taxonomy_table:
+      order: 10
+  checkv_table:
       order: 9
   votus_distribution:
       order: 8
@@ -46,7 +60,7 @@ report_section_order:
       order: 7
   betadiversity_plots:
       order: 6
-  interesting_files:
+  relevant_outputs:
       order: 5
   fastp:
       order: 4

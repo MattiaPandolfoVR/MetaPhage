@@ -1,9 +1,14 @@
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 shhh <- suppressPackageStartupMessages
 shhh(library(seqinr))
 shhh(library(tidyverse))
 
 # Reading input
 args <- commandArgs(trailingOnly = TRUE)
+# check arguments
+if (length(args) < 3) {
+  stop("Usage: file_chopper.R <vOTUs_consensus> <vOTUs_proteins> <vOTUs_coords> <>\n")
+}
 ############################# vOTU CONSENSUS FILE ##############################
 nucleotides <- args[1]
 fna <- read.fasta(nucleotides, 

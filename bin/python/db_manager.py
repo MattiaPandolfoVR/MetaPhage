@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Coded by Andrea Telatin (Andrea.Telatin@quadram.ac.uk)
-# Implemented in MetaPhage by Mattia Pandolfo (mattia.pandolfo@gmail.com)
+# Implemented in MetaPhage by Mattia Pandolfo (mattia.pandolfo@univr.it)
 software = "db_manager.py"
 version = "0.0.2"
 

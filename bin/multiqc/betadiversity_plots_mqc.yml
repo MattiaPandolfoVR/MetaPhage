@@ -1,18 +1,12 @@
 id: 'betadiversity_plots'
-section_name: 'Beta Diversity Plots'
-description: 'Links to the beta diversity plots. The link will open the relative plot directly on the browser'
+section_name: 'vOTUs β diversity'
+description: 'Links to the 2D and 3D beta diversity plots, calculated with Bray-Curtis and Jaccard metrics. The link will open the relative plot directly on the browser'
 plot_type: 'table'
 pconfig:
-    id: 'interactive_links'
-    title: 'Interactive'
+    col1_header: 'Plot'
     scale: false
-    col1_header: 'Metric'
 data:
-    Bray_2D:
-        Link: '<a href="./plots/beta_div/beta2D_bray.html"> Bray_2D </a>'
-    Bray_3D:
-        Link: '<a href="./plots/beta_div/beta3D_bray.html"> Bray_3D </a>'
-    Jaccard_2D:
-        Link: '<a href="./plots/beta_div/beta2D_jaccard.html"> Jaccard_2D </a>'
-    Jaccard_3D:
-        Link: '<a href="./plots/beta_div/beta3D_jaccard.html"> Jaccard_3D </a>'
+    Beta diversity 2D (BC+J):
+        Link: '<a href="./plots/beta_diversity/beta2D.html">2DBetaDiversity.html</a>'
+    Beta diversity 3D (BC+J):
+        Link: '<a href="./plots/beta_diversity/beta3D.html">3DBetaDiversity.html</a>'

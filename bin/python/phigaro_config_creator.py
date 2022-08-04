@@ -1,4 +1,5 @@
-# Coded by Gioele Lazzari (gioele.lazza@studenti.univr.it)
+#!/usr/bin/env python3
+# Coded by Mattia Pandolfo (mattia.pandolfo@univr.it)
 software = "phigaro_config_creator.py"
 version = "0.0.1"
 
