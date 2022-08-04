@@ -9,6 +9,12 @@ This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage 
 
 :book: MetaPhage documentation is [available online](https://MattiaPandolfoVR.github.io/MetaPhage/)
 
+## Development version
+
+A new version with updated Miners is available in the *dev* branch:
+
+* [Developmental version](https://github.com/MattiaPandolfoVR/MetaPhage/tree/dev#readme)
+
 ## Overview
 
 This pipeline consists of several modules, as summarised in the workflow below.
