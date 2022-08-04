@@ -12,7 +12,7 @@ This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage 
 
 ## Documentation
 
-* :page: [Tutorial to use this *beta* version](tutorial_beta.md)
+* :page_facing_up: [Tutorial to use this *beta* version](tutorial_beta.md)
 * :book: MetaPhage documentation is [available online](https://MattiaPandolfoVR.github.io/MetaPhage/)
 
 ## Overview
