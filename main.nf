@@ -713,7 +713,7 @@ process covtocounts2 {
 //ch_diamond = ch_dbm_diamond.splitCsv().flatMap { it -> "${it[5]}" + "/${params.mod_vcontact2}" } to be added whith new db_manager.py
 //ch_vcontact2_db = ch_dbm_vcontact2.splitCsv().flatMap { it -> "${it[6]}" + "/${params.mod_vcontact2}/" } to be added whith new db_manager.py
 ch_diamond = Channel.fromPath("${params.dbPath}/diamond/${params.mod_vcontact2}/allVSall_${params.mod_vcontact2}.csv")
-ch_vcontact2_db = ch_dbm_vcontact2.splitCsv().flatMap { it -> "${it[4]}"  }
+ch_vcontact2_db = ch_dbm_vcontact2.splitCsv().flatMap { it -> "${it[6]}"  }
 
 process diamond_vcontact2 {
     cache 'lenient'

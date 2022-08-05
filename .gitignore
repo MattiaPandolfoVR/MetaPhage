@@ -24,4 +24,4 @@ db_path.csv
 climb
 conf/datasets/mattia.config
 conf/load/locale.config
-nextflow_mattia.config
+nextflow_mattia.configbin/cd-hit*
