@@ -14,8 +14,9 @@
 
 ```bash
 # Check required tools
-nextflow -version
-conda --version
+nextflow -version   # Otherwise install Nextflow: https://www.nextflow.io/
+conda --version     # Otherwise install Miniconda: https://www.nextflow.io/
+g++ --version       # Otherwise install the compiler, "sudo apt install build-essential" from ubuntu
 
 # Install mamba
 conda install -y -c conda-forge mamba
@@ -24,7 +25,10 @@ conda install -y -c conda-forge mamba
 2. Clone this repository (*dev* branch):
 
 ```bash
-git clone --branch dev git@github.com:MattiaPandolfoVR/MetaPhage.git
+# Download the repository
+git clone --branch dev https://github.com/MattiaPandolfoVR/MetaPhage.git
+
+# IMPORTANT: Set the installation directory now or the following stesp won't work
 export METAPHAGE_DIR="$PWD"/MetaPhage
 ```
 
@@ -32,10 +36,15 @@ export METAPHAGE_DIR="$PWD"/MetaPhage
 
 ```bash
 # Create the environment (needed once)
-mamba env create -n metaphage2 --file "$METAPHAGE_DIR"/deps/env-2.yaml
+mamba env create -n metaphage2 --file "$METAPHAGE_DIR"/deps/env-v2.yaml
 
-# Activate the environment to use MetaPhage
+# ⚠️ Activate the environment to use MetaPhage
 conda activate metaphage2
+
+# Update/download krona and quast datasets
+ktUpdateTaxonomy.sh
+quast-download-silva
+quast-download-busco
 ```
 
 4. Clone cd-hit and compile it to support more sequences:
@@ -49,7 +58,6 @@ make MAX_SEQ=2000000
 # Move binaries to the directory with MetaPhage binaries
 mv cd-hit cd-hit-2d  cd-hit-454 cd-hit-div cd-hit-est "$METAPHAGE_DIR"/bin/
 
-# Cleanup
 cd ..
 rm -rf cdhit
 ```
@@ -58,16 +66,16 @@ rm -rf cdhit
 
 ```bash
 # Download up to 6 files simultaneously to "$METAPHAGE_DIR"/DB/ (default location)
-"$METAPHAGE_DIR"/bin/python/db_manager.py -o "$METAPHAGE_DIR"/DB/ -m 6
+# It's important to specify the database release 2022.1 as by default you will get the bundle for v1
+"$METAPHAGE_DIR"/bin/python/db_manager.py -o "$METAPHAGE_DIR"/DB/ -m 6 -r 2022.1
 
 # Download and setup virsorter 2
-virsorter setup --db-dir "$METAPHAGE_DIR"/DB/ --jobs 4
+virsorter setup --db-dir "$METAPHAGE_DIR"/DB/virsorter/virsorter2 --jobs 4
 ```
 
 ## Usage
 
 At this point you can use MetaPhage v2 in a similar fashion thant MetaPhage v1:
-
-* [Generate a new project](https://mattiapandolfovr.github.io/MetaPhage/new)
-* [and run the pipeline](https://mattiapandolfovr.github.io/MetaPhage/tutorial#create-the-project-configuration-file)
+* Generate a Project file starting with a directory with your reads and a metadata file ([Generate a new project](https://mattiapandolfovr.github.io/MetaPhage/new))
+* then execute the pipeline ensuring the conda environment is active (see [run the pipeline](https://mattiapandolfovr.github.io/MetaPhage/tutorial#create-the-project-configuration-file))
 
