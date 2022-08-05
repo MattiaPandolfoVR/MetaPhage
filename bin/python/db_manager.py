@@ -2,7 +2,7 @@
 # Coded by Andrea Telatin (Andrea.Telatin@quadram.ac.uk)
 # Implemented in MetaPhage by Mattia Pandolfo (mattia.pandolfo@univr.it)
 software = "db_manager.py"
-version = "0.2.0"
+version = "0.2.1"
 
 
 
@@ -128,7 +128,7 @@ config = """
       "url": "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/virsorter2.tar.gz",
       "md5": "ddc75b770b96a9fabee4f76458b57e0d",
       "file": "virsorter2.tar.gz",
-      "provides": ["virsorter2"],
+      "provides": ["virsorter"],
       "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
       "cleanup": "rm virsorter2.tar.gz"
     }, 
