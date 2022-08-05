@@ -42,7 +42,8 @@ mamba env create -n metaphage2  --file "$METAPHAGE_DIR"/deps/env-v2.yaml
 # ⚠️ Activate the environment to use MetaPhage
 conda activate metaphage2
 
-# Update/download krona and quast datasets
+# Update/download krona and quast datasets (note: quast might fail as they
+# are updating URLs, it's not a problem)
 ktUpdateTaxonomy.sh
 quast-download-silva
 quast-download-busco
@@ -112,6 +113,7 @@ python ./bin/newProject.py \
 ### Start the pipeline
 
 ```bash
-nextflow run main.nf -c demo.conf
+# Skip metaquast
+nextflow run main.nf -c demo.conf --skip_metaquast
 ```
 
