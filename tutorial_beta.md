@@ -37,7 +37,7 @@ export METAPHAGE_DIR="$PWD"/MetaPhage
 
 ```bash
 # Create the environment (needed once)
-mamba env create -n cd  --file "$METAPHAGE_DIR"/deps/env-v2.yaml
+mamba env create -n metaphage2  --file "$METAPHAGE_DIR"/deps/env-v2.yaml
 
 # ⚠️ Activate the environment to use MetaPhage
 conda activate metaphage2
@@ -68,7 +68,7 @@ rm -rf cdhit
 ```bash
 # Download up to 6 files simultaneously to "$METAPHAGE_DIR"/DB/ (default location)
 # It's important to specify the database release 2022.1 as by default you will get the bundle for v1
-n"$METAPHAGE_DIR"/bin/python/db_manager.py -o "$METAPHAGE_DIR"/db/ -m 6 -r 2022.1
+"$METAPHAGE_DIR"/bin/python/db_manager.py -o "$METAPHAGE_DIR"/db/ -m 6 -r 2022.1
 
 # Download and setup virsorter 2
 virsorter setup --db-dir "$METAPHAGE_DIR"/db/virsorter/virsorter2 --jobs 4
@@ -114,3 +114,4 @@ python ./bin/newProject.py \
 ```bash
 nextflow run main.nf -c demo.conf
 ```
+
