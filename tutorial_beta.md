@@ -6,6 +6,7 @@
   * Internet access
   * Conda (see [how to install](https://telatin.github.io/microbiome-bioinformatics/Install-Miniconda/))
   * Nextflow (see [how to install](https://www.nextflow.io/docs/latest/getstarted.html#installation))
+  * Compiling tools (g++ and make), in Ubuntu `sudo apt install -y build-essential`
 * Resources will vary depending on the project size, we recommend at least 128 Gb RAM and 64 CPU cores
 
 ## Installation
