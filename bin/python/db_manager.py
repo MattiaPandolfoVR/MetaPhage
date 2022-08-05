@@ -2,16 +2,9 @@
 # Coded by Andrea Telatin (Andrea.Telatin@quadram.ac.uk)
 # Implemented in MetaPhage by Mattia Pandolfo (mattia.pandolfo@univr.it)
 software = "db_manager.py"
-version = "0.1.0"
+version = "0.2.0"
 
-#85095275aee479de87b0dbc95b3ca48e  checkv.tar.gz
-#1fae862c224d2357392c7871c42be792  diamond.tar.gz
-#b072aa91dfb98e31209a7c62360ff0b3  inphared.tar.gz
-#407c66b21f7cb73d6d20b701f55c70e9  kraken2.tar.gz
-#da46b4b25eef1b8c5bc0d05dda25186a  phigaro.tar.gz
-#82402223c89642771ad291877cb5a9a5  phix.tar.gz
-#2299366bd756b805a3718ee265bdb1f3  vibrant.tar.gz
-#ddc75b770b96a9fabee4f76458b57e0d  virsorter.tar.gz
+
 
 import json, argparse, os, time, re, sys
 import concurrent.futures
@@ -152,7 +145,7 @@ config = """
       "name":    "vConTACT2",
       "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/inphared.tar.gz",
       "md5":     "72c9a0be3b93364e44338ced659341fe",
-      "file":    "2022-01-inphared.tar.gz",
+      "file":    "inphared.tar.gz",
       "provides": ["inphared"],
       "expand":   ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
       "cleanup":  "rm *inphared*.tar.gz"

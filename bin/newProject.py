@@ -112,9 +112,26 @@ class Metaphage:
         # Self dir is the parent dir of bin
         self.dir        = os.path.dirname(self.bins)
         self.input      = os.path.realpath(args.readsdir)
+
+        # Check input data
+        if (not os.path.exists(self.input)):
+            print("ERROR: Input directory not found: {}".format(self.input), file=sys.stderr)
+            exit(0)
+
+        if (args.metadata is not None and not os.path.exists(args.metadata)):
+            print("ERROR: Metadata file not found: {}".format(args.metadata), file=sys.stderr)
+            exit(0)
+
+
+        # Metadata
         metadatadir     = os.path.join(self.input, "metadata")
         if (not os.path.exists(metadatadir)):
-            os.mkdir(metadatadir)
+            if args.verbose:
+                print("INFO: Making metadata directory: {}".format(metadatadir), file=sys.stderr)
+            try:
+                os.mkdir(metadatadir)
+            except Exception as e:
+                print("ERROR: Unable to make metadata directory: {}:\n  {}".format(metadatadir, e), file=sys.stderr)
         else:
             metadatadir = tempfile.mkdtemp(prefix="MetaPhage_", suffix="_metadata", dir=self.input)
         self.pattern    = ""
@@ -396,10 +413,14 @@ if __name__ == "__main__":
     other.add_argument("--version",   action="store_true", help="Print version and exit")
     args = parser.parse_args()
 
+
     if args.version:
         print(f"{__version__}")
         sys.exit(0)
+    
+    
     metaphage = Metaphage(args)
+
     if not metaphage.valid:
         print("ERROR: Configuration failed")
         sys.exit(1)
