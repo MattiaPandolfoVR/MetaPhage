@@ -302,7 +302,7 @@ if __name__ == "__main__":
     path_phix = parameters.outdir + "/phix"
     path_kraken2 = parameters.outdir + "/kraken2"
     path_vibrant = parameters.outdir + "/vibrant"
-    path_virsorter2 = parameters.outdir + "/virsorter2"
+    path_virsorter2 = parameters.outdir + "/virsorter"
     path_checkv = parameters.outdir + "/checkv"
     path_allvsall = parameters.outdir + "/diamond"
     path_vcontact2 = parameters.outdir + "/inphared"
