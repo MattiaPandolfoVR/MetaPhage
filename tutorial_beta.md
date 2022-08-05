@@ -37,7 +37,7 @@ export METAPHAGE_DIR="$PWD"/MetaPhage
 
 ```bash
 # Create the environment (needed once)
-mamba env create -n metaphage2 --file "$METAPHAGE_DIR"/deps/env-v2.yaml
+mamba env create -n cd  --file "$METAPHAGE_DIR"/deps/env-v2.yaml
 
 # ⚠️ Activate the environment to use MetaPhage
 conda activate metaphage2
@@ -68,10 +68,10 @@ rm -rf cdhit
 ```bash
 # Download up to 6 files simultaneously to "$METAPHAGE_DIR"/DB/ (default location)
 # It's important to specify the database release 2022.1 as by default you will get the bundle for v1
-"$METAPHAGE_DIR"/bin/python/db_manager.py -o "$METAPHAGE_DIR"/DB/ -m 6 -r 2022.1
+n"$METAPHAGE_DIR"/bin/python/db_manager.py -o "$METAPHAGE_DIR"/db/ -m 6 -r 2022.1
 
 # Download and setup virsorter 2
-virsorter setup --db-dir "$METAPHAGE_DIR"/DB/virsorter/virsorter2 --jobs 4
+virsorter setup --db-dir "$METAPHAGE_DIR"/db/virsorter/virsorter2 --jobs 4
 ```
 
 ## Usage
@@ -80,3 +80,37 @@ At this point you can use MetaPhage v2 in a similar fashion thant MetaPhage v1:
 * Generate a Project file starting with a directory with your reads and a metadata file ([Generate a new project](https://mattiapandolfovr.github.io/MetaPhage/new))
 * then execute the pipeline ensuring the conda environment is active (see [run the pipeline](https://mattiapandolfovr.github.io/MetaPhage/tutorial#create-the-project-configuration-file))
 
+If you want a step-by-step guidance, read on:
+
+## Tutorial: how to use MetaPhage v2
+
+### Get the reads
+
+In the repository there is a folder with an example metadata-file (`./demo/`), we can fetch its reads:
+
+```bash
+cd "$METAPHAGE_DIR"
+./bin/getExample.py --verbose -t 8
+```
+
+### Create a project
+
+See [start new project](https://mattiapandolfovr.github.io/MetaPhage/new) for more details
+
+Customise the output directory (`-o`) and the temporary directory (`--work`) as needed.
+
+```bash
+python ./bin/newProject.py \
+    -i demo \
+    -m demo/infant-metadata.csv \
+    -v Infant_delivery_type \
+    -o MetaPhage-Demo-Output \
+    --work /tmp \
+    -s demo.conf
+```
+
+### Start the pipeline
+
+```bash
+nextflow run main.nf -c demo.conf
+```
