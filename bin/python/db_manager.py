@@ -2,7 +2,16 @@
 # Coded by Andrea Telatin (Andrea.Telatin@quadram.ac.uk)
 # Implemented in MetaPhage by Mattia Pandolfo (mattia.pandolfo@univr.it)
 software = "db_manager.py"
-version = "0.0.2"
+version = "0.1.0"
+
+#85095275aee479de87b0dbc95b3ca48e  checkv.tar.gz
+#1fae862c224d2357392c7871c42be792  diamond.tar.gz
+#b072aa91dfb98e31209a7c62360ff0b3  inphared.tar.gz
+#407c66b21f7cb73d6d20b701f55c70e9  kraken2.tar.gz
+#da46b4b25eef1b8c5bc0d05dda25186a  phigaro.tar.gz
+#82402223c89642771ad291877cb5a9a5  phix.tar.gz
+#2299366bd756b805a3718ee265bdb1f3  vibrant.tar.gz
+#ddc75b770b96a9fabee4f76458b57e0d  virsorter.tar.gz
 
 import json, argparse, os, time, re, sys
 import concurrent.futures
@@ -14,7 +23,7 @@ try:
   withWget = True
 except ImportError:
   withWget = False
-  print(f"{software} requires wget to be installed", file=sys.stderr)
+  print(f"WARNING: {software} will use `wget` from the system.", file=sys.stderr)
 
 
 start = time.perf_counter()
@@ -27,59 +36,128 @@ def eprint(*args, **kwargs):
 
 config = """
 {
-  "phix": {
-    "name": "PhiX reference",
-    "url": "https://zenodo.org/record/4608203/files/phix.tar.gz?download=1",
-    "md5": "36897778387b36cecd6e60aef9dab17b",
-    "file": "phix.tar.gz",
-    "provides": ["phix"],
-    "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm phix.*"
-  },  
-  "kraken2": {
-    "name": "MiniKraken",
-    "url": "https://zenodo.org/record/4608203/files/kraken2.tar.gz?download=1",
-    "md5": "4dca0ee1acccbff860ca725c37e22f85",
-    "file": "kraken2.tar.gz",
-    "provides": ["kraken2"],
-    "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm kraken2.*"
-  }, 
-  "vibrant": {
-    "name": "Vibrant",
-    "url": "https://zenodo.org/record/4608203/files/vibrant.tar.gz?download=1",
-    "md5": "05bad36563db58889236571af871acaa",
-    "file": "vibrant.tar.gz",
-    "provides": ["vibrant"],
-    "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm vibrant.*"
+  "2021.1": {
+    "phix": {
+      "name": "PhiX reference",
+      "url": "https://zenodo.org/record/4608203/files/phix.tar.gz?download=1",
+      "md5": "36897778387b36cecd6e60aef9dab17b",
+      "file": "phix.tar.gz",
+      "provides": ["phix"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm phix.*"
+    },  
+    "kraken2": {
+      "name": "MiniKraken",
+      "url": "https://zenodo.org/record/4608203/files/kraken2.tar.gz?download=1",
+      "md5": "4dca0ee1acccbff860ca725c37e22f85",
+      "file": "kraken2.tar.gz",
+      "provides": ["kraken2"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm kraken2.*"
+    }, 
+    "vibrant": {
+      "name": "Vibrant",
+      "url": "https://zenodo.org/record/4608203/files/vibrant.tar.gz?download=1",
+      "md5": "05bad36563db58889236571af871acaa",
+      "file": "vibrant.tar.gz",
+      "provides": ["vibrant"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm vibrant.*"
+    },
+    "virsorter": {
+      "name": "Virsorter",
+      "url": "https://zenodo.org/record/4608203/files/virsorter_legacy.tar.gz?download=1",
+      "md5": "2e4308be78a15df3d89ceb3e72c9ba81",
+      "file": "virsorter_legacy.tar.gz",
+      "provides": ["virsorter"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm virsorter_legacy.*"
+    }, 
+      "phigaro": {
+      "name": "Phigaro",
+      "url": "https://zenodo.org/record/4608203/files/phigaro.tar.gz?download=1",
+      "md5": "f6e671d885538542755d0c52b1aa6ddb",
+      "file": "phigaro.tar.gz",
+      "provides": ["phigaro"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm phigaro.*"
+    },
+    "vcontact2": {
+      "name":    "vConTACT2",
+      "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
+      "md5":     "72c9a0be3b93364e44338ced659341fe",
+      "file":    "2022-01-inphared.tar.gz",
+      "provides": ["inphared"],
+      "expand":   ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup":  "rm *inphared*.tar.gz"
+    }
   },
-  "virsorter": {
-    "name": "Virsorter",
-    "url": "https://zenodo.org/record/4608203/files/virsorter_legacy.tar.gz?download=1",
-    "md5": "2e4308be78a15df3d89ceb3e72c9ba81",
-    "file": "virsorter_legacy.tar.gz",
-    "provides": ["virsorter"],
-    "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm virsorter_legacy.*"
-  }, 
-    "phigaro": {
-    "name": "Phigaro",
-    "url": "https://zenodo.org/record/4608203/files/phigaro.tar.gz?download=1",
-    "md5": "f6e671d885538542755d0c52b1aa6ddb",
-    "file": "phigaro.tar.gz",
-    "provides": ["phigaro"],
-    "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup": "rm phigaro.*"
-  },
-  "vcontact2": {
-    "name":    "vConTACT2",
-    "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
-    "md5":     "72c9a0be3b93364e44338ced659341fe",
-    "file":    "2022-01-inphared.tar.gz",
-    "provides": ["inphared"],
-    "expand":   ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
-    "cleanup":  "rm *inphared*.tar.gz"
+  "2022.1": {
+    
+    "phix": {
+      "name": "PhiX reference",
+      "url": "https://zenodo.org/record/4608203/files/phix.tar.gz?download=1",
+      "md5": "36897778387b36cecd6e60aef9dab17b",
+      "file": "phix.tar.gz",
+      "provides": ["phix"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm phix.*"
+    },
+    "kraken2": {
+      "name": "MiniKraken",
+      "url": "https://zenodo.org/record/4608203/files/kraken2.tar.gz?download=1",
+      "md5": "4dca0ee1acccbff860ca725c37e22f85",
+      "file": "kraken2.tar.gz",
+      "provides": ["kraken2"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm kraken2.*"
+    },
+      "phigaro": {
+      "name": "Phigaro",
+      "url": "https://zenodo.org/record/4608203/files/phigaro.tar.gz?download=1",
+      "md5": "f6e671d885538542755d0c52b1aa6ddb",
+      "file": "phigaro.tar.gz",
+      "provides": ["phigaro"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm phigaro.*"
+    },
+    "vibrant": {
+      "name": "Vibrant",
+      "url": "https://zenodo.org/record/4608203/files/vibrant.tar.gz?download=1",
+      "md5": "05bad36563db58889236571af871acaa",
+      "file": "vibrant.tar.gz",
+      "provides": ["vibrant"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm vibrant.*"
+    },
+    "virsorter2": {
+      "name": "Virsorter2",
+      "url": "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/virsorter2.tar.gz",
+      "md5": "ddc75b770b96a9fabee4f76458b57e0d",
+      "file": "virsorter2.tar.gz",
+      "provides": ["virsorter2"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm virsorter2.tar.gz"
+    }, 
+    "checkv": {
+      "name": "CheckV database",
+      "url": "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/checkv.tar.gz",
+      "md5": "85095275aee479de87b0dbc95b3ca48e",
+      "file": "checkv.tar.gz",
+      "provides": ["checkv"],
+      "expand": ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup": "rm checkv.tar.gz"
+    },
+    "vcontact2": {
+      "name":    "vConTACT2",
+      "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
+      "md5":     "72c9a0be3b93364e44338ced659341fe",
+      "file":    "2022-01-inphared.tar.gz",
+      "provides": ["inphared"],
+      "expand":   ["tar xfz '{file}' --directory '{outdir}'", "rm '{file}'"],
+      "cleanup":  "rm *inphared*.tar.gz"
+    }
+  
   }
 }
 """
@@ -171,6 +249,7 @@ if __name__ == "__main__":
     options = parser.add_argument_group("Options")
      
     options.add_argument('-o', '--outdir', help="Output directory", required=True)
+    options.add_argument('-r', '--release', help="Database bundle release [default: %(default)s]", default="2021.1")
     options.add_argument('-m', '--maxthreads', help="Maximum number of concurrent downloads", default=3)
     parameters = parser.parse_args()
 
@@ -180,6 +259,13 @@ if __name__ == "__main__":
     
     # To download
     todo_list = []
+
+    if parameters.release not in data:
+        print("Error: `{}` is not a valid release. Try:\n * {}".format(parameters.release, "\n * ".join(data.keys())))
+        exit(1)
+
+    data = data[parameters.release]
+    print(" 📂  Downloading bundle {}: {} databases total".format(parameters.release, len(data)))
     for package_name in data:
       pack = data[package_name]
       #print("▸ ",package_name, "\t", pack["url"])
@@ -216,9 +302,11 @@ if __name__ == "__main__":
     path_phix = parameters.outdir + "/phix"
     path_kraken2 = parameters.outdir + "/kraken2"
     path_vibrant = parameters.outdir + "/vibrant"
-    path_virsorter = parameters.outdir + "/virsorter"
+    path_virsorter2 = parameters.outdir + "/virsorter2"
+    path_checkv = parameters.outdir + "/checkv"
+    path_allvsall = parameters.outdir + "/diamond"
     path_vcontact2 = parameters.outdir + "/inphared"
 
     file_db_path = open("db_path.csv", "w")
-    file_db_path.writelines("%s,%s,%s,%s,%s" % (path_phix, path_kraken2, path_vibrant, path_virsorter, path_vcontact2))
+    file_db_path.writelines("%s,%s,%s,%s,%s,%s,%s" % (path_phix, path_kraken2, path_vibrant, path_virsorter2, path_checkv, path_allvsall, path_vcontact2))
     file_db_path.close()
