@@ -13,6 +13,7 @@ The new version:
 * added CheckV
 * currently only works using Conda as dependency manager
 
+![Beta workflow](https://github.com/MattiaPandolfoVR/MetaPhage/raw/dev/figures/metaphage.drawio.svg)
 
 ## Requirements
 
