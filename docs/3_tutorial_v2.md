@@ -1,6 +1,6 @@
 ---
-sort: 3
-permalink: /tutorial
+sort: 4
+permalink: /tutorial-v2
 ---
 
 # Tutorial (beta)

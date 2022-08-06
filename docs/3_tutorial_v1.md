@@ -3,7 +3,7 @@ sort: 3
 permalink: /tutorial
 ---
 
-# Tutorial
+# Tutorial (stable)
 
 This tutorial will guide through the download of MetaPhage 0.3.0, its 
 {{ site.baseurl }}{% link notes/databases.md %}
