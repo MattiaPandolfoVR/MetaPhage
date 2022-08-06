@@ -3,7 +3,8 @@
   <a href="https://MattiaPandolfoVR.github.io/MetaPhage/"><img src="./docs/imgs/metaphage-logo.png"></a>
 </p>
 
-This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage can be run on Linux or MacOS.
+This is MetaPhage, a nextflow pipeline for automatic phage discovery. 
+MetaPhage requires a Linux environment.
 
 ## Documentation
 
