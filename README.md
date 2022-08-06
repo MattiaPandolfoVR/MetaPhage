@@ -1,6 +1,6 @@
 # MetaPhage v2 *beta*
 
-> This release replaced VirSorter with VirSorter 2 and VirFinder with DeepVirfinder.
+> :warning: This release replaced VirSorter with VirSorter 2 and VirFinder with DeepVirfinder.
 > It is currently being finalized, and only supports **conda** environments to provide dependencies,
 > whilte the v1 branch supports Docker and Singularity as well.
 
@@ -8,8 +8,7 @@
   <a href="https://MattiaPandolfoVR.github.io/MetaPhage/"><img src="./docs/imgs/metaphage-logo.png"></a>
 </p>
 
-This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage can be run on Linux or MacOS.
-
+This is MetaPhage, a nextflow pipeline for automatic phage discovery. MetaPhage can be run on Linux using Conda as dependency manager.
 ## Documentation
 
 * :page_facing_up: [Tutorial to use this *beta* version](tutorial_beta.md)
