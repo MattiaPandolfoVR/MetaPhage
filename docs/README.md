@@ -7,7 +7,7 @@
 ### A reads-to-report pipeline to analyse metaviromics datasets.
 
 ```note
-A beta version of MetaPhage 2 is available as a dev branch (see [tutorial (beta)]({{ site.baseurl }}{% link 3_tutorial_v2.png %})).
+A beta version of MetaPhage 2 is available as a dev branch (see [tutorial (beta)]({{ site.baseurl }}{% link 3_tutorial_v2.md %})).
 ```
 
 * The **pipeline** includes viral mining and quantification of the vOTUs.
