@@ -1,5 +1,8 @@
 # MetaPhage
 
+[![Github repository](https://img.shields.io/github/last-commit/mattiapandolfovr/metaphage?style=plastic)](https://github.com/mattiapandolfovr/metaphage)
+[![release](https://img.shields.io/github/v/release/mattiapandolfovr/metaphage?style=plastic)](https://github.com/mattiapandolfovr/metaphage/releases)
+[![MetaPhage Beta](https://img.shields.io/badge/MetaPhage-beta-red?style=plastic)](https://github.com/MattiaPandolfoVR/MetaPhage/tree/dev)
 
 ![MetaPhage Logo]({{ site.baseurl }}{% link imgs/metaphage-logo.png %})
 
