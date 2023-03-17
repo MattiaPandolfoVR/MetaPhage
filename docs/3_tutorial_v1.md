@@ -3,7 +3,7 @@ sort: 3
 permalink: /tutorial
 ---
 
-# Tutorial (stable)
+# Tutorial (stable: 0.3.3)
 
 This tutorial will guide through the download of MetaPhage 0.3.0, its 
 {{ site.baseurl }}{% link notes/databases.md %}
@@ -22,16 +22,16 @@ Conda or Singularity as package providers. **Linux** is required.
 ## Download MetaPhage
 
 We recommend downloading a release, to ensure reproducible results.
-This tutorial is based on version 0.3.2.
+This tutorial is based on version 0.3.3.
 
 ```bash
 # Download MetaPhage and expand it
-wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.3.2.tar.gz
-tar zxvf v0.3.0.tar.gz
+wget https://github.com/MattiaPandolfoVR/MetaPhage/archive/refs/tags/v0.3.3.tar.gz
+tar zxvf v0.3.3.tar.gz
 
 # Keep note of the installation directory:
 # If you move away you can return with `cd "$METAPHAGE_DIR"`
-export METAPHAGE_DIR=$(readlink -f MetaPhage-0.3.2)
+export METAPHAGE_DIR=$(readlink -f MetaPhage-0.3.3)
 ```
 
 ## Download the databases
@@ -165,10 +165,10 @@ will look like in the terminal:
                                           __/ |
                                          |___/
 ====================================================
-              
- Input:      /share/MetaPhage-0.3.0/demo
- Metadata:   /share/MetaPhage-0.3.0/demo/MetaPhage_7n2mhdur_metadata
- Databases:  /share/MetaPhage-0.3.0/db
+             
+ Input:      /share/MetaPhage-0.3.3/demo
+ Metadata:   /share/MetaPhage-0.3.3/demo/MetaPhage_7n2mhdur_metadata
+ Databases:  /share/MetaPhage-0.3.3/db
 found metadata!
 
 [9c/143f92] process > csv_validator (Checking metadata format...)   [100%] 1 of 1 
