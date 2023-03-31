@@ -77,7 +77,7 @@ config = """
     },
     "vcontact2": {
       "name":    "vConTACT2",
-      "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
+      "url":     "https://warwick.s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
       "md5":     "72c9a0be3b93364e44338ced659341fe",
       "file":    "2022-01-inphared.tar.gz",
       "provides": ["inphared"],
@@ -143,7 +143,7 @@ config = """
     },
     "vcontact2": {
       "name":    "vConTACT2",
-      "url":     "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/inphared.tar.gz",
+      "url":     "https://warwick.s3.climb.ac.uk/ifrqmra-metaphage/v1.0/2022-01-inphared.tar.gz",
       "md5":     "72c9a0be3b93364e44338ced659341fe",
       "file":    "inphared.tar.gz",
       "provides": ["inphared"],
