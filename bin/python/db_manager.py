@@ -125,7 +125,7 @@ config = """
     },
     "virsorter2": {
       "name": "Virsorter2",
-      "url": "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/virsorter2.tar.gz",
+      "url": "https://warwick.s3.climb.ac.uk/ifrqmra-metaphage/v2.0/virsorter2.tar.gz",
       "md5": "ddc75b770b96a9fabee4f76458b57e0d",
       "file": "virsorter2.tar.gz",
       "provides": ["virsorter"],
@@ -134,7 +134,7 @@ config = """
     }, 
     "checkv": {
       "name": "CheckV database",
-      "url": "https://s3.climb.ac.uk/ifrqmra-metaphage/v2.0/checkv.tar.gz",
+      "url": "https://warwick.s3.climb.ac.uk/ifrqmra-metaphage/v2.0/checkv.tar.gz",
       "md5": "85095275aee479de87b0dbc95b3ca48e",
       "file": "checkv.tar.gz",
       "provides": ["checkv"],
