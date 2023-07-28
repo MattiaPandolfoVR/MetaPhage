@@ -562,7 +562,7 @@ dependencies:
   - r-callr=3.7.0=r41hc72bb7e_0
   - r-catools=1.18.2=r41h03ef668_0
   - r-cellranger=1.1.0=r41hc72bb7e_1003
-  - r-cli=3.0.1=r41hc72bb7e_0
+  - r-cli=3.3.0=r41h7525677_0
   - r-clipr=0.7.1=r41hc72bb7e_0
   - r-cluster=2.1.2=r41h859d828_0
   - r-codetools=0.2_18=r41hc72bb7e_0
