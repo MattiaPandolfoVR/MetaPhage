@@ -13,7 +13,7 @@ from [Docker hub](https://hub.docker.com/r/andreatelatin/metaphage).
 Several HPC are kept off-line, so it's convenient to pre-download the Singularity image.
 
 ```bash
-wget "https://s3.climb.ac.uk/ifrqmra-metaphage/v1.0/metaphage.simg"
+wget "https://warwick.s3.climb.ac.uk/ifrqmra-metaphage/v1.0/metaphage.simg"
 ```
 
 ## Running with Singularity (manually)
