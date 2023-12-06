@@ -187,7 +187,7 @@ if(!params.keep_phix) {
     }
 }
 else {
-    ch_fastp_phix.into {ch_trimm_megahit; ch_trimm_derep}
+    ch_fastp_phix.into {ch_trimm_megahit; ch_trimm_kraken2; ch_trimm_derep}
 }
 
 /* STEP 2 - taxonomy classification */
